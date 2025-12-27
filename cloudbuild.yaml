@@ -39,8 +39,9 @@ steps:
       - '90s'
 
   # 5. Deploy to Firebase Hosting
-  - name: 'gcr.io/$PROJECT_ID/firebase'
-    args: ['deploy', '--project', '$PROJECT_ID', '--only', 'hosting']
+  - name: 'node:18'
+    entrypoint: 'npx'
+    args: ['firebase-tools', 'deploy', '--project', '$PROJECT_ID', '--only', 'hosting', '--token', '$_FIREBASE_TOKEN']
 
 # Upload build artifacts
 artifacts:
