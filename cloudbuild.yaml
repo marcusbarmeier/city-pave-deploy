@@ -23,7 +23,22 @@ steps:
         chmod +x ./gradlew
         ./gradlew assembleDebug
 
-  # 4. Deploy to Firebase Hosting
+  # 4. Run Robo Test (Firebase Test Lab)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    args:
+      - 'gcloud'
+      - 'firebase'
+      - 'test'
+      - 'android'
+      - 'run'
+      - '--app'
+      - 'android/app/build/outputs/apk/debug/app-debug.apk'
+      - '--device'
+      - 'model=Pixel2,version=28,locale=en,orientation=portrait'
+      - '--timeout'
+      - '90s'
+
+  # 5. Deploy to Firebase Hosting
   - name: 'gcr.io/$PROJECT_ID/firebase'
     args: ['deploy', '--project', '$PROJECT_ID', '--only', 'hosting']
 
