@@ -38,10 +38,10 @@ steps:
       - '--timeout'
       - '90s'
 
-  # 5. Deploy to Firebase Hosting
-  - name: 'node:18'
-    entrypoint: 'npx'
-    args: ['firebase-tools', 'deploy', '--project', '$PROJECT_ID', '--only', 'hosting', '--token', '$_FIREBASE_TOKEN']
+  # 5. Deploy to Firebase Hosting (Requires Token)
+  # - name: 'node:18'
+  #   entrypoint: 'npx'
+  #   args: ['firebase-tools', 'deploy', '--project', '$PROJECT_ID', '--only', 'hosting', '--token', '$_FIREBASE_TOKEN']
 
 # Upload build artifacts
 artifacts:
