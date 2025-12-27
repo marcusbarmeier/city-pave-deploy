@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "111714884839",
+    "project_id": "city-pave-estimator",
+    "storage_bucket": "city-pave-estimator.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:111714884839:android:676a9606007d10a4dc5642",
+        "android_client_info": {
+          "package_name": "com.citypave.estimator"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "111714884839-kjgpi5dhqlmr8fudmjketdrd3cng7v6l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQzP4xGH9Wxk5URVKrjLdEVYMGHIabKlk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "111714884839-icga49r7u91ar7haibpbirbjmhaj47bg.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
