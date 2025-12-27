@@ -1,4 +1,4 @@
-# City Pave Estimator - Cloud-Native Deployment
+# City Pave Estimator - Cloud-Native Deployment 🚀
 
 This project is configured for Cloud-Native deployment using Google Cloud Build, Firebase, and Capacitor.
 
