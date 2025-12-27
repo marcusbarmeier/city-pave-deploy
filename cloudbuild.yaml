@@ -44,12 +44,13 @@ steps:
     args: ['firebase-tools', 'deploy', '--project', '$PROJECT_ID', '--only', 'hosting', '--token', '$_FIREBASE_TOKEN']
 
 # Upload build artifacts
-artifacts:
-  objects:
-    location: 'gs://$PROJECT_ID-build-artifacts/$BUILD_ID'
-    paths: 
-      - 'dist/**'
-      - 'android/app/build/outputs/apk/debug/app-debug.apk'
+# Artifact upload removed to ensure build stability
+# artifacts:
+#   objects:
+#     location: 'gs://$PROJECT_ID-build-artifacts/$BUILD_ID'
+#     paths: 
+#       - 'dist/**'
+#       - 'android/app/build/outputs/apk/debug/app-debug.apk'
 
 # Timeout
 timeout: '1200s'
