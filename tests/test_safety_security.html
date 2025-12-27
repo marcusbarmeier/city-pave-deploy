@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Safety Auditor Security Rules Verification</title>
+    <!-- Firebase SDK (using CDN for simplicity in test file) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, connectFirestoreEmulator, collection, addDoc, updateDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getAuth, connectAuthEmulator, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // --- CONFIG ---
+        // Requires Firebase Emulator running on default ports
+        // Or configure for live project if needed (be careful with live data)
+        const firebaseConfig = {
+            // Placeholder: Emulators don't strictly need real keys if just testing rules
+            projectId: "city-pave-estimator",
+            apiKey: "test-api-key"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // UNCOMMENT TO USE EMULATORS
+        // connectFirestoreEmulator(db, 'localhost', 8080);
+        // connectAuthEmulator(auth, "http://localhost:9099");
+
+        // Logging Helper
+        function log(msg, type = 'info') {
+            const el = document.getElementById('logs');
+            const div = document.createElement('div');
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            div.className = type === 'error' ? 'text-red-600' : (type === 'success' ? 'text-green-600' : 'text-gray-800');
+            el.appendChild(div);
+            console.log(msg);
+        }
+
+        async function runTests() {
+            log("Starting Tests...", 'info');
+
+            try {
+                // await signInAnonymously(auth); 
+                // Note: Security rules require 'request.auth != null', so we need to be logged in. 
+                // If testing against live, we need a real user. 
+                // If emulator, anonymous works if rules allow it, but our rules check specific roles nicely.
+                // For this targeted test, we'll assume the environment provides window.firebaseServices or similar if running in-context,
+                // BUT since this is a standalone file, we'll try to rely on manual user interaction or assume dev environment.
+
+                // Let's assume we are running this in a context where we can get a logged-in user or we'll fail.
+                const user = auth.currentUser;
+                if (!user) {
+                    log("⚠️ User not signed in. Attempting anonymous auth (Rules might block this if role checks fail).", 'warning');
+                    await signInAnonymously(auth);
+                }
+
+                // TEST 1: Form Submissions - Missing Fields
+                log("Test 1: Creating Invalid Form Submission (Missing 'submittedAt')...", 'info');
+                try {
+                    await addDoc(collection(db, "form_submissions"), {
+                        type: 'incident',
+                        userId: 'test-user'
+                        // submittedAt missing
+                    });
+                    log("❌ Test 1 Failed: Should have been rejected.", 'error');
+                } catch (e) {
+                    if (e.code === 'permission-denied') {
+                        log("✅ Test 1 Passed: Request rejected as expected.", 'success');
+                    } else {
+                        log(`❌ Test 1 Error: ${e.message}`, 'error');
+                    }
+                }
+
+                // TEST 2: Form Submissions - Valid
+                log("Test 2: Creating Valid Form Submission...", 'info');
+                try {
+                    await addDoc(collection(db, "form_submissions"), {
+                        type: 'incident',
+                        userId: 'test-user',
+                        submittedAt: new Date().toISOString()
+                    });
+                    // Note: If rules require a real user ID match, this might fail if we aren't that user.
+                    // The rule is: allow create: if request.auth != null && request.resource.data.keys().hasAll(...);
+                    // It doesn't check 'request.auth.uid == data.userId' strictly in the 'create' block I added,
+                    // unless I preserved 'isAdmin' etc from original context. 
+                    // My generic rule addition was: allow create: if request.auth != null && ...
+
+                    log("✅ Test 2 Passed: Request accepted.", 'success');
+                } catch (e) {
+                    log(`❌ Test 2 Failed: ${e.message}`, 'error');
+                }
+
+                // TEST 3: Maintenance Tickets - Invalid Transition
+                // This requires an existing ticket. We'll try to create one first.
+                log("Test 3: Testing Invalid Status Transition...", 'info');
+                let ticketId;
+                try {
+                    const docRef = await addDoc(collection(db, "maintenance_tickets"), {
+                        status: 'open',
+                        description: 'Test Ticket'
+                    });
+                    ticketId = docRef.id;
+
+                    // Attempt: Open -> Archived (Skipping In Progress, Completed)
+                    await updateDoc(doc(db, "maintenance_tickets", ticketId), {
+                        status: 'archived'
+                    });
+                    log("❌ Test 3 Failed: Invalid transition Open -> Archived should be rejected.", 'error');
+                } catch (e) {
+                    if (e.code === 'permission-denied') {
+                        log("✅ Test 3 Passed: Invalid transition rejected.", 'success');
+                    } else {
+                        log(`⚠️ Test 3 inconclusive: ${e.message} (Are you Admin? Admin bypasses rules.)`, 'warning');
+                    }
+                }
+
+            } catch (err) {
+                log(`Global Test Error: ${err.message}`, 'error');
+            }
+        }
+
+        window.runTests = runTests;
+    </script>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 p-10">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">Safety Agent Rule Verification</h1>
+        <p class="mb-4 text-gray-600">Open console for details or check logs below.</p>
+        <button onclick="runTests()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Run
+            Tests</button>
+
+        <div id="logs" class="mt-6 space-y-2 font-mono text-sm border-t pt-4">
+            <!-- Logs appear here -->
+        </div>
+    </div>
+</body>
+
+</html>

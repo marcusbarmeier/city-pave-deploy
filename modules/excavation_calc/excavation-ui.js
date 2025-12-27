@@ -1,0 +1,202 @@
+
+// modules/excavation_calc/excavation-ui.js
+
+export function renderExcavationCalculator(containerId, initialData = {}) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="flex flex-col md:flex-row h-full">
+            <!-- Sidebar: Controls -->
+            <div class="w-full md:w-96 bg-white shadow-xl z-10 flex flex-col overflow-y-auto border-r border-gray-200">
+                <div class="p-4 space-y-6">
+                    
+                    <!-- Section 1: Site & Soil -->
+                    <div class="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                        <h3 class="font-bold text-blue-900 mb-3 flex items-center">
+                            <span class="bg-blue-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">1</span>
+                            Site & Soil
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Draw Area</label>
+                                <div class="flex gap-2">
+                                    <button id="draw-poly-btn" class="w-full py-2 bg-white border border-gray-300 rounded text-sm font-semibold hover:bg-gray-50 shadow-sm">Draw Polygon</button>
+                                    <button id="clear-poly-btn" class="px-3 py-2 text-red-500 border border-red-200 rounded hover:bg-red-50" title="Clear Map">×</button>
+                                </div>
+                                <p id="exc-area-display" class="text-right text-sm font-mono font-bold mt-1 text-blue-600">0 sq ft</p>
+                                <input type="hidden" id="exc-area-hidden" value="0">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase">Avg Depth (ft)</label>
+                                    <input type="number" id="exc-depth" value="${initialData.depth || 3}" class="w-full p-2 border rounded bg-white" step="0.5">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase">Swell Factor</label>
+                                    <select id="exc-soil-type" class="w-full p-2 border rounded bg-white text-sm">
+                                        <option value="1.25" ${initialData.swell === 1.25 ? 'selected' : ''}>Common Earth (25%)</option>
+                                        <option value="1.3" ${initialData.swell === 1.3 ? 'selected' : ''}>Clay (30%)</option>
+                                        <option value="1.1" ${initialData.swell === 1.1 ? 'selected' : ''}>Sand (10%)</option>
+                                        <option value="1.5" ${initialData.swell === 1.5 ? 'selected' : ''}>Rock (50%)</option>
+                                        <option value="1.4" ${initialData.swell === 1.4 ? 'selected' : ''}>Concrete/Asphalt (40%)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Loading Equipment -->
+                    <div class="bg-orange-50 p-4 rounded-lg border border-orange-100">
+                        <h3 class="font-bold text-orange-900 mb-3 flex items-center">
+                            <span class="bg-orange-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">2</span>
+                            Loading Equipment
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Excavator Bucket Size</label>
+                                <select id="exc-bucket-size" class="w-full p-2 border rounded bg-white text-sm">
+                                    <option value="0.5">0.5 yd³ (Mini Ex)</option>
+                                    <option value="1.0">1.0 yd³ (Mid-Size)</option>
+                                    <option value="1.5" selected>1.5 yd³ (Standard 20T)</option>
+                                    <option value="2.5">2.5 yd³ (Large 30T+)</option>
+                                    <option value="4.0">4.0 yd³ (Production)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase">Cycle (sec)</label>
+                                    <input type="number" id="exc-cycle-time" value="25" class="w-full p-2 border rounded bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase">Efficiency %</label>
+                                    <input type="number" id="exc-efficiency" value="85" class="w-full p-2 border rounded bg-white">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 3: Hauling Logistics -->
+                    <div class="bg-green-50 p-4 rounded-lg border border-green-100">
+                        <h3 class="font-bold text-green-900 mb-3 flex items-center">
+                            <span class="bg-green-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs mr-2">3</span>
+                            Hauling Logistics
+                        </h3>
+                        <div class="space-y-3">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Truck Capacity (Loose yds)</label>
+                                <input type="number" id="haul-capacity" value="18" class="w-full p-2 border rounded bg-white">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase">Dump Dist (km)</label>
+                                    <input type="number" id="haul-dist" value="15" class="w-full p-2 border rounded bg-white">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-500 uppercase">Avg Speed (km/h)</label>
+                                    <input type="number" id="haul-speed" value="40" class="w-full p-2 border rounded bg-white">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase">Dump/Wait Time (min)</label>
+                                <input type="number" id="haul-dump-time" value="10" class="w-full p-2 border rounded bg-white">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="exc-save-btn" class="w-full mt-4 py-3 bg-gray-800 text-white font-bold rounded hover:bg-gray-900 shadow-lg">Process to Estimate</button>
+
+                </div>
+            </div>
+
+            <!-- Main Content: Map & Results -->
+            <div class="flex-grow flex flex-col relative bg-gray-100">
+                
+                <!-- Floating Results Panel -->
+                <div class="absolute top-4 right-4 z-10 w-80 bg-white/95 backdrop-blur shadow-2xl rounded-lg border border-gray-300 overflow-hidden">
+                    <div class="p-3 bg-gray-800 text-white font-bold text-sm flex justify-between">
+                        <span>Project Totals</span>
+                        <span id="calc-status" class="text-green-400 text-xs uppercase tracking-wide">Ready</span>
+                    </div>
+                    <div class="p-4 space-y-4">
+                        <div class="flex justify-between items-end border-b pb-2">
+                            <span class="text-sm text-gray-600">Bank Volume</span>
+                            <span id="res-bank-vol" class="font-bold text-gray-900">0 yd³</span>
+                        </div>
+                        <div class="flex justify-between items-end border-b pb-2">
+                            <span class="text-sm text-gray-600">Loose Volume</span>
+                            <span id="res-loose-vol" class="font-bold text-blue-600 text-lg">0 yd³</span>
+                        </div>
+                        <div class="flex justify-between items-end border-b pb-2">
+                            <span class="text-sm text-gray-600">Truck Loads</span>
+                            <span id="res-loads" class="font-bold text-gray-900">0</span>
+                        </div>
+                        
+                        <div class="bg-yellow-50 p-3 rounded border border-yellow-100 mt-2">
+                            <p class="text-xs text-yellow-800 font-bold uppercase mb-1">Optimization</p>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-sm text-gray-600">Trucks Needed:</span>
+                                <span id="res-trucks-needed" class="font-bold text-2xl text-gray-900">0</span>
+                            </div>
+                            <p class="text-xs text-gray-500 italic" id="res-cycle-note">To keep excavator 100% busy.</p>
+                        </div>
+
+                        <div class="flex justify-between items-end pt-1">
+                            <span class="text-sm text-gray-600">Est. Duration</span>
+                            <span id="res-duration" class="font-bold text-green-600 text-lg">0 hrs</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div id="excavation-map" class="w-full h-full min-h-[400px] bg-gray-200 flex items-center justify-center">
+                    <p class="text-gray-400">Map Loading...</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+export function getInputValues() {
+    return {
+        areaSqFt: parseFloat(document.getElementById('exc-area-hidden')?.value) || 0,
+        depthFt: parseFloat(document.getElementById('exc-depth')?.value) || 0,
+        swellFactor: parseFloat(document.getElementById('exc-soil-type')?.value) || 1.25,
+        truckCapacityLooseYd: parseFloat(document.getElementById('haul-capacity')?.value) || 0,
+        bucketSizeYd: parseFloat(document.getElementById('exc-bucket-size')?.value) || 0,
+        excCycleSec: parseFloat(document.getElementById('exc-cycle-time')?.value) || 0,
+        efficiencyPercent: parseFloat(document.getElementById('exc-efficiency')?.value) || 0,
+        haulDistKm: parseFloat(document.getElementById('haul-dist')?.value) || 0,
+        haulSpeedKmh: parseFloat(document.getElementById('haul-speed')?.value) || 0,
+        dumpWaitMin: parseFloat(document.getElementById('haul-dump-time')?.value) || 0
+    };
+}
+
+export function updateResults(results) {
+    // Safety check if elements exist
+    const setText = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = val;
+    };
+
+    setText('res-bank-vol', `${Math.round(results.volumes.bankCuYd).toLocaleString()} yd³`);
+    setText('res-loose-vol', `${Math.round(results.volumes.looseCuYd).toLocaleString()} yd³`);
+    setText('res-loads', results.loads.toLocaleString());
+    setText('res-trucks-needed', results.optimization.trucksNeeded.toFixed(1));
+    setText('res-duration', `${results.durationHours.toFixed(1)} hrs`);
+
+    // Warnings & Notes
+    const cycleNote = document.getElementById('res-cycle-note');
+    if (cycleNote) {
+        cycleNote.innerHTML = `Cycle: ${Math.round(results.cycles.truckCycleMin)}m | Load: ${Math.round(results.cycles.loadTimeMin)}m`;
+        cycleNote.className = "text-xs text-gray-500 italic";
+
+        results.warnings.forEach(w => {
+            const colorClass = w.type === 'error' ? 'text-red-800 bg-red-100' : 'text-orange-800 bg-orange-100';
+            cycleNote.innerHTML += `<br><strong class="${colorClass} p-1 rounded mt-1 block">⚠ ${w.msg}</strong>`;
+        });
+    }
+
+    setText('calc-status', 'Updated');
+    setTimeout(() => setText('calc-status', 'Ready'), 1000);
+}

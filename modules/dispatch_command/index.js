@@ -1,0 +1,473 @@
+// Dispatch Command Module
+// Handles scheduling, routing, and crew assignment.
+
+import { ComplianceBridge } from '../bridges/ComplianceBridge.js';
+import CommunicationBridge from '../bridges/CommunicationBridge.js';
+import { checkAssetMaintenanceStatus } from '../fleet/maintenance-bridge.js';
+
+// Initialize Bridges
+const complianceBridge = new ComplianceBridge();
+const communicationBridge = new CommunicationBridge();
+
+let availableUsers = [];
+let availableAssets = [];
+
+export async function loadReadyJobs() {
+    const { db, collection, query, where, getDocs } = window.firebaseServices;
+    const container = document.getElementById('unscheduled-list');
+    if (!container) return;
+    container.innerHTML = '<p class="text-center text-gray-500">Loading...</p>';
+    try {
+        const q = query(collection(db, "estimates"), where("status", "in", ["Accepted", "In Progress", "Work Starting"]));
+        const snapshot = await getDocs(q);
+        container.innerHTML = '';
+        if (snapshot.empty) { container.innerHTML = '<p class="text-center text-gray-500">No active jobs to schedule.</p>'; return; }
+        snapshot.forEach(doc => {
+            const job = doc.data();
+            const card = document.createElement('div');
+            card.className = "bg-white p-3 rounded border border-gray-200 hover:shadow-md transition-shadow cursor-pointer flex justify-between items-center";
+            card.innerHTML = `<div><h4 class="font-bold text-gray-800">${job.customerInfo?.name || 'Unnamed'}</h4><p class="text-sm text-gray-600">${job.customerInfo?.address || 'No Address'}</p><span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">${job.status}</span></div><button class="text-blue-600 font-bold text-2xl">&rarr;</button>`;
+            card.addEventListener('click', () => openDispatchModal(doc.id, job));
+            container.appendChild(card);
+        });
+    } catch (error) { container.innerHTML = '<p class="text-center text-red-500">Error loading jobs.</p>'; }
+}
+
+export async function loadDailySchedule() {
+    const { db, collection, query, where, getDocs } = window.firebaseServices;
+    const dateInput = document.getElementById('dispatch-date-picker');
+    const container = document.getElementById('daily-schedule-list');
+    if (!container) return;
+    const selectedDate = dateInput.value;
+    container.innerHTML = '<p class="text-center text-gray-500">Loading schedule...</p>';
+    try {
+        const q = query(collection(db, "dispatch_schedule"), where("date", "==", selectedDate));
+        const snapshot = await getDocs(q);
+        container.innerHTML = '';
+        if (snapshot.empty) { container.innerHTML = '<p class="text-center text-gray-400 py-4">Nothing scheduled for this day.</p>'; return; }
+        snapshot.forEach(doc => {
+            const item = doc.data();
+
+            // --- CREW RENDERING WITH MAINTENANCE CHECKS ---
+            const crewContainer = document.createElement('div');
+            crewContainer.className = "bg-white p-2 rounded border mb-1 text-xs space-y-1";
+
+            if (Array.isArray(item.crew)) {
+                // We need to render this async to check maintenance, but keeping it simple for UI speed:
+                // We'll render first, then update with warnings asynchronously.
+                item.crew.forEach(async (c) => {
+                    const row = document.createElement('div');
+                    row.className = "flex justify-between items-center";
+                    row.innerHTML = `<span class="font-bold">${c.userName}</span> <span class="flex items-center gap-1">${c.assetName} <span id="maint-icon-${doc.id}-${c.assetId}" class="hidden text-amber-500 cursor-help" title="Loading...">⚠️</span></span>`;
+                    crewContainer.appendChild(row);
+
+                    // Async Check
+                    if (c.assetId) {
+                        checkAssetMaintenanceStatus(c.assetId).then(status => {
+                            if (status.status !== 'ok' && status.alerts.length > 0) {
+                                const icon = document.getElementById(`maint-icon-${doc.id}-${c.assetId}`);
+                                if (icon) {
+                                    icon.classList.remove('hidden');
+                                    icon.title = status.alerts.join('\n');
+                                    if (status.status === 'critical') icon.classList.replace('text-amber-500', 'text-red-600');
+                                }
+                            }
+                        });
+                    }
+                });
+            } else {
+                crewContainer.textContent = item.crew; // Legacy string format
+            }
+
+            const card = document.createElement('div');
+            card.className = "bg-blue-50 p-3 rounded border border-blue-200 text-sm";
+            card.innerHTML = `
+                <div class="flex justify-between items-start"><h4 class="font-bold text-blue-900">${item.clientName}</h4><span class="text-xs bg-white border px-1 rounded">${item.shopTime || '--:--'}</span></div>
+                <p class="text-xs text-gray-600 mb-1 font-semibold">${item.jobType}</p>
+                <p class="text-gray-700 mb-2 flex items-start gap-1"><svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg> ${item.siteAddress || 'No Address'}</p>
+            `;
+            card.appendChild(crewContainer); // Inject the crew list we built
+            const footer = document.createElement('div');
+            footer.className = "text-xs text-gray-500 mt-1";
+            footer.textContent = `Dump: ${item.dumpAddress || 'N/A'}`;
+            card.appendChild(footer);
+
+            container.appendChild(card);
+        });
+    } catch (error) { container.innerHTML = '<p class="text-center text-red-500">Error loading schedule.</p>'; }
+}
+
+export function openDispatchModal(jobId, jobData) {
+    const modal = document.getElementById('dispatch-modal');
+    setupClientSelector();
+    modal.querySelectorAll('input, textarea, select').forEach(el => el.value = '');
+    document.getElementById('dispatch-crew-list').innerHTML = ''; // Clear crew list
+
+    if (jobId && jobData) {
+        document.getElementById('dispatch-job-id').value = jobId;
+        document.getElementById('dispatch-client-name').value = jobData.customerInfo?.name || '';
+        document.getElementById('dispatch-site-loc').value = jobData.customerInfo?.siteAddress || jobData.customerInfo?.address || '';
+        document.getElementById('dispatch-job-type').value = "Paving";
+    }
+
+    document.getElementById('dispatch-date').value = document.getElementById('dispatch-date-picker').value;
+    modal.classList.remove('hidden');
+
+    // --- ROUTE EFFICIENCY LOGIC ---
+    const siteInput = document.getElementById('dispatch-site-loc');
+    const driveTimeDisplay = document.getElementById('dispatch-drive-time');
+
+    // Clear previous
+    driveTimeDisplay.textContent = '';
+    driveTimeDisplay.classList.add('hidden');
+
+    // Define Calculator
+    const updateDriveTime = () => {
+        const address = siteInput.value;
+        if (!address) {
+            driveTimeDisplay.classList.add('hidden');
+            return;
+        }
+
+        // SIMULATED ROUTER (Haversine-ish)
+        driveTimeDisplay.textContent = 'Calculating route...';
+        driveTimeDisplay.classList.remove('hidden');
+
+        setTimeout(() => {
+            // Mock logic: Hash the address to get a consistent "random" time between 15 and 55 mins
+            let hash = 0;
+            for (let i = 0; i < address.length; i++) hash = address.charCodeAt(i) + ((hash << 5) - hash);
+            const minutes = 15 + (Math.abs(hash) % 40);
+
+            driveTimeDisplay.innerHTML = `🚗 Est. Travel: ${minutes} mins <span class="text-gray-400 font-normal">(from HQ)</span>`;
+        }, 600);
+    };
+
+    // Attach Listener (Debounced)
+    let timeout;
+    siteInput.onkeyup = () => {
+        clearTimeout(timeout);
+        timeout = setTimeout(updateDriveTime, 800);
+    };
+
+    // Trigger immediately if value exists
+    if (siteInput.value) updateDriveTime();
+
+    // Load Safety Docs
+    loadSafetyDocsForDispatch();
+}
+
+export async function saveDispatchAssignment() {
+    const { db, collection, addDoc } = window.firebaseServices;
+    const btn = document.getElementById('save-dispatch-btn');
+
+    const crewAssignments = [];
+    document.querySelectorAll('#dispatch-crew-list tr').forEach(tr => {
+        const userId = tr.querySelector('.crew-user-select').value;
+        const assetId = tr.querySelector('.crew-asset-select').value;
+        const note = tr.querySelector('.crew-note-input').value;
+        if (userId) {
+            const userName = tr.querySelector('.crew-user-select option:checked').text;
+            const assetName = assetId ? tr.querySelector('.crew-asset-select option:checked').text : 'None';
+            crewAssignments.push({ userId, userName, assetId, assetName, note });
+        }
+    });
+
+    // Collect SWPs
+    const swpList = [];
+    document.querySelectorAll('.swp-check:checked').forEach(cb => swpList.push(cb.value));
+
+    // Collect Custom Hazards
+    const customHazards = [];
+    document.querySelectorAll('.custom-hazard-tag').forEach(tag => customHazards.push(tag.textContent.replace('×', '').trim()));
+
+    // --- NEW: Broadcast / Queue Logic ---
+    const isBroadcast = document.getElementById('dispatch-broadcast-mode')?.checked;
+    const targetGroup = document.getElementById('dispatch-target-group')?.value;
+
+    const dispatchData = {
+        jobId: document.getElementById('dispatch-job-id').value || null,
+        clientName: document.getElementById('dispatch-client-name').value,
+        jobType: document.getElementById('dispatch-job-type').value,
+        date: document.getElementById('dispatch-date').value,
+        shopTime: document.getElementById('dispatch-shop-time').value,
+        siteTime: document.getElementById('dispatch-site-time').value,
+        siteAddress: document.getElementById('dispatch-site-loc').value,
+        dumpAddress: document.getElementById('dispatch-dump-loc').value,
+        contactInfo: document.getElementById('dispatch-contact').value,
+        material: document.getElementById('dispatch-material').value,
+        crew: isBroadcast ? [] : crewAssignments, // Broadcasts have no specific crew yet
+        equipment: document.getElementById('dispatch-equipment').value,
+        tools: document.getElementById('dispatch-tools').value,
+
+        // Safety & Compliance
+        toolboxLocation: document.getElementById('dispatch-toolbox-loc').value,
+        toolboxTime: document.getElementById('dispatch-toolbox-time').value,
+        lmhaRequired: document.getElementById('dispatch-lmha-required').checked,
+        lmhaWhen: document.getElementById('dispatch-lmha-when').value,
+        lmhaWhere: document.getElementById('dispatch-lmha-where').value,
+        swpList: swpList,
+        customHazards: customHazards,
+
+        notes: document.getElementById('dispatch-notes').value,
+        notifyCrew: document.getElementById('dispatch-notify-crew').checked,
+
+        // Broadcast Fields
+        isBroadcast: isBroadcast || false,
+        targetGroup: isBroadcast ? targetGroup : null,
+
+        createdAt: new Date().toISOString(),
+        status: isBroadcast ? "Open" : "Dispatched" // "Open" for queue, "Dispatched" for direct
+    };
+
+    if (!dispatchData.date || !dispatchData.clientName) {
+        alert("Date and Client are required.");
+        return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = "Sending...";
+
+    try {
+        const docRef = await addDoc(collection(db, "dispatch_schedule"), dispatchData);
+
+        // --- Notifications via Bridge ---
+        if (dispatchData.notifyCrew && !dispatchData.isBroadcast) {
+            const emailBody = `
+                <h2>New Dispatch Assignment</h2>
+                <p><strong>Date:</strong> ${dispatchData.date}</p>
+                <p><strong>Job:</strong> ${dispatchData.clientName}</p>
+                <p><strong>Site:</strong> ${dispatchData.siteAddress}</p>
+                <p><strong>Start Time:</strong> ${dispatchData.siteTime}</p>
+                <p><strong>Notes:</strong> ${dispatchData.notes}</p>
+                <p>Please check the Employee Portal for full details.</p>
+            `;
+
+            await communicationBridge.sendEmail(["dispatch@citypave.com"], `Dispatch: ${dispatchData.clientName} - ${dispatchData.date}`, emailBody);
+            console.log("Email notification delegated to CommunicationBridge.");
+
+        } else if (dispatchData.isBroadcast) {
+            await communicationBridge.broadcastToChannel(dispatchData.targetGroup, "New Job Available: " + dispatchData.clientName);
+        }
+
+        alert("Dispatch Sent Successfully!");
+        document.getElementById('dispatch-modal').classList.add('hidden');
+        document.getElementById('dispatch-date-picker').value = dispatchData.date;
+        loadDailySchedule();
+    } catch (error) {
+        alert("Error: " + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = "Send Dispatch";
+    }
+}
+
+/**
+ * BRIDGING FUNCTION: Allows external modules (Nav, Employee Portal) to claim an open job.
+ * @param {string} dispatchId - The ID of the open dispatch record.
+ * @param {object} user - The user object {id, name} claiming the job.
+ * @param {object} asset - Optional asset object {id, name}.
+ */
+export async function claimJob(dispatchId, user, asset = null) {
+    const { db, doc, updateDoc, getDoc } = window.firebaseServices;
+
+    try {
+        const ref = doc(db, "dispatch_schedule", dispatchId);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) throw new Error("Job not found");
+        const data = snap.data();
+
+        if (data.status !== "Open") throw new Error("Job is no longer open.");
+
+        // Update Assignment
+        const newCrew = [{
+            userId: user.id,
+            userName: user.name,
+            assetId: asset?.id || null,
+            assetName: asset?.name || 'None',
+            note: 'Self-Claimed via App'
+        }];
+
+        await updateDoc(ref, {
+            status: "Dispatched",
+            crew: newCrew,
+            claimedAt: new Date().toISOString(),
+            claimedBy: user.id
+        });
+
+        return { success: true, message: "Job claimed successfully!" };
+
+    } catch (e) {
+        console.error("Claim Error:", e);
+        return { success: false, message: e.message };
+    }
+}
+
+export function setupClientSelector() {
+    const btn = document.getElementById('dispatch-select-client-btn');
+    const modal = document.getElementById('client-select-modal');
+    const container = document.getElementById('client-list-container');
+    const nameInput = document.getElementById('dispatch-client-name');
+    if (!btn || !modal) return;
+    btn.addEventListener('click', async () => {
+        modal.classList.remove('hidden');
+        container.innerHTML = '<p class="text-center text-gray-500">Loading clients...</p>';
+        const { db, collection, getDocs } = window.firebaseServices;
+        const q = collection(db, "estimates");
+        const snap = await getDocs(q);
+        const clients = new Set();
+        snap.forEach(doc => { const name = doc.data().customerInfo?.name; if (name) clients.add(name); });
+        container.innerHTML = '';
+        const manualBtn = document.createElement('button');
+        manualBtn.className = "w-full text-left p-2 hover:bg-blue-50 border-b text-blue-600 font-bold";
+        manualBtn.textContent = "+ New / External Client";
+        manualBtn.onclick = () => { nameInput.value = ""; nameInput.focus(); modal.classList.add('hidden'); };
+        container.appendChild(manualBtn);
+        clients.forEach(name => {
+            const div = document.createElement('div');
+            div.className = "p-2 hover:bg-gray-100 cursor-pointer border-b text-sm font-medium";
+            div.textContent = name;
+            div.onclick = () => { nameInput.value = name; modal.classList.add('hidden'); };
+            container.appendChild(div);
+        });
+    });
+}
+
+export async function setupDispatchCrewBuilder() {
+    const addRowBtn = document.getElementById('add-crew-row-btn');
+    if (addRowBtn) {
+        addRowBtn.addEventListener('click', () => addCrewRow());
+    }
+
+    const { db, collection, getDocs } = window.firebaseServices;
+    try {
+        const userSnap = await getDocs(collection(db, "users"));
+        availableUsers = [];
+        userSnap.forEach(doc => availableUsers.push({ id: doc.id, name: doc.data().name }));
+
+        const assetSnap = await getDocs(collection(db, "assets"));
+        availableAssets = [];
+        assetSnap.forEach(doc => availableAssets.push({ id: doc.id, name: `${doc.data().unitId} - ${doc.data().type}` }));
+    } catch (e) { console.error("Error loading lists for dispatch", e); }
+}
+
+function addCrewRow(data = {}) {
+    const tbody = document.getElementById('dispatch-crew-list');
+    const tr = document.createElement('tr');
+    tr.className = "border-b";
+
+    let userOptions = `<option value="">Select Employee...</option>`;
+    availableUsers.forEach(u => userOptions += `<option value="${u.id}" ${data.userId === u.id ? 'selected' : ''}>${u.name}</option>`);
+
+    let assetOptions = `<option value="">No Vehicle</option>`;
+    availableAssets.forEach(a => assetOptions += `<option value="${a.id}" ${data.assetId === a.id ? 'selected' : ''}>${a.name}</option>`);
+
+    tr.innerHTML = `
+        <td class="p-1"><select class="crew-user-select w-full border rounded text-sm">${userOptions}</select></td>
+        <td class="p-1"><select class="crew-asset-select w-full border rounded text-sm">${assetOptions}</select></td>
+        <td class="p-1"><input type="text" class="crew-note-input w-full border rounded text-sm" placeholder="Role/Notes" value="${data.note || ''}"></td>
+        <td class="p-1 text-center"><button onclick="this.closest('tr').remove()" class="text-red-500 font-bold">×</button></td>
+    `;
+    tbody.appendChild(tr);
+}
+
+export function setupDispatchAutocomplete() {
+    const checkForGoogle = setInterval(() => {
+        if (window.google && window.google.maps && window.google.maps.places) {
+            clearInterval(checkForGoogle);
+
+            const siteInput = document.getElementById('dispatch-site-loc');
+            const dumpInput = document.getElementById('dispatch-dump-loc');
+            const toolboxInput = document.getElementById('dispatch-toolbox-loc');
+            const options = {
+                types: ['geocode', 'establishment'],
+                componentRestrictions: { country: 'ca' }
+            };
+
+            if (siteInput) new google.maps.places.Autocomplete(siteInput, options);
+            if (dumpInput) new google.maps.places.Autocomplete(dumpInput, options);
+            if (toolboxInput) new google.maps.places.Autocomplete(toolboxInput, options);
+        }
+    }, 500);
+}
+
+export function setupDispatchSafetyUI() {
+    const lmhaCheck = document.getElementById('dispatch-lmha-required');
+    const lmhaConfig = document.getElementById('lmha-config');
+    if (lmhaCheck && lmhaConfig) {
+        lmhaCheck.addEventListener('change', (e) => {
+            if (e.target.checked) lmhaConfig.classList.remove('hidden');
+            else lmhaConfig.classList.add('hidden');
+        });
+    }
+
+    const addHazBtn = document.getElementById('add-custom-hazard-btn');
+    const hazInput = document.getElementById('dispatch-custom-hazard');
+    const hazList = document.getElementById('custom-hazards-list');
+
+    if (addHazBtn && hazInput && hazList) {
+        addHazBtn.addEventListener('click', () => {
+            const val = hazInput.value.trim();
+            if (!val) return;
+
+            const span = document.createElement('span');
+            span.className = "bg-red-100 text-red-800 text-xs px-2 py-1 rounded flex items-center gap-1 custom-hazard-tag";
+            span.innerHTML = `${val} <button onclick="this.parentElement.remove()" class="text-red-500 font-bold hover:text-red-700">×</button>`;
+            hazList.appendChild(span);
+            hazInput.value = '';
+        });
+    }
+}
+
+async function loadSafetyDocsForDispatch() {
+    const container = document.getElementById('dispatch-swp-container');
+    if (!container) return;
+
+    if (container.children.length > 1 && !container.querySelector('p')) return;
+    container.innerHTML = '<p class="text-xs text-gray-400 italic">Loading safety documents...</p>';
+
+    try {
+        // --- REFACTORED: Use Bridge ---
+        const docs = await complianceBridge.fetchSafetyDocs();
+
+        if (docs.length === 0) {
+            container.innerHTML = '<p class="text-xs text-gray-400">No safety documents found.</p>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        docs.forEach(data => {
+            const div = document.createElement('div');
+            div.className = "flex items-center gap-2 hover:bg-gray-50 p-1 rounded";
+
+            const checkbox = document.createElement('input');
+            checkbox.type = "checkbox";
+            checkbox.className = "swp-check h-3 w-3 text-red-600 rounded border-gray-300 focus:ring-red-500";
+            checkbox.value = data.title;
+
+            const label = document.createElement('span');
+            label.className = "text-xs text-gray-700 truncate";
+            label.textContent = data.title;
+
+            const badge = document.createElement('span');
+            badge.className = "text-[9px] bg-gray-100 text-gray-500 px-1 rounded ml-auto";
+            badge.textContent = data.category;
+
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            div.appendChild(badge);
+
+            div.addEventListener('click', (e) => {
+                if (e.target !== checkbox) checkbox.checked = !checkbox.checked;
+            });
+
+            container.appendChild(div);
+        });
+
+    } catch (error) {
+        console.error("Error loading safety docs via Bridge:", error);
+        container.innerHTML = '<p class="text-xs text-red-500">Error loading documents.</p>';
+    }
+}

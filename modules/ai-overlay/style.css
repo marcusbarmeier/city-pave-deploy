@@ -1,0 +1,343 @@
+/* AI Overlay Module Styles */
+
+/* Action Dock (Container for Floating Actions) */
+.ai-dock {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 9998;
+    align-items: flex-end;
+}
+
+/* Dock Buttons */
+.dock-btn {
+    width: 56px;
+    height: 56px;
+    border-radius: 28px;
+    border: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    color: white;
+    font-weight: 600;
+    overflow: hidden;
+    position: relative;
+    padding: 0;
+}
+
+.primary-dock-btn {
+    background: linear-gradient(135deg, #4f46e5, #ec4899);
+}
+
+.dock-icon {
+    font-size: 24px;
+    transition: transform 0.3s;
+}
+
+.dock-label {
+    max-width: 0;
+    opacity: 0;
+    white-space: nowrap;
+    margin-left: 0;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.dock-btn:hover {
+    width: 140px;
+    padding-right: 15px;
+    border-radius: 30px;
+}
+
+.dock-btn:hover .dock-label {
+    max-width: 100px;
+    opacity: 1;
+    margin-left: 8px;
+}
+
+.dock-btn:hover .dock-icon {
+    transform: rotate(15deg);
+}
+
+/* Chat Window Container */
+#ai-overlay-window {
+    position: fixed;
+    bottom: 90px;
+    right: 80px;
+    /* Shifted left of the dock */
+    width: 380px;
+    height: 600px;
+    max-height: 80vh;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-origin: bottom right;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    visibility: hidden;
+    /* Added to prevent ghosting */
+    pointer-events: none;
+    transform: scale(0.9) translateY(20px);
+}
+
+#ai-overlay-window.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+    transform: scale(1) translateY(0);
+}
+
+/* Quick Replies */
+.ai-quick-replies {
+    padding: 10px 15px;
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    background: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+    scrollbar-width: none;
+}
+
+.ai-quick-replies::-webkit-scrollbar {
+    display: none;
+}
+
+.ai-chip {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 6px 12px;
+    font-size: 12px;
+    color: #4b5563;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.ai-chip:hover {
+    background: #eef2ff;
+    border-color: #c7d2fe;
+    color: #4f46e5;
+}
+
+/* Header */
+.ai-header {
+    padding: 15px 20px;
+    background: white;
+    color: #111827;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.ai-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+/* Voice Button */
+.ai-voice-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 0 8px;
+    opacity: 0.6;
+    transition: opacity 0.2s;
+}
+
+.ai-voice-btn:hover {
+    opacity: 1;
+}
+
+/* Chat Area */
+.ai-messages {
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: #f9fafb;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.ai-msg {
+    max-width: 85%;
+    padding: 12px 16px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.5;
+    position: relative;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.ai-msg.user {
+    align-self: flex-end;
+    background: #4f46e5;
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.ai-msg.ai {
+    align-self: flex-start;
+    background: white;
+    color: #1f2937;
+    border: 1px solid #e5e7eb;
+    border-bottom-left-radius: 4px;
+}
+
+/* Input Area */
+.ai-input-area {
+    padding: 15px;
+    background: white;
+    border-top: 1px solid #f3f4f6;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.ai-voice-btn.listening {
+    color: #ef4444;
+    background: #fee2e2;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        WebkitTransform: scale(1);
+    }
+
+    50% {
+        WebkitTransform: scale(1.1);
+    }
+
+    100% {
+        WebkitTransform: scale(1);
+    }
+}
+
+.ai-input-area input {
+    flex: 1;
+    padding: 12px 16px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 24px;
+    outline: none;
+    transition: all 0.2s;
+    font-size: 14px;
+}
+
+.ai-input-area input:focus {
+    background: white;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.ai-send-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #4f46e5;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(79, 70, 229, 0.3);
+}
+
+.ai-send-btn:hover {
+    background: #4338ca;
+    transform: translateY(-1px);
+}
+
+/* Context Tip */
+.ai-context-tip {
+    font-size: 11px;
+    color: #6b7280;
+    text-align: center;
+    margin-bottom: 15px;
+    padding: 6px 12px;
+    background: #f3f4f6;
+    border-radius: 20px;
+    align-self: center;
+    display: inline-block;
+}
+
+/* Toast Notifications */
+.ai-toast {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    background: rgba(31, 41, 55, 0.95);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 10000;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.ai-toast.visible {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+}
+
+/* Voice Pulse Animation */
+@keyframes voice-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+    }
+}
+
+.ai-voice-btn.listening {
+    color: #ef4444;
+    animation: voice-pulse 1.5s infinite;
+    background: #fee2e2;
+    border-radius: 50%;
+}

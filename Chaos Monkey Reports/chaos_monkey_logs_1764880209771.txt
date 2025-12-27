@@ -1,0 +1,272 @@
+[2025-12-04T19:15:33.490Z] [/modules/sketch/index.html] [Console Error] App Init Error: {}
+[2025-12-04T19:15:47.995Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:15:47.995Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:21:51.578Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:21:51.578Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:22:29.387Z] [/modules/sketch/index.html] [Console Error] App Init Error: {}
+[2025-12-04T19:22:39.207Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:22:39.207Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:30:25.458Z] [/modules/safety/index.html] [Console Error] [2025-12-04T19:30:25.458Z]  @firebase/firestore: Firestore (9.6.10): INTERNAL UNHANDLED ERROR:  
+[2025-12-04T19:30:40.418Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:30:40.418Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:32:03.410Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:32:03.410Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:41:32.680Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:41:32.680Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:45:22.654Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:45:22.654Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T19:57:03.664Z] [/modules/fleet/index.html] [Unhandled Rejection] Cannot set properties of null (setting 'textContent')
+[2025-12-04T19:57:03.664Z] [/modules/fleet/index.html] [Stack Trace] TypeError: Cannot set properties of null (setting 'textContent')
+    at http://localhost:8000/modules/fleet/mechanic.js:12:70
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T20:03:46.471Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-blue-500
+[2025-12-04T20:03:47.861Z] [/modules/employee/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:03:49.284Z] [/modules/estimator/index.html] Clicked: BUTTON nav-logout-btn
+[2025-12-04T20:03:50.284Z] [/modules/estimator/index.html] Clicked: BUTTON delete-visit-dashboard-btn text-red-400 hover:text-red-600
+[2025-12-04T20:03:51.289Z] [/modules/estimator/index.html] Clicked: BUTTON text-lg focus:outline-none transition-colors star-btn text-slate-200 dark:text-slate-600 hover:text-yellow-200
+[2025-12-04T20:03:52.289Z] [/modules/estimator/index.html] Clicked: BUTTON add-visit-dashboard-btn text-xs text-blue-600 hover:underline mt-1
+[2025-12-04T20:03:53.289Z] [/modules/estimator/index.html] Clicked: INPUT item-select-checkbox h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1
+[2025-12-04T20:03:54.287Z] [/modules/estimator/index.html] Clicked: BUTTON text-lg focus:outline-none transition-colors star-btn text-slate-200 dark:text-slate-600 hover:text-yellow-200
+[2025-12-04T20:03:55.288Z] [/modules/estimator/index.html] Clicked: INPUT item-select-checkbox h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1
+[2025-12-04T20:03:56.289Z] [/modules/estimator/index.html] Clicked: INPUT item-select-checkbox h-5 w-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 mt-1
+[2025-12-04T20:03:57.082Z] [/modules/estimator/index.html] Action: History Back
+[2025-12-04T20:03:57.319Z] [/modules/employee/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:03:58.854Z] [/modules/fleet/index.html] Clicked: BUTTON nav-logout-btn
+[2025-12-04T20:03:59.852Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:01.308Z] [/modules/operations/index.html] Clicked: BUTTON tab-tickets
+[2025-12-04T20:04:02.308Z] [/modules/operations/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:03.812Z] [/modules/operations/index.html] Clicked: BUTTON bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-50
+[2025-12-04T20:04:04.812Z] [/modules/operations/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:06.278Z] [/modules/employee/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:07.706Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:09.134Z] [/modules/employee/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:10.637Z] [/modules/operations/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:12.105Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-teal-500
+[2025-12-04T20:04:13.544Z] [/modules/growth/index.html] Clicked: BUTTON filter-btn px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-300 hover:bg-gray-50
+[2025-12-04T20:04:14.344Z] [/modules/growth/index.html] Action: History Back
+[2025-12-04T20:04:14.583Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-orange-500
+[2025-12-04T20:04:16.015Z] [/modules/sketch/excavation.html] Clicked: A text-gray-500 hover:text-gray-800 font-bold
+[2025-12-04T20:04:17.494Z] [/modules/sketch/index.html] Clicked: BUTTON save-btn
+[2025-12-04T20:04:18.542Z] [/modules/sketch/index.html] Clicked: BUTTON toggle-location-btn
+[2025-12-04T20:04:19.474Z] [/modules/sketch/index.html] Clicked: BUTTON px-4 py-2 rounded-md font-semibold text-white bg-blue-600 hover:bg-blue-700
+[2025-12-04T20:04:20.476Z] [/modules/sketch/index.html] Clicked: BUTTON border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium focus:outline-none
+[2025-12-04T20:04:21.475Z] [/modules/sketch/index.html] Clicked: BUTTON tool-text
+[2025-12-04T20:04:22.477Z] [/modules/sketch/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:23.959Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-orange-500
+[2025-12-04T20:04:25.438Z] [/modules/sketch/excavation.html] Clicked: BUTTON unnamed
+[2025-12-04T20:04:26.439Z] [/modules/sketch/excavation.html] Clicked: BUTTON draw-poly-btn
+[2025-12-04T20:04:27.439Z] [/modules/sketch/excavation.html] Clicked: A unnamed
+[2025-12-04T20:04:28.437Z] [/modules/sketch/excavation.html] Clicked: BUTTON reset-btn
+[2025-12-04T20:04:29.866Z] [/modules/sketch/excavation.html] Clicked: BUTTON clear-poly-btn
+[2025-12-04T20:04:30.865Z] [/modules/sketch/excavation.html] Clicked: A text-gray-500 hover:text-gray-800 font-bold
+[2025-12-04T20:04:32.368Z] [/modules/sketch/index.html] Clicked: BUTTON measurements-toggle-btn
+[2025-12-04T20:04:33.370Z] [/modules/sketch/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:04:34.904Z] [/modules/employee/index.html] Clicked: BUTTON time-ticket-btn
+[2025-12-04T20:05:11.701Z] [/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:05:13.143Z] [/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:05:14.582Z] [/modules/fleet/index.html] Clicked: BUTTON nav-logout-btn
+[2025-12-04T20:05:15.580Z] [/modules/fleet/index.html] Clicked: BUTTON border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium focus:outline-none
+[2025-12-04T20:05:16.582Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:05:18.066Z] [/modules/sketch/index.html] Clicked: BUTTON tool-circle
+[2025-12-04T20:05:19.067Z] [/modules/sketch/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:05:20.512Z] [/modules/fleet/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:05:21.959Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-teal-500
+[2025-12-04T20:05:23.402Z] [/modules/growth/index.html] Clicked: BUTTON sync-contacts-btn
+[2025-12-04T20:05:23.403Z] [/modules/growth/index.html] [Confirm Suppressed] This will scan all estimates and add missing contacts to the CRM. Continue? -> Returning true
+[2025-12-04T20:05:23.942Z] [/modules/growth/index.html] [Alert Suppressed] Sync Complete!
+Added: 0 new contacts.
+Updated: 0 existing contacts.
+[2025-12-04T20:05:24.396Z] [/modules/growth/index.html] Clicked: BUTTON delete-lead-btn text-gray-400 hover:text-red-500 px-2
+[2025-12-04T20:05:24.397Z] [/modules/growth/index.html] [Confirm Suppressed] Delete Melanie Vanreenen? -> Returning true
+[2025-12-04T20:05:25.402Z] [/modules/growth/index.html] Clicked: BUTTON create-est-btn bg-green-50 text-green-600 px-3 py-1 rounded text-xs font-bold hover:bg-green-100 border border-green-200
+[2025-12-04T20:05:25.402Z] [/modules/growth/index.html] [Confirm Suppressed] Create a new estimate for Melanie Vanreenen? -> Returning true
+[2025-12-04T20:05:26.091Z] [/modules/growth/index.html] [Confirm Suppressed] Found existing client "Melanie Vanreenen" with matching contact info.
+
+Use existing client details (Address: 3324 Birds Hill Rd, East Saint Paul, MB R2E 0M1, Canada)? -> Returning true
+[2025-12-04T20:05:38.322Z] [/modules/employee/index.html] Clicked: BUTTON start-dashcam-btn
+[2025-12-04T20:05:39.322Z] [/modules/employee/index.html] Clicked: BUTTON time-ticket-btn
+[2025-12-04T20:05:46.792Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-indigo-500
+[2025-12-04T20:05:49.393Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:05:50.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:05:51.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:05:52.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:05:53.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:05:54.390Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:05:55.390Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:05:56.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:05:57.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:05:58.392Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:05:59.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:06:00.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:06:01.392Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:06:02.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:06:03.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:06:04.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:06:05.390Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:06:06.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:06:07.392Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:06:08.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:06:09.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:06:10.391Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:06:11.390Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:06:12.830Z] [/modules/employee/index.html] Clicked: BUTTON close-schedule-btn
+[2025-12-04T20:06:13.831Z] [/modules/employee/index.html] Clicked: INPUT gps-toggle
+[2025-12-04T20:06:14.830Z] [/modules/employee/index.html] Clicked: BUTTON scan-invoice-btn
+[2025-12-04T20:06:15.832Z] [/modules/employee/index.html] Clicked: BUTTON time-ticket-btn
+[2025-12-04T20:06:22.176Z] [/modules/operations/index.html] Clicked: BUTTON tab-time
+[2025-12-04T20:06:23.176Z] [/modules/operations/index.html] Clicked: BUTTON tab-tickets
+[2025-12-04T20:06:24.175Z] [/modules/operations/index.html] Clicked: BUTTON tab-forms
+[2025-12-04T20:19:09.070Z] [/index.html] Clicked: BUTTON nav-logout-btn
+[2025-12-04T20:19:10.070Z] [/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:11.533Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-red-500
+[2025-12-04T20:19:13.002Z] [/modules/safety/index.html] Clicked: BUTTON admin-bulk-btn
+[2025-12-04T20:19:14.002Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap
+[2025-12-04T20:19:15.001Z] [/modules/safety/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:16.446Z] [/index.html] Clicked: BUTTON open-sketch-modal-btn
+[2025-12-04T20:19:17.447Z] [/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:18.879Z] [/modules/safety/index.html] Clicked: BUTTON admin-edit-btn
+[2025-12-04T20:19:19.865Z] [/modules/safety/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:21.301Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap
+[2025-12-04T20:19:22.301Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-purple-100 text-purple-700 border border-purple-300 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-gray-200 text-gray-700
+[2025-12-04T20:19:23.300Z] [/modules/safety/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:23.660Z] [/modules/fleet/index.html] [Unhandled Rejection] userDisplay is not defined
+[2025-12-04T20:19:23.660Z] [/modules/fleet/index.html] [Stack Trace] ReferenceError: userDisplay is not defined
+    at http://localhost:8000/modules/fleet/mechanic.js:13:13
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T20:19:24.852Z] [/modules/fleet/index.html] Clicked: BUTTON nav-tickets
+[2025-12-04T20:19:25.852Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:27.526Z] [/modules/estimator/index.html] Clicked: BUTTON dashboard-filter-button
+[2025-12-04T20:19:28.528Z] [/modules/estimator/index.html] Clicked: BUTTON dashboard-filter-button
+[2025-12-04T20:19:29.526Z] [/modules/estimator/index.html] Clicked: BUTTON new-sketch-dashboard-btn
+[2025-12-04T20:19:30.324Z] [/modules/estimator/index.html] Action: History Back
+[2025-12-04T20:19:30.555Z] [/modules/fleet/index.html] Clicked: BUTTON nav-logout-btn
+[2025-12-04T20:19:30.853Z] [/modules/fleet/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:31.098Z] [/modules/fleet/index.html] [Unhandled Rejection] userDisplay is not defined
+[2025-12-04T20:19:31.098Z] [/modules/fleet/index.html] [Stack Trace] ReferenceError: userDisplay is not defined
+    at http://localhost:8000/modules/fleet/mechanic.js:13:13
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T20:19:32.289Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:33.772Z] [/modules/growth/index.html] Clicked: BUTTON border-transparent text-gray-500 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium focus:outline-none
+[2025-12-04T20:19:34.776Z] [/modules/growth/index.html] Clicked: BUTTON log-touch-btn bg-blue-50 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 border border-blue-200
+[2025-12-04T20:19:34.778Z] [/modules/growth/index.html] [Prompt Suppressed] Log interaction with Blair Lawson: -> Returning 'ChaosInput'
+[2025-12-04T20:19:35.774Z] [/modules/growth/index.html] Clicked: BUTTON log-touch-btn bg-blue-50 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 border border-blue-200
+[2025-12-04T20:19:35.774Z] [/modules/growth/index.html] [Prompt Suppressed] Log interaction with bbfsdsbcxf: -> Returning 'ChaosInput'
+[2025-12-04T20:19:36.783Z] [/modules/growth/index.html] Clicked: BUTTON delete-lead-btn text-gray-400 hover:text-red-500 px-2
+[2025-12-04T20:19:36.783Z] [/modules/growth/index.html] [Confirm Suppressed] Delete Biljana Mijatovic Vujadin? -> Returning true
+[2025-12-04T20:19:37.811Z] [/modules/growth/index.html] Clicked: BUTTON log-touch-btn bg-blue-50 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 border border-blue-200
+[2025-12-04T20:19:37.812Z] [/modules/growth/index.html] [Prompt Suppressed] Log interaction with testtesttest: -> Returning 'ChaosInput'
+[2025-12-04T20:19:38.835Z] [/modules/growth/index.html] Clicked: BUTTON log-touch-btn bg-blue-50 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 border border-blue-200
+[2025-12-04T20:19:38.835Z] [/modules/growth/index.html] [Prompt Suppressed] Log interaction with Diana Zhang: -> Returning 'ChaosInput'
+[2025-12-04T20:19:39.853Z] [/modules/growth/index.html] Clicked: BUTTON delete-lead-btn text-gray-400 hover:text-red-500 px-2
+[2025-12-04T20:19:39.853Z] [/modules/growth/index.html] [Confirm Suppressed] Delete Ken and Barb? -> Returning true
+[2025-12-04T20:19:40.816Z] [/modules/growth/index.html] Clicked: BUTTON log-touch-btn bg-blue-50 text-blue-600 px-3 py-1 rounded text-xs font-bold hover:bg-blue-100 border border-blue-200
+[2025-12-04T20:19:40.816Z] [/modules/growth/index.html] [Prompt Suppressed] Log interaction with Dennis Koniak: -> Returning 'ChaosInput'
+[2025-12-04T20:19:41.850Z] [/modules/growth/index.html] Clicked: BUTTON create-est-btn bg-green-50 text-green-600 px-3 py-1 rounded text-xs font-bold hover:bg-green-100 border border-green-200
+[2025-12-04T20:19:41.850Z] [/modules/growth/index.html] [Confirm Suppressed] Create a new estimate for Cindy Willette? -> Returning true
+[2025-12-04T20:19:42.204Z] [/modules/growth/index.html] [Confirm Suppressed] Found existing client "Cindy Willette" with matching contact info.
+
+Use existing client details (Address: 505 Stewart Street)? -> Returning true
+[2025-12-04T20:19:43.960Z] [/modules/estimator/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:44.205Z] [/modules/fleet/index.html] [Unhandled Rejection] userDisplay is not defined
+[2025-12-04T20:19:44.205Z] [/modules/fleet/index.html] [Stack Trace] ReferenceError: userDisplay is not defined
+    at http://localhost:8000/modules/fleet/mechanic.js:13:13
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T20:19:45.400Z] [/modules/fleet/index.html] Clicked: BUTTON nav-inventory
+[2025-12-04T20:19:46.398Z] [/modules/fleet/index.html] Clicked: BUTTON nav-maintenance
+[2025-12-04T20:19:47.398Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:48.862Z] [/modules/operations/index.html] Clicked: BUTTON nav-logout-btn
+[2025-12-04T20:19:49.861Z] [/modules/operations/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:51.311Z] [/index.html] Clicked: BUTTON open-sketch-modal-btn
+[2025-12-04T20:19:52.314Z] [/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:53.735Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap
+[2025-12-04T20:19:54.736Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap
+[2025-12-04T20:19:55.736Z] [/modules/safety/index.html] Clicked: BUTTON admin-bulk-btn
+[2025-12-04T20:19:56.735Z] [/modules/safety/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:19:56.995Z] [/modules/fleet/index.html] [Unhandled Rejection] userDisplay is not defined
+[2025-12-04T20:19:56.995Z] [/modules/fleet/index.html] [Stack Trace] ReferenceError: userDisplay is not defined
+    at http://localhost:8000/modules/fleet/mechanic.js:13:13
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T20:19:58.187Z] [/modules/fleet/index.html] Clicked: BUTTON nav-inventory
+[2025-12-04T20:19:58.985Z] [/modules/fleet/index.html] Action: History Back
+[2025-12-04T20:19:59.211Z] [/modules/safety/index.html] Clicked: BUTTON text-gray-500 hover:text-red-500 text-2xl
+[2025-12-04T20:19:59.735Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap
+[2025-12-04T20:20:00.735Z] [/modules/safety/index.html] Clicked: BUTTON category-btn bg-purple-100 text-purple-700 border border-purple-300 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-gray-200 text-gray-700
+[2025-12-04T20:20:01.735Z] [/modules/safety/index.html] Clicked: BUTTON admin-bulk-btn
+[2025-12-04T20:20:02.734Z] [/modules/safety/index.html] Clicked: BUTTON category-btn px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-gray-200 text-gray-700
+[2025-12-04T20:20:03.734Z] [/modules/safety/index.html] Clicked: BUTTON category-btn px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap bg-gray-200 text-gray-700
+[2025-12-04T20:20:04.736Z] [/modules/safety/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:20:06.178Z] [/modules/sketch/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:20:06.410Z] [/modules/fleet/index.html] [Unhandled Rejection] userDisplay is not defined
+[2025-12-04T20:20:06.410Z] [/modules/fleet/index.html] [Stack Trace] ReferenceError: userDisplay is not defined
+    at http://localhost:8000/modules/fleet/mechanic.js:13:13
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28
+[2025-12-04T20:20:07.603Z] [/modules/fleet/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:20:09.118Z] [/modules/sketch/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:20:10.783Z] [/modules/employee/index.html] Clicked: A border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:20:12.311Z] [/modules/sketch/index.html] Clicked: BUTTON zoom-out-btn
+[2025-12-04T20:20:13.299Z] [/modules/sketch/index.html] Clicked: BUTTON tool-circle
+[2025-12-04T20:20:14.299Z] [/modules/sketch/index.html] Clicked: BUTTON tool-freeDraw
+[2025-12-04T20:20:15.299Z] [/modules/sketch/index.html] Clicked: A border-blue-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium
+[2025-12-04T20:20:16.760Z] [/index.html] Clicked: A dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-indigo-500
+[2025-12-04T20:20:18.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:19.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:20.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:21.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:22.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:23.903Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:24.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:25.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:26.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:27.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:28.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:29.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:30.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:31.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:32.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:33.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:34.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:35.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:36.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:37.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:38.889Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:39.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:40.889Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:41.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:42.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:43.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:44.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:45.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:46.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:47.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:48.889Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:49.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:50.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:51.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:52.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-map
+[2025-12-04T20:20:53.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:54.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:55.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:20:56.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:57.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:20:58.891Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:20:59.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-calendar
+[2025-12-04T20:21:00.889Z] [/modules/operations/dispatch.html] Clicked: BUTTON manage-crews-btn
+[2025-12-04T20:21:01.890Z] [/modules/operations/dispatch.html] Clicked: BUTTON view-gantt
+[2025-12-04T20:21:31.443Z] [/modules/fleet/index.html] [Unhandled Rejection] userDisplay is not defined
+[2025-12-04T20:21:31.443Z] [/modules/fleet/index.html] [Stack Trace] ReferenceError: userDisplay is not defined
+    at http://localhost:8000/modules/fleet/mechanic.js:13:13
+    at https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js:3476:28

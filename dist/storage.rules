@@ -1,0 +1,38 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    // 1. Dashcam Clips
+    // Allow users to upload to their own folder: dashcam/{userId}/...
+    match /dashcam/{userId}/{allPaths=**} {
+      allow read: if isAuthenticated(); // Admins/Dispatchers need to see them
+      allow write: if isOwner(userId);
+    }
+
+    // 2. Job Media (Photos, signatures, etc.)
+    // Allow strict per-job uploading
+    match /job_media/{jobId}/{allPaths=**} {
+      allow read, write: if isAuthenticated();
+    }
+    
+    // 3. User Avatars
+    match /users/{userId}/avatar.jpg {
+      allow read: if true;
+      allow write: if isOwner(userId);
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

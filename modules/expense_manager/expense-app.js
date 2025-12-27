@@ -1,0 +1,139 @@
+
+// modules/expense_manager/expense-app.js
+
+import { renderExpenseFormUI, populateJobSelect } from './expense-ui.js';
+import { Modal, Button } from '../../ui-components.js';
+
+let currentType = 'receipt';
+
+export async function renderExpenseForm(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (container.querySelector('#expense-form-content')) return; // Already rendered
+
+    await renderExpenseFormUI(container, currentType, handleTypeChange, handleExpenseSubmit);
+
+    // Load jobs explicitly after render
+    if (currentType === 'receipt') {
+        await loadJobs();
+    }
+}
+
+async function handleTypeChange(newType) {
+    currentType = newType;
+    const container = document.getElementById('expense-form-container');
+    if (container) {
+        await renderExpenseFormUI(container, currentType, handleTypeChange, handleExpenseSubmit);
+        if (newType === 'receipt') loadJobs();
+    }
+}
+
+async function loadJobs() {
+    if (!window.firebaseServices) return;
+    const { db, collection, query, where, getDocs } = window.firebaseServices;
+
+    try {
+        const q = query(collection(db, "estimates"), where("status", "in", ["Accepted", "In Progress", "Work Starting"]));
+        const snap = await getDocs(q);
+        const jobs = [];
+        snap.forEach(doc => {
+            const data = doc.data();
+            jobs.push({ id: doc.id, name: data.customerInfo?.name });
+        });
+        populateJobSelect(jobs);
+    } catch (e) {
+        console.error("Error loading jobs:", e);
+    }
+}
+
+async function handleExpenseSubmit(e, type) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+
+    try {
+        const { db, collection, addDoc, storage, ref, uploadBytes, getDownloadURL, auth } = window.firebaseServices;
+        const currentUser = auth.currentUser || { uid: 'anonymous', displayName: 'Anonymous' };
+        const paymentMethod = document.getElementById('exp-payment-method').value;
+
+        let data = {
+            type,
+            userId: currentUser.uid,
+            userName: currentUser.displayName || "Crew Member",
+            timestamp: new Date().toISOString(),
+            status: "Pending",
+            paymentMethod
+        };
+
+        if (type === 'receipt') {
+            const desc = document.getElementById('exp-desc').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            const file = document.getElementById('exp-photo').files[0];
+
+            let url = null;
+            if (file) {
+                const storageRef = ref(storage, `expenses/${currentUser.uid}/${Date.now()}_${file.name}`);
+                const snapshot = await uploadBytes(storageRef, file);
+                url = await getDownloadURL(snapshot.ref);
+            }
+
+            const jobSelect = document.getElementById('exp-job-select');
+            const jobId = jobSelect ? jobSelect.value : null;
+            const jobName = jobSelect && jobSelect.selectedIndex > 0 ? jobSelect.options[jobSelect.selectedIndex].text : null;
+
+            data = { ...data, description: desc, amount, receiptUrl: url, jobId: jobId || null, jobName: jobName || null };
+        } else {
+            const vehicle = document.getElementById('mil-vehicle').value;
+            const s = parseFloat(document.getElementById('mil-start').value);
+            const e = parseFloat(document.getElementById('mil-end').value);
+
+            if (e <= s) throw new Error("End odometer must be greater than start.");
+            data = { ...data, description: `Mileage: ${vehicle}`, vehicle, startOdo: s, endOdo: e, totalKm: e - s };
+        }
+
+        await addDoc(collection(db, "expenses"), data);
+
+        const successModal = Modal({
+            title: 'Expense Submitted',
+            content: document.createTextNode('Your expense has been submitted for approval.'),
+            actions: [Button({ text: 'OK', onClick: () => { successModal.close(); e.target.reset(); if (type === 'receipt') document.getElementById('exp-photo').value = ''; } })]
+        });
+
+    } catch (error) {
+        console.error("Error submitting expense:", error);
+        alert(error.message);
+    } finally {
+        if (btn) {
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }
+    }
+}
+
+export function prefillExpenseForm(data, file) {
+    const container = document.getElementById('expense-form-container');
+    if (!container) return;
+
+    // Ensure render
+    currentType = 'receipt';
+    renderExpenseFormUI(container, currentType, handleTypeChange, handleExpenseSubmit);
+    loadJobs();
+
+    setTimeout(() => {
+        const descInput = document.getElementById('exp-desc');
+        if (descInput) descInput.value = `Invoice ${data.date || ''} - ${data.description || ''}`;
+
+        const amountInput = document.getElementById('exp-amount');
+        if (amountInput) amountInput.value = data.amount || '';
+
+        const fileInput = document.getElementById('exp-photo');
+        if (fileInput && file) {
+            const dt = new DataTransfer();
+            dt.items.add(file);
+            fileInput.files = dt.files;
+        }
+    }, 100);
+}

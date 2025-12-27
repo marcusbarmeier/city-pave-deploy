@@ -1,0 +1,69 @@
+
+// modules/inventory_manager/inventory-ui.js
+
+export function renderInventoryTable(containerId, items, onDelete) {
+    const tbody = document.getElementById(containerId);
+    if (!tbody) return;
+
+    if (items.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center text-gray-500">No items in inventory.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = '';
+    items.forEach(item => {
+        let compatibilityHtml = '<span class="text-gray-400 text-xs">General</span>';
+        if (item.category === 'Vehicle Part' && item.compatibleAssets && item.compatibleAssets.length > 0) {
+            compatibilityHtml = `<span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">${item.compatibleAssets.length} Linked Asset(s)</span>`;
+        }
+
+        const photoHtml = item.partPhotoUrl ? `<a href="${item.partPhotoUrl}" target="_blank" class="text-blue-500 underline text-xs">View Photo</a>` : '';
+
+        const tr = document.createElement('tr');
+        tr.className = "bg-white border-b hover:bg-gray-50";
+        tr.innerHTML = `
+            <td class="px-6 py-4">
+                <div class="font-bold text-gray-900">${item.partNumber || 'N/A'}</div>
+                <div class="text-sm text-gray-600">${item.description || 'No Description'}</div>
+                <div class="text-xs text-gray-400">${item.vendor || 'Unknown Vendor'} ${item.poNumber ? `| PO: ${item.poNumber}` : ''}</div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="font-bold text-gray-900">${item.quantity} in stock</div>
+                <div class="text-xs text-gray-500">$${parseFloat(item.cost || 0).toFixed(2)} / each</div>
+            </td>
+            <td class="px-6 py-4">${compatibilityHtml}</td>
+            <td class="px-6 py-4 text-right">
+                ${photoHtml}
+                <button class="delete-btn text-red-600 hover:underline text-xs font-bold ml-3">Delete</button>
+            </td>
+        `;
+
+        // Attach delete listener safely
+        tr.querySelector('.delete-btn').addEventListener('click', () => onDelete(item.id));
+        tbody.appendChild(tr);
+    });
+}
+
+export function populateAssetDropdown(containerId, assets) {
+    const select = document.getElementById(containerId);
+    if (!select) return;
+
+    // Only fetch if empty to avoid reset
+    if (select.options.length > 0) return;
+
+    select.innerHTML = '';
+    assets.forEach(asset => {
+        const option = document.createElement('option');
+        option.value = asset.id;
+        option.textContent = `${asset.unitId} - ${asset.type}`;
+        select.appendChild(option);
+    });
+}
+
+export function toggleCompatibleWrapper(isVisible) {
+    const wrapper = document.getElementById('inv-compatible-wrapper');
+    if (wrapper) {
+        if (isVisible) wrapper.classList.remove('hidden');
+        else wrapper.classList.add('hidden');
+    }
+}

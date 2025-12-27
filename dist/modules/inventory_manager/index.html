@@ -1,0 +1,27 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>City Pave - Inventory Manager</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../style.css"><script src="https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js"></script><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { firebaseConfig } from '../../firebase-config.js';
+
+        const app = initializeApp(firebaseConfig);
+        window.firebaseServices = {
+            db: getFirestore(app),
+            storage: getStorage(app),
+            collection, addDoc, getDocs, deleteDoc, doc, query, orderBy, limit, ref, uploadBytes, getDownloadURL
+        };
+    </script></head><body class="bg-gray-100 h-screen flex flex-col"><header class="bg-white shadow p-4 flex justify-between items-center z-20 border-b"><h1 class="text-xl font-bold text-gray-800">Inventory Manager</h1><div class="flex space-x-2"><button id="tab-inventory"
+                class="tab-btn active bg-blue-100 text-blue-800 px-3 py-1 rounded font-bold">List</button></div></header><main class="flex-grow container mx-auto p-4 flex flex-col md:flex-row gap-6"><div id="view-inventory" class="w-full flex flex-col md:flex-row gap-6"><div class="w-full md:w-1/3 bg-white rounded shadow p-4 h-fit"><h2 class="text-lg font-bold mb-4">Add Part / Item</h2><div class="space-y-3"><button id="scan-invoice-btn"
+                        class="w-full bg-blue-50 text-blue-700 py-2 rounded border border-blue-200 hover:bg-blue-100 font-bold flex items-center justify-center gap-2 mb-2">
+                        📸 Scan Invoice
+                    </button><input type="file" id="invoice-photo-input" capture="environment" accept="image/*" class="hidden"><input type="text" id="inv-part-number" placeholder="Part Number" class="w-full p-2 border rounded"><input type="text" id="inv-description" placeholder="Description" class="w-full p-2 border rounded"><div class="grid grid-cols-2 gap-2"><input type="number" id="inv-quantity" placeholder="Qty" value="1"
+                            class="w-full p-2 border rounded"><input type="number" id="inv-cost" placeholder="Cost Each" class="w-full p-2 border rounded"></div><input type="text" id="inv-vendor" placeholder="Vendor" class="w-full p-2 border rounded"><input type="text" id="inv-po" placeholder="PO Number (Optional)" class="w-full p-2 border rounded"><select id="inv-category" class="w-full p-2 border rounded"><option value="General">General Supply</option><option value="Vehicle Part">Vehicle Part</option><option value="Tool">Tool / Equipment</option></select><div id="inv-compatible-wrapper" class="hidden bg-gray-50 p-2 rounded border mt-2"><label class="text-xs text-gray-500 block mb-1">Compatible Assets (Hold Cmd/Ctrl)</label><select id="inv-compatible-assets" multiple
+                            class="w-full p-2 border rounded h-24 text-sm"></select></div><div class="mt-2"><label class="text-xs text-gray-500">Part Photo (Optional)</label><input type="file" id="inv-part-photo" accept="image/*" class="w-full text-sm"></div><button id="save-part-btn"
+                        class="w-full bg-blue-600 text-white font-bold py-2 rounded hover:bg-blue-700 mt-2">Add to
+                        Inventory</button></div></div><div class="w-full md:w-2/3 bg-white rounded shadow overflow-hidden flex flex-col"><div class="p-3 bg-gray-50 border-b font-bold text-gray-600">Current Stock</div><div class="overflow-y-auto flex-1"><table class="w-full text-left"><thead class="bg-gray-100 text-xs text-gray-500 uppercase"><tr><th class="px-6 py-3">Item Details</th><th class="px-6 py-3">Stock / Cost</th><th class="px-6 py-3">Compat.</th><th class="px-6 py-3 text-right">Actions</th></tr></thead><tbody id="inventory-table-body" class="divide-y divide-gray-200"></tbody></table></div></div></div></main><script type="module">
+        import { initializeInventoryManager } from './inventory-app.js';
+
+        // Wait for Firebase shim
+        setTimeout(() => initializeInventoryManager(), 500);
+    </script></body></html>

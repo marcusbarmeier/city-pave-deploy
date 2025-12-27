@@ -1,0 +1,62 @@
+{
+    "id": "demo-driveway-calc-v1",
+    "name": "Demo Driveway Installer",
+    "description": "Calculates concrete volume and rebar requirements for a driveway.",
+    "category": "concrete",
+    "inputs": [
+        {
+            "id": "area",
+            "type": "system",
+            "label": "Total Area (from Sketch)",
+            "default": 1000
+        },
+        {
+            "id": "thickness",
+            "type": "number",
+            "label": "Slab Thickness (inches)",
+            "default": 5
+        },
+        {
+            "id": "rebar_spacing",
+            "type": "select",
+            "label": "Rebar Info",
+            "default": "16",
+            "options": [
+                {
+                    "label": "12 inch spacing",
+                    "value": "12"
+                },
+                {
+                    "label": "16 inch spacing",
+                    "value": "16"
+                },
+                {
+                    "label": "24 inch spacing",
+                    "value": "24"
+                },
+                {
+                    "label": "None",
+                    "value": "0"
+                }
+            ]
+        }
+    ],
+    "calculations": [
+        {
+            "id": "vol_cy",
+            "formula": "(area * (thickness / 12)) / 27",
+            "label": "Concrete Volume (CY)"
+        },
+        {
+            "id": "rebar_ft",
+            "formula": "rebar_spacing > 0 ? (area * 2.2) : 0",
+            "label": "Est. Rebar (Linear Ft)"
+        },
+        {
+            "id": "total_cost",
+            "formula": "(vol_cy * 250) + (rebar_ft * 1.5)",
+            "label": "Estimated Material Cost",
+            "isCost": true
+        }
+    ]
+}

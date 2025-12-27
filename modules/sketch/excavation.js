@@ -1,0 +1,155 @@
+// © 2025 City Pave. All Rights Reserved.
+// Filename: excavation.js
+
+let map, drawingManager, polygon;
+
+export function initializeExcavationApp() {
+    initMap();
+    setupListeners();
+}
+
+function initMap() {
+    const initialPos = { lat: 49.8951, lng: -97.1384 }; // Winnipeg default
+    map = new google.maps.Map(document.getElementById("map"), {
+        center: initialPos,
+        zoom: 17,
+        mapTypeId: 'satellite',
+        disableDefaultUI: true,
+        zoomControl: true
+    });
+
+    drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: null,
+        drawingControl: false,
+        polygonOptions: {
+            fillColor: '#2563EB',
+            fillOpacity: 0.3,
+            strokeWeight: 2,
+            clickable: false,
+            editable: true,
+            zIndex: 1
+        }
+    });
+    drawingManager.setMap(map);
+
+    google.maps.event.addListener(drawingManager, 'overlaycomplete', (event) => {
+        if (event.type === 'polygon') {
+            if (polygon) polygon.setMap(null); // Only allow one polygon
+            polygon = event.overlay;
+            drawingManager.setDrawingMode(null); // Stop drawing
+
+            // Listen for edits to update area
+            google.maps.event.addListener(polygon.getPath(), 'set_at', calculate);
+            google.maps.event.addListener(polygon.getPath(), 'insert_at', calculate);
+
+            calculate();
+        }
+    });
+}
+
+function setupListeners() {
+    document.getElementById('draw-poly-btn').addEventListener('click', () => {
+        if (polygon) polygon.setMap(null);
+        drawingManager.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+    });
+
+    document.getElementById('clear-poly-btn').addEventListener('click', () => {
+        if (polygon) {
+            polygon.setMap(null);
+            polygon = null;
+            document.getElementById('area-display').textContent = '0 sq ft';
+            calculate();
+        }
+    });
+
+    document.getElementById('reset-btn').addEventListener('click', () => window.location.reload());
+
+    // Inputs that trigger calculation
+    const inputs = ['exc-depth', 'exc-soil-type', 'exc-bucket-size', 'exc-cycle-time', 'exc-efficiency', 'haul-capacity', 'haul-dist', 'haul-speed', 'haul-dump-time'];
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', calculate);
+    });
+}
+
+function calculate() {
+    const areaDisplay = document.getElementById('area-display');
+    let areaSqFt = 0;
+
+    if (polygon) {
+        const areaSqM = google.maps.geometry.spherical.computeArea(polygon.getPath());
+        areaSqFt = areaSqM * 10.7639;
+        areaDisplay.textContent = `${Math.round(areaSqFt).toLocaleString()} sq ft`;
+    }
+
+    // --- 1. VOLUMES ---
+    const depthFt = parseFloat(document.getElementById('exc-depth').value) || 0;
+    const swellFactor = parseFloat(document.getElementById('exc-soil-type').value) || 1.25;
+
+    const bankVolCuFt = areaSqFt * depthFt;
+    const bankVolCuYd = bankVolCuFt / 27;
+    const looseVolCuYd = bankVolCuYd * swellFactor;
+
+    document.getElementById('res-bank-vol').textContent = `${Math.round(bankVolCuYd).toLocaleString()} yd³`;
+    document.getElementById('res-loose-vol').textContent = `${Math.round(looseVolCuYd).toLocaleString()} yd³`;
+
+    // --- 2. LOADS ---
+    const truckCapacityLoose = parseFloat(document.getElementById('haul-capacity').value) || 1;
+    const totalLoads = Math.ceil(looseVolCuYd / truckCapacityLoose);
+    document.getElementById('res-loads').textContent = totalLoads;
+
+    // --- 3. CYCLE TIMES & FLEET ---
+    const bucketSize = parseFloat(document.getElementById('exc-bucket-size').value) || 1;
+    const excCycleSec = parseFloat(document.getElementById('exc-cycle-time').value) || 25;
+    const efficiency = (parseFloat(document.getElementById('exc-efficiency').value) || 85) / 100;
+
+    // Excavator Production Rate
+    // Buckets per truck = Capacity / Bucket Size
+    const bucketsPerTruck = Math.ceil(truckCapacityLoose / bucketSize);
+    // Load time per truck (mins) = (Buckets * CycleSec) / 60 / Efficiency
+    const loadTimeMin = (bucketsPerTruck * excCycleSec) / 60 / efficiency;
+
+    // Truck Cycle
+    const haulDistKm = parseFloat(document.getElementById('haul-dist').value) || 1;
+    const haulSpeedKmh = parseFloat(document.getElementById('haul-speed').value) || 40;
+    const dumpWaitMin = parseFloat(document.getElementById('haul-dump-time').value) || 10;
+
+    // Travel Time (Round Trip) = (Dist / Speed) * 60 * 2
+    const travelTimeMin = (haulDistKm / haulSpeedKmh) * 60 * 2;
+
+    const truckCycleMin = loadTimeMin + travelTimeMin + dumpWaitMin;
+
+    // Optimization: How many trucks to keep Exc busy?
+    // Trucks Needed = Truck Cycle Time / Load Time
+    const trucksNeeded = truckCycleMin / loadTimeMin;
+
+    document.getElementById('res-trucks-needed').textContent = trucksNeeded.toFixed(1);
+
+    // --- PREDICTIVE LOGISTICS WARNING ---
+    const cycleNote = document.getElementById('res-cycle-note');
+    cycleNote.innerHTML = `Cycle: ${Math.round(truckCycleMin)}m | Load: ${Math.round(loadTimeMin)}m`;
+    cycleNote.className = "text-xs text-gray-500 italic"; // Reset class
+
+    // Check for Clay (1.3) and optimistic cycle time (< 40s)
+    if (swellFactor === 1.3 && excCycleSec < 40) {
+        cycleNote.innerHTML += `<br><strong class="text-orange-600">⚠ Warning: ${excCycleSec}s is too optimistic for heavy clay. Recommend >40s.</strong>`;
+        cycleNote.className = "text-xs text-orange-800 bg-orange-100 p-1 rounded mt-1 block";
+    }
+    // Check for Rock (1.5) and optimistic cycle time (< 45s)
+    else if (swellFactor === 1.5 && excCycleSec < 45) {
+        cycleNote.innerHTML += `<br><strong class="text-red-600">⚠ Warning: Rock excavation typically requires >45s cycle times.</strong>`;
+        cycleNote.className = "text-xs text-red-800 bg-red-100 p-1 rounded mt-1 block";
+    }
+
+    // --- 4. DURATION ---
+    // Total Duration depends on if we are Truck-Limited or Excavator-Limited.
+    // Max loads per hour (Excavator) = 60 / LoadTime
+    const maxLoadsPerHour = 60 / loadTimeMin;
+    // Actual loads per hour with proposed fleet (assuming user matches suggestion)
+    // For simplicity, we calculate based on Excavator capacity (Ideal)
+    const totalHours = totalLoads / maxLoadsPerHour;
+
+    document.getElementById('res-duration').textContent = `${totalHours.toFixed(1)} hrs`;
+
+    document.getElementById('calc-status').textContent = "Updated";
+    setTimeout(() => document.getElementById('calc-status').textContent = "Ready", 1000);
+}

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave - Invoice Scanner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../../style.css">
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+</head>
+
+<body class="bg-gray-100 h-screen flex flex-col">
+    <div class="bg-white shadow p-4 flex items-center justify-between">
+        <button onclick="window.history.back()" class="text-gray-500 hover:text-blue-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        </button>
+        <h1 class="font-bold text-lg text-gray-800">Invoice Scanner</h1>
+        <div class="w-6"></div> <!-- Spacer -->
+    </div>
+
+    <main class="flex-grow p-4 flex flex-col items-center justify-center">
+        <div id="scanner-container"
+            class="w-full max-w-md bg-white rounded-xl shadow-lg p-6 min-h-[400px] flex flex-col justify-center">
+            <!-- Content injected by invoice-scanner.js -->
+        </div>
+    </main>
+
+    <script type="module">
+        import { renderInvoiceScanner } from './invoice-scanner.js';
+
+        // Mock UI Components if missing in this scope or import them correctly
+        // For simplicity, we assume invoice-scanner.js might need adjustment or we mock them here if it imports from '../../ui-components.js'
+        // Ideally we correct the import in invoice-scanner.js, but let's see. 
+
+        const container = document.getElementById('scanner-container');
+
+        renderInvoiceScanner('scanner-container', (result) => {
+            console.log("Scan Result:", result);
+            alert(`Scanned $${result.amount}\nDate: ${result.date}\n\n(In a real app, this would return data to the expense form)`);
+        });
+    </script>
+
+    <!-- Hack to support the ES module imports inside invoice-scanner.js if they use relative paths -->
+    <script type="module">
+        // We might need to adjust relative paths in invoice-scanner.js or copy ui-components.
+        // For now, let's assume the relative path `../../ui-components.js` in invoice-scanner.js
+        // resolves to `modules/finance/ui-components.js` which doesn't exist.
+        // We will need to fix the import in invoice-scanner.js in the next step.
+    </script>
+</body>
+
+</html>

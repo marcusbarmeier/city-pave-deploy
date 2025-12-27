@@ -1,0 +1,333 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>City Pave Estimating Tool</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/exif-js/2.3.0/exif.min.js"></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet"><script src="https://cdn.quilljs.com/1.3.6/quill.js"></script><link rel="stylesheet" href="../../style.css"></head><body class="bg-gray-100"><div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div><script type="module" src="../../navigation.js"></script><div class="h-16"></div><div id="error-banner"
+        class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-lg z-[101]"
+        role="alert"><p class="font-bold">Error</p><p id="error-message"></p></div><div id="success-banner"
+        class="hidden fixed top-5 right-5 bg-green-100 border-l-4 border-green-500 text-green-700 p-4 rounded-md shadow-lg z-[101]"
+        role="alert"><p id="success-message"></p></div><div id="dashboard-view" class="view active container mx-auto p-4 md:p-8 max-w-7xl"><header class="flex items-center justify-between mb-8 no-print"><div class="flex items-center gap-4"><a href="index.html"><img src="" alt="City Pave Logo" class="h-12 logo-light" onerror="this.style.display='none'"><img src="" alt="City Pave Logo Dark" class="h-12 mb-4 logo-dark"
+                        onerror="this.style.display='none'"></a><h1 class="text-3xl font-bold text-gray-800">Estimates Dashboard</h1></div><div class="flex items-center gap-4"><div class="theme-switch-wrapper"><label class="theme-switch" for="dark-mode-toggle"><input type="checkbox" id="dark-mode-toggle" /><span class="slider round"></span></label></div><div id="brand-selector-wrapper"><label for="brand-selector" class="sr-only">Select Brand</label><select id="brand-selector"
+                        class="block w-full rounded-md border-gray-300 shadow-sm text-sm font-medium"><option value="citypave">City Pave</option><option value="dumptrux">DumpTrux</option></select></div><a href="index.html"
+                    class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50">←
+                    Main Menu</a><button id="print-dashboard-btn"
+                    class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50">Print
+                    List</button><button id="new-sketch-dashboard-btn"
+                    class="inline-flex items-center justify-center rounded-md border border-transparent bg-purple-600 px-4 py-2 text-base font-medium text-white hover:bg-purple-700">+
+                    New Sketch</button><button id="create-new-estimate-button"
+                    class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-6 py-2 text-base font-medium text-white hover:bg-blue-700">+
+                    New Estimate</button></div></header><div class="mb-6 no-print"><button id="toggle-quick-add-form"
+                class="w-full text-left font-semibold text-lg py-2 px-4 bg-gray-200 rounded-t-lg hover:bg-gray-300 transition-colors">+
+                Add Lead</button><div id="quick-add-form-container" class="bg-white p-6 rounded-b-lg shadow-md"><div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"><div class="space-y-4"><h3 class="font-semibold text-md border-b pb-2">Customer Info</h3><div class="relative"><label for="qa-search-contact" class="block text-sm font-medium text-blue-600">Search
+                                Existing Contact</label><input type="text" id="qa-search-contact" class="table-input border-blue-300"
+                                placeholder="Type to search..."><div id="qa-contact-results"
+                                class="hidden absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-y-auto"></div></div><div><label for="qa-customer-name" class="block text-sm font-medium">Name</label><input
+                                type="text" id="qa-customer-name" class="table-input"></div><div><label for="qa-customer-address" class="block text-sm font-medium">Address</label><input
+                                type="text" id="qa-customer-address" class="table-input"></div><div><label for="qa-customer-phone" class="block text-sm font-medium">Phone</label><input
+                                type="tel" id="qa-customer-phone" class="table-input"></div><div><label for="qa-customer-email" class="block text-sm font-medium">Email</label><input
+                                type="email" id="qa-customer-email" class="table-input"></div><div><label for="qa-estimate-status" class="block text-sm font-medium">Status</label><select
+                                id="qa-estimate-status" class="table-input"></select></div></div><div class="space-y-4"><h3 class="font-semibold text-md border-b pb-2">Contact History</h3><div><label for="qa-initial-contact-date" class="block text-sm font-medium">Initial
+                                Contact</label><input type="date" id="qa-initial-contact-date" class="table-input"></div><div><label for="qa-contact-source" class="block text-sm font-medium">Source</label><select
+                                id="qa-contact-source" class="table-input"><option>Facebook Marketplace</option><option>Facebook Ads</option><option>Referral</option><option>Kijiji</option><option>Other</option></select></div><div><label for="qa-contact-notes" class="block text-sm font-medium">Contact
+                                Notes</label><textarea id="qa-contact-notes" rows="3" class="table-input"></textarea></div></div><div class="md:col-span-2 space-y-4"><h3 class="font-semibold text-md border-b pb-2">Scope & Template</h3><div><label for="qa-scope-notes" class="block text-sm font-medium">Scope of Work
+                                Notes</label><textarea id="qa-scope-notes" rows="4" class="table-input"></textarea></div><div><label for="qa-template-select" class="block text-sm font-medium">Use Template
+                                (Optional)</label><select id="qa-template-select" class="table-input"><option value="">Select a template...</option></select></div></div></div><div class="mt-6 flex justify-end gap-3"><button id="cancel-quick-add" type="button"
+                        class="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">Cancel</button><button
+                        id="save-quick-add" type="button"
+                        class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save
+                        Lead</button></div></div></div><div class="flex items-center justify-between no-print mb-6"><input type="search" id="dashboard-search-input"
+                placeholder="Search by name, address, phone, email, price, or notes..."
+                class="w-full p-2 border border-gray-300 rounded-md shadow-sm"><button id="migrate-data-button"
+                class="ml-4 flex-shrink-0 inline-flex items-center justify-center rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-100">Re-Sync
+                Categories</button></div><div id="dashboard-filters" class="flex flex-wrap space-x-1 rounded-lg bg-gray-200 p-1 mb-6 no-print"><button data-filter="New Leads" class="dashboard-filter-button active-filter">1. New Leads</button><button data-filter="Site Visits" class="dashboard-filter-button">2. Site Visits (Estimates)</button><button data-filter="Ready for Review" class="dashboard-filter-button">3. Pending Approval</button><button data-filter="Follow-up" class="dashboard-filter-button">4. Follow-Up / Closing</button><button data-filter="Work Starting" class="dashboard-filter-button">5. Scheduled Work</button><button data-filter="Active Customers" class="dashboard-filter-button">Active Jobs</button><button data-filter="parked"
+                class="dashboard-filter-button bg-gray-300 text-gray-700 hover:bg-gray-400">Parked / Inactive</button><div class="w-px bg-gray-300 mx-2"></div><button data-filter="all" class="dashboard-filter-button">All</button><button data-filter="templates" class="dashboard-filter-button">Templates</button><button data-filter="deleted" class="dashboard-filter-button">Deleted</button></div><div id="list-header" class="hidden items-center p-2 no-print"><input type="checkbox" id="select-all-checkbox"
+                class="h-4 w-4 rounded border-gray-300 text-blue-600"><label for="select-all-checkbox"
+                class="ml-2 text-sm font-medium">Select All</label></div><div class="grid grid-cols-1 lg:grid-cols-4 gap-6"><div class="lg:col-span-3 space-y-4"><div id="estimate-list-container"><p class="text-center text-gray-500 py-10">Loading estimates...</p></div><div id="load-more-container" class="text-center py-4 hidden"><button id="load-more-btn"
+                        class="bg-gray-200 text-gray-700 px-6 py-2 rounded-full font-semibold hover:bg-gray-300 transition-colors">Load
+                        Older Estimates</button></div></div><div class="lg:col-span-1"><div class="bg-white rounded-lg shadow-md p-4 sticky top-6 border-t-4 border-blue-500"><h3 class="font-bold text-gray-800 mb-3 flex items-center gap-2"><svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                        Upcoming Visits
+                    </h3><div id="sales-schedule-container" class="space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto pr-1"><p class="text-xs text-gray-400 italic">No visits scheduled.</p></div></div></div></div><div id="batch-action-bar"
+            class="fixed bottom-0 left-0 right-0 bg-gray-800 text-white p-4 shadow-lg transform translate-y-full transition-transform duration-300 z-40 no-print"><div class="container mx-auto max-w-7xl flex items-center justify-between"><div><span class="font-semibold"><span id="selected-count">0</span> items selected</span><div id="route-link-container" class="mt-1"></div></div><div id="batch-buttons" class="flex items-center gap-4"></div></div></div></div><div id="editor-view" class="view"><div class="container mx-auto p-4 md:p-8 max-w-7xl"><div class="flex justify-between items-center mb-6 no-print"><button id="manage-tags-btn"
+                    class="inline-flex items-center justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-base font-medium text-gray-700 hover:bg-gray-50">Manage
+                    Categories</button></div></div><div id="editor-tags-container" class="flex flex-wrap gap-2 mb-4"></div><input type="hidden" id="editing-estimate-id"><header id="print-section-header" class="bg-white p-6 rounded-lg shadow-md mb-8"><div class="grid grid-cols-1 md:grid-cols-3 gap-6"><div class="md:col-span-1"><h3 class="font-bold text-lg">City Pave</h3><p class="text-sm text-gray-600">Office: (431) 482-5688</p></div><div class="md:col-span-1"><label for="estimate-status" class="block text-sm font-medium text-gray-700">Estimate
+                        Status</label><select id="estimate-status"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"></select></div><div class="md:col-span-1"><h2 class="text-3xl font-bold text-right text-gray-700 mb-4">Estimate</h2></div></div></header><div class="flex border-b border-gray-300 mb-6 overflow-x-auto no-print bg-white rounded-t-lg shadow-sm"><button id="etab-project"
+                class="editor-tab-btn active px-6 py-3 text-gray-600 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap">1.
+                Project Info</button><button id="etab-scope"
+                class="editor-tab-btn px-6 py-3 text-gray-600 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap">2.
+                Scope & Pricing</button><button id="etab-services"
+                class="editor-tab-btn px-6 py-3 text-gray-600 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap">3.
+                Specialty Services</button><button id="etab-finalize"
+                class="editor-tab-btn px-6 py-3 text-gray-600 hover:text-blue-600 font-medium border-b-2 border-transparent hover:border-blue-300 transition-all whitespace-nowrap">4.
+                Finalize</button></div><main><div id="eview-project" class="editor-tab-content active"><section class="bg-white p-6 rounded-lg shadow-md mb-8"><h3 class="font-semibold text-lg mb-4 text-blue-700 border-b pb-2">Customer Information</h3><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div><label for="customer-name"
+                                class="block text-sm font-medium text-gray-700">Name</label><input type="text"
+                                id="customer-name" placeholder="John Doe"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div><div><label for="customer-address"
+                                class="block text-sm font-medium text-gray-700">Address</label><input type="text"
+                                id="customer-address" placeholder="123 Main St, Winnipeg, MB"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div><div><label for="site-address" class="block text-sm font-medium text-gray-700">Site Address
+                                (if different)</label><input type="text" id="site-address"
+                                placeholder="Leave blank if same as above"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div><div><label for="customer-phone"
+                                class="block text-sm font-medium text-gray-700">Phone</label><input type="tel"
+                                id="customer-phone" placeholder="(204) 555-1234"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div><div><label for="customer-email"
+                                class="block text-sm font-medium text-gray-700">Email</label><input type="email"
+                                id="customer-email" placeholder="john.doe@example.com"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div></div></section><section id="print-section-property-photo" class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Property Photo</h2><div id="property-photo-container"></div><input type="file" id="property-photo-input" class="hidden" accept="image/*"></section><section id="print-section-location-map" class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Location Map</h2><div id="location-map-container" class="w-full h-80 border rounded-lg"></div></section><div class="bg-white p-4 rounded-lg shadow-md mb-8 flex items-center justify-between"><h2 class="text-lg font-bold text-gray-700">Lead Temperature</h2><div class="rating-group flex gap-1"><input type="radio" id="rating-1" name="lead-rating" value="1" class="hidden peer/1"><label
+                            for="rating-1"
+                            class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-yellow-100 peer-checked/1:bg-yellow-400 peer-checked/1:border-yellow-500 text-gray-400 peer-checked/1:text-white font-bold transition-all">1</label><input type="radio" id="rating-2" name="lead-rating" value="2" class="hidden peer/2"><label
+                            for="rating-2"
+                            class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-yellow-100 peer-checked/2:bg-yellow-400 peer-checked/2:border-yellow-500 text-gray-400 peer-checked/2:text-white font-bold transition-all">2</label><input type="radio" id="rating-3" name="lead-rating" value="3" class="hidden peer/3"><label
+                            for="rating-3"
+                            class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-yellow-100 peer-checked/3:bg-yellow-400 peer-checked/3:border-yellow-500 text-gray-400 peer-checked/3:text-white font-bold transition-all">3</label><input type="radio" id="rating-4" name="lead-rating" value="4" class="hidden peer/4"><label
+                            for="rating-4"
+                            class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-yellow-100 peer-checked/4:bg-yellow-400 peer-checked/4:border-yellow-500 text-gray-400 peer-checked/4:text-white font-bold transition-all">4</label><input type="radio" id="rating-5" name="lead-rating" value="5" class="hidden peer/5"><label
+                            for="rating-5"
+                            class="w-8 h-8 flex items-center justify-center rounded-full border border-gray-300 cursor-pointer hover:bg-yellow-100 peer-checked/5:bg-yellow-400 peer-checked/5:border-yellow-500 text-gray-400 peer-checked/5:text-white font-bold transition-all">5</label></div></div><section class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Site Visits & Appointments</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border-b pb-4"><div><label for="visit-duration" class="block text-sm font-medium text-gray-700">Estimated
+                                Visit Duration (Minutes)</label><input type="number" id="visit-duration" value="30"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div></div><div id="site-visits-container" class="space-y-4"></div><button id="add-site-visit-button" type="button"
+                        class="mt-4 text-blue-600 font-semibold hover:text-blue-800 no-print">+ Add Visit</button></section><section id="work-starting-section" class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Work Starting</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 border-b pb-4"><div><label for="tentative-start-date" class="block text-sm font-medium text-gray-700">Tentative
+                                Start Date</label><input type="date" id="tentative-start-date"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div><div><label for="tentative-proof-roll-date"
+                                class="block text-sm font-medium text-gray-700">Tentative Proof Roll
+                                Date</label><input type="date" id="tentative-proof-roll-date"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div><div><label for="tentative-end-date" class="block text-sm font-medium text-gray-700">Tentative
+                                End Date</label><input type="date" id="tentative-end-date"
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm table-input"></div></div><div id="work-stages-container" class="space-y-6"></div><button id="add-work-stage-button" type="button"
+                        class="mt-4 text-blue-600 font-semibold hover:text-blue-800 no-print">+ Add Work
+                        Stage</button></section></div><div id="eview-scope" class="editor-tab-content hidden"><section class="bg-white p-6 rounded-lg shadow-md mb-8"><label for="apply-template-select" class="block text-sm font-medium text-gray-700">Apply
+                        Template to This Estimate</label><select id="apply-template-select"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></select></section><section id="print-section-sketches" class="bg-white p-6 rounded-lg shadow-md mb-8"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold">Sketches & Quick Estimates</h2><button id="new-sketch-editor-btn" type="button"
+                            class="text-blue-600 font-semibold hover:text-blue-800 no-print">+ Add New
+                            Sketch</button></div><div id="sketches-container" class="space-y-4"></div><div id="sketch-card" class="price-option-card bg-gray-50 p-4 rounded-lg"><div class="flex justify-between items-center mb-2"><h3 class="text-lg font-bold text-gray-700">From Sketch</h3><button id="copy-sketch-to-option" type="button"
+                                class="text-sm text-indigo-600 hover:underline font-semibold">Copy to
+                                Option</button></div><div id="sketch-items-container" class="space-y-3"></div><button id="add-item-sketch"
+                            class="add-item-btn-sketch text-blue-600 font-semibold hover:text-blue-800 mt-2 text-sm no-print">+
+                            Add Item</button></div></section><section id="print-section-pricing-options" class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Pricing Options</h2><button id="add-pricing-option-btn" type="button"
+                        class="mb-4 text-blue-600 font-semibold hover:text-blue-800 no-print">+ Add Pricing
+                        Option</button><div id="pricing-options-container" class="space-y-6"></div><div class="space-y-6 mt-6"><div id="change-order-card" class="price-option-card bg-green-50 p-4 rounded-lg"><label class="flex items-center mb-2"><input type="checkbox" id="change-order-checkbox"
+                                    class="h-5 w-5 rounded"><span class="ml-2 text-lg font-bold text-gray-700">Change
+                                    Order</span></label><div id="change-order-items-container" class="space-y-3"></div><button id="add-item-change-order"
+                                class="text-blue-600 font-semibold hover:text-blue-800 mt-2 text-sm no-print">+ Add
+                                Item</button></div></div></section><section id="print-section-scope" class="bg-white p-6 rounded-lg shadow-md mb-8"><div class="flex justify-between items-center mb-4"><h2 class="text-xl font-bold">General Scope of Work</h2><button id="populate-scope-btn" type="button"
+                            class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 no-print">Generate
+                            Scope from Line Items</button></div><h3 class="text-lg font-semibold mt-4 mb-2">Manual Notes</h3><div id="manual-scope-editor" class="bg-white"></div><h3 class="text-lg font-semibold mt-6 mb-2">Generated Scope Details</h3><div id="auto-scope-editor" class="bg-white"></div></section><div id="pricing-options-container" class="space-y-6"></div></div><div id="eview-services" class="editor-tab-content hidden"><section id="multi-site-snow-section" class="bg-white p-6 rounded-lg shadow-md mb-8"><div class="flex justify-between items-center border-b pb-4 mb-4"><h2 class="text-xl font-bold">Multi-Site Snow Service Planner</h2><div class="flex items-center gap-4"><button id="edit-snow-route-map-btn" type="button"
+                                class="text-purple-600 font-semibold hover:text-purple-800 no-print">Create Route
+                                Map</button><label class="flex items-center font-semibold"><input type="checkbox" id="snow-is-routed-job"
+                                    class="h-4 w-4 rounded border-gray-300 text-blue-600"><span class="ml-2 text-sm text-gray-700">Routed Job (Waive 4hr Minimum)</span></label></div></div><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 no-print"><div
+                            class="border border-orange-200 bg-orange-50 rounded-lg p-4 flex flex-col items-center text-center"><div class="bg-orange-100 p-3 rounded-full mb-3"><svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg></div><h3 class="font-bold text-orange-900 mb-1">Excavation Calculator</h3><p class="text-xs text-orange-700 mb-3">Calculate volume, trucks, and cycle times.</p><button id="launch-excavation-calc-btn"
+                                class="w-full py-2 bg-orange-600 text-white font-bold rounded hover:bg-orange-700 transition shadow-sm">Launch
+                                Calculator</button></div><div
+                            class="border border-blue-200 bg-blue-50 rounded-lg p-4 flex flex-col items-center text-center"><div class="bg-blue-100 p-3 rounded-full mb-3"><svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg></div><h3 class="font-bold text-blue-900 mb-1">Snow Calculator</h3><p class="text-xs text-blue-700 mb-3">Calculate salt, plow time, and triggers.</p><button id="launch-snow-calc-btn"
+                                class="w-full py-2 bg-blue-600 text-white font-bold rounded hover:bg-blue-700 transition shadow-sm">Launch
+                                Calculator</button></div></div><div id="snow-route-map-preview" class="mb-6 border rounded-lg overflow-hidden hidden"><div class="p-3 bg-gray-50 border-b flex justify-between items-center"><h3 class="text-md font-semibold">Saved Route Map</h3><div class="flex items-center gap-3 no-print"><button id="edit-saved-route-map-btn" type="button"
+                                    class="text-blue-600 hover:text-blue-800 text-sm font-medium">Edit
+                                    Route</button><button id="delete-saved-route-map-btn" type="button"
+                                    class="text-red-600 hover:text-red-800 text-sm font-medium">Delete
+                                    Route</button></div></div><img id="snow-route-map-preview-img" src="" alt="Snow Route Map Preview"
+                            class="w-full h-auto max-h-96 object-contain"></div><div id="snow-locations-container" class="space-y-6"><p id="snow-location-placeholder" class="text-gray-500">No snow locations have been added
+                            yet.</p></div><button id="add-snow-location-btn" type="button"
+                        class="mt-6 text-blue-600 font-semibold hover:text-blue-800 no-print">+ Add Snow
+                        Location</button><div id="snow-totals-summary" class="mt-6 pt-6 border-t-2"><h3 class="text-lg font-bold mb-3">Contract Summary</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 text-left"><div><label for="snow-contract-duration" class="text-sm font-medium text-gray-700">Contract
+                                    Duration
+                                    (Months)</label><input type="number" id="snow-contract-duration"
+                                    class="table-input w-full text-right" placeholder="e.g., 5" value="5"></div><div><label for="snow-events-per-month" class="text-sm font-medium text-gray-700">Included
+                                    Events / Month</label><input type="number" id="snow-events-per-month"
+                                    class="table-input w-full text-right"
+                                    placeholder="e.g., 4 (Uses trigger avg if blank)"></div><div><label for="snow-route-discount" class="text-sm font-medium text-gray-700">Route
+                                    Discount (%)</label><input type="number" id="snow-route-discount"
+                                    class="table-input w-full text-right" placeholder="e.g., 15"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-right mb-4 border-t pt-4"><div><span class="text-sm text-gray-600">Total Per Push Price</span><p id="snow-total-per-push" class="font-semibold text-xl">$0.00</p><button type="button"
+                                    class="apply-snow-summary-btn text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 mt-1"
+                                    data-cost-type="perPush">Apply All Per Push</button></div><div><span class="text-sm text-gray-600">Total Monthly Price</span><p id="snow-total-monthly" class="font-semibold text-xl">$0.00</p><button type="button"
+                                    class="apply-snow-summary-btn text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 mt-1"
+                                    data-cost-type="monthly">Apply All Monthly</button></div><div><span class="text-sm text-gray-600">Total Seasonal Price</span><p id="snow-total-seasonal" class="font-semibold text-xl">$0.00</p><button type="button"
+                                    class="apply-snow-summary-btn text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 mt-1"
+                                    data-cost-type="seasonal">Apply All Seasonal</button></div></div><div class="text-right font-bold text-2xl mt-4 border-t pt-4"><span>Grand Total
+                                (Seasonal):</span><span id="snow-grand-total">$0.00</span></div></div></section><section id="print-section-before-after" class="bg-white p-6 rounded-lg shadow-md mb-8"><div class="flex items-center justify-between mb-4"><h2 class="text-xl font-bold">Before & After Work Showcase</h2><div class="flex items-center gap-4 no-print"><button id="edit-ba-map-btn" type="button"
+                                class="text-purple-600 font-semibold hover:text-purple-800">Edit on Map</button><button id="add-before-after-btn" type="button"
+                                class="text-blue-600 font-semibold hover:text-blue-800">+ Add Work Showcase</button></div></div><div id="before-after-container" class="space-y-8"><p class="text-gray-500 placeholder-text">No work showcases have been added yet.</p></div><input type="file" id="before-after-photo-input" class="hidden" accept="image/*,video/*" multiple></section></div><div id="eview-finalize" class="editor-tab-content hidden"><section id="print-section-comparison" class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Comparison & Acceptance</h2><div class="overflow-x-auto"><table id="comparison-table" class="w-full text-sm"><thead></thead><tbody></tbody></table></div><div class="flex justify-end mt-4"><div class="flex items-center gap-2"><label for="deposit-rate-input"
+                                class="text-sm font-medium">Deposit Rate (%):</label><input type="number"
+                                id="deposit-rate-input" value="40" class="table-input w-24 text-right"></div></div><div id="signature-zoom-modal"
+                        class="hidden fixed inset-0 bg-gray-900 z-[100] flex flex-col items-center justify-center p-4"><div
+                            class="bg-white rounded-lg shadow-xl w-full max-w-4xl flex-grow flex flex-col overflow-hidden relative"><div class="p-4 border-b flex justify-between items-center bg-gray-50"><h3 class="text-lg font-bold text-gray-900">Sign Here</h3><button id="close-zoom-signature-btn"
+                                    class="text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button></div><div class="flex-grow bg-white relative cursor-crosshair touch-none"><canvas id="zoom-signature-pad" class="w-full h-full block"></canvas><div
+                                    class="absolute bottom-4 left-1/2 -translate-x-1/2 text-gray-300 text-4xl font-bold opacity-20 pointer-events-none select-none">
+                                    SIGN HERE</div></div><div class="p-4 border-t bg-gray-50 flex justify-between gap-4"><button id="clear-zoom-signature-btn"
+                                    class="px-6 py-3 bg-red-100 text-red-700 font-bold rounded-lg hover:bg-red-200">Clear</button><button id="save-zoom-signature-btn"
+                                    class="px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 flex-grow">Done</button></div></div></div></section><section id="financial-summary-section" class="bg-white p-6 rounded-lg shadow-md mt-8"><h2 class="text-xl font-bold mb-4">Financial Summary & Payment Schedule</h2><div class="space-y-2 text-right mb-6 border-b pb-4"><div class="flex justify-between font-bold text-2xl"><span class="text-gray-800">Total
+                                Contract Amount:</span><span id="summary-grand-total">$0.00</span></div><div class="flex justify-between font-semibold text-lg text-red-600"><span>Total Adjustments
+                                (Discounts/Holdbacks):</span><span id="fs-total-adjustments">$0.00</span></div><div class="flex justify-between font-bold text-2xl border-t pt-2 mt-2"><span
+                                class="text-gray-800">Adjusted Contract Total:</span><span
+                                id="fs-adjusted-total">$0.00</span></div></div><h3 class="font-semibold text-lg mb-3">Payments, Deposits, & Adjustments</h3><div id="financial-items-container" class="space-y-4"></div><button id="add-financial-item-btn" type="button"
+                        class="mt-4 text-blue-600 font-semibold hover:text-blue-800 no-print">+ Add Payment /
+                        Adjustment</button><div class="mt-6 border-t-2 border-gray-300 pt-4 text-right space-y-3"><div class="flex justify-between font-semibold text-lg"><span class="text-gray-800">Amount
+                                Paid to Date:</span><span id="fs-amount-paid" class="text-green-600">$0.00</span></div><div class="flex justify-between font-bold text-2xl"><span class="text-gray-800">Total
+                                Remaining Balance:</span><span id="fs-remaining-balance">$0.00</span></div><div class="flex justify-between font-semibold text-lg text-orange-600 border-t pt-3 mt-3"><span class="text-gray-800">Amount Due Today:</span><span id="fs-due-today">$0.00</span></div></div></section><section id="print-section-acceptance" class="bg-white p-6 rounded-lg shadow-md mt-8"><h2 class="text-xl font-bold mb-4">Acceptance of Proposal</h2><p class="text-sm text-gray-600 mb-4">By signing below, you accept the prices, specifications,
+                        and conditions for the option selected. You authorize City Pave to do the work as specified.
+                        Payment will be made as outlined above.</p><div id="signature-container"><div id="signature-pad-wrapper"><div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mb-6"><div><label class="block text-sm font-medium text-gray-700">Client Signature</label><div class="mt-1 bg-gray-50 border border-gray-300 rounded-md relative"><canvas id="signature-pad" class="w-full h-32"></canvas><button id="zoom-signature-btn" type="button"
+                                            class="absolute top-1 right-1 bg-white p-1 rounded border shadow text-gray-500 hover:text-blue-600"
+                                            title="Zoom for easier signing"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v3m0 0v3m0-3h3m-3 0H7"></path></svg></button></div><button id="clear-signature-btn" type="button"
+                                        class="text-sm text-blue-600 hover:underline mt-1 no-print">Clear</button></div><div><label for="editor-print-name"
+                                        class="block text-sm font-medium text-gray-700">Print Name</label><input
+                                        type="text" id="editor-print-name" class="table-input"></div><div><label class="block text-sm font-medium text-gray-700">Witness
+                                        Signature</label><div class="mt-1 bg-gray-50 border border-gray-300 rounded-md"><canvas
+                                            id="witness-signature-pad-editor" class="w-full h-32"></canvas></div><button id="clear-witness-signature-btn-editor" type="button"
+                                        class="text-sm text-blue-600 hover:underline mt-1 no-print">Clear</button></div><div><label for="editor-witness-print-name"
+                                        class="block text-sm font-medium text-gray-700">Print Witness
+                                        Name</label><input type="text" id="editor-witness-print-name"
+                                        class="table-input"></div></div></div><div id="signed-view-wrapper" class="hidden"><div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4"><div><label class="block text-sm font-medium text-gray-700">Client Signature</label><div
+                                        class="mt-1 p-2 bg-gray-50 border border-gray-300 rounded-md h-28 flex items-center justify-center"><img id="signed-signature-image" class="w-auto h-24" alt="Client Signature"></div><p class="mt-2"><span class="text-sm font-medium text-gray-700">Printed
+                                            Name:</span><span id="signed-print-name"></span></p></div><div><label class="block text-sm font-medium text-gray-700">Witness
+                                        Signature</label><div
+                                        class="mt-1 p-2 bg-gray-50 border border-gray-300 rounded-md h-28 flex items-center justify-center"><img id="signed-witness-signature-image" class="w-auto h-24"
+                                            alt="Witness Signature"></div><p class="mt-2"><span class="text-sm font-medium text-gray-700">Witness
+                                            Name:</span><span id="signed-witness-print-name"></span></p></div></div><div class="mt-4"><button id="revoke-acceptance-btn" type="button"
+                                    class="text-sm text-red-600 hover:underline no-print">Revoke Acceptance</button></div></div></div><div class="mt-4"><label for="acceptance-date" class="block text-sm font-medium text-gray-700">Date
+                            of Acceptance</label><input type="date" id="acceptance-date"
+                            class="mt-1 w-full md:w-1/2 rounded-md border-gray-300 shadow-sm"></div><div class="mt-6 border-t pt-4"><label class="block text-sm font-medium text-gray-700">Signed
+                            Document Upload</label><div id="signed-copy-link-container" class="mt-1"><p class="text-xs text-gray-500">No document uploaded.</p></div><button id="upload-signed-copy-btn" type="button"
+                            class="mt-1 text-sm text-blue-600 hover:underline no-print">Upload Scanned
+                            Copy</button><input type="file" id="signed-copy-input" class="hidden"
+                            accept="image/*,application/pdf"></div><div id="customer-notes-wrapper" class="hidden mt-4"><label
+                            class="block text-sm font-medium text-gray-700">Additional Information from
+                            Client</label><div id="customer-notes-content"
+                            class="mt-1 p-3 bg-gray-50 border rounded-md text-sm whitespace-pre-wrap"></div></div></section><section id="print-section-terms" class="bg-white p-6 rounded-lg shadow-md mt-8"><h2 class="text-xl font-bold mb-4">Terms & Conditions</h2><div id="terms-editor" class="bg-white"></div><div class="flex justify-end gap-3 mt-4 no-print"><button id="save-terms-for-estimate" type="button"
+                            class="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">Save
+                            for This Estimate</button><button id="save-terms-as-default-new" type="button"
+                            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save
+                            as Default for New</button><button id="save-terms-to-all" type="button"
+                            class="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700">Save
+                            & Update All Estimates</button></div></section><section class="bg-white p-6 rounded-lg shadow-md mt-8 mb-8"><h2 class="text-xl font-bold mb-4">Sharing & Download Options</h2><div id="sharing-permission-group" class="space-y-3"><div><label class="flex items-center"><input type="radio" name="sharing-permission" value="none"
+                                    class="h-4 w-4 text-blue-600 border-gray-300" checked><span
+                                    class="ml-3 text-sm"><span class="font-medium text-gray-900">Do Not Allow
+                                        Download</span><p class="text-gray-500">The client can only view the estimate online.</p></span></label></div><div><label class="flex items-center"><input type="radio" name="sharing-permission"
+                                    value="afterSigning" class="h-4 w-4 text-blue-600 border-gray-300"><span
+                                    class="ml-3 text-sm"><span class="font-medium text-gray-900">Allow Download
+                                        After Signing</span><p class="text-gray-500">A download button will appear for the client only after
+                                        they have signed the proposal.</p></span></label></div><div><label class="flex items-center"><input type="radio" name="sharing-permission"
+                                    value="immediate" class="h-4 w-4 text-blue-600 border-gray-300"><span
+                                    class="ml-3 text-sm"><span class="font-medium text-gray-900">Allow Immediate
+                                        Download (Commercial)</span><p class="text-gray-500">Allows client to download before signing. A
+                                        confidentiality notice will be shown.</p></span></label></div></div></section><section id="print-section-appendix" class="bg-white p-6 rounded-lg shadow-md mb-8"><h2 class="text-xl font-bold mb-4">Appendix: Our Process Overview</h2><div id="appendix-editor" class="bg-white"></div><div class="flex justify-end gap-3 mt-4 no-print"><button id="save-appendix-for-estimate" type="button"
+                            class="rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-800 hover:bg-gray-300">Save
+                            for This Estimate</button><button id="save-appendix-as-default-new" type="button"
+                            class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Save
+                            as Default for New</button><button id="save-appendix-to-all" type="button"
+                            class="rounded-md bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700">Save
+                            & Update All Estimates</button></div></section></div></main></div></div><div id="admin-controls" class="bg-gray-800 text-white p-4 shadow-lg no-print"><div class="container mx-auto max-w-7xl flex items-center justify-between"><div id="admin-buttons-left" class="flex items-center gap-4"></div><div class="flex items-center gap-2"><button id="undo-button" title="Undo"
+                    class="disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md hover:bg-gray-700"><svg
+                        class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M11 15l-3-3m0 0l3-3m-3 3h8a5 5 0 010 10H9"></path></svg></button><button id="redo-button" title="Redo"
+                    class="disabled:opacity-50 disabled:cursor-not-allowed p-2 rounded-md hover:bg-gray-700"><svg
+                        class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 15l3-3m0 0l-3-3m3 3H8a5 5 0 000 10h3"></path></svg></button></div><button id="save-estimate-button" type="button"
+                class="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-6 py-2 text-base font-medium text-white hover:bg-blue-700">Save
+                Estimate</button></div></div><div id="share-link-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"><div class="flex justify-between items-center mb-4"><h3 class="text-lg font-bold text-gray-900">Share Estimate</h3><button id="close-share-modal-btn"
+                    class="text-gray-400 hover:text-gray-600 text-2xl font-bold">&times;</button></div><div id="share-modal-loader" class="text-center py-8"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-2"></div><p class="text-sm text-gray-500">Generating secure link...</p></div><div id="share-modal-content" class="hidden space-y-4"><div class="flex items-center justify-between bg-gray-50 p-3 rounded-md border"><span class="text-sm font-medium text-gray-700">Status:</span><span id="share-link-status"
+                        class="text-xs font-bold py-1 px-2 rounded-full bg-green-100 text-green-800">Active</span></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Shareable Link</label><div class="flex gap-2"><input type="text" id="share-link-input"
+                            class="w-full p-2 border rounded-md text-sm bg-white text-gray-600" readonly><button id="copy-share-link-btn"
+                            class="bg-blue-100 text-blue-700 px-3 py-1 rounded-md font-bold hover:bg-blue-200 text-sm">Copy</button></div><p class="text-xs text-gray-400 mt-1">Anyone with this link can view the proposal.</p></div><div class="border-t pt-4 mt-2"><h4 class="text-sm font-bold text-gray-800 mb-2">View History</h4><div id="view-history-container"
+                        class="bg-gray-50 rounded-md p-3 h-32 overflow-y-auto border text-xs space-y-2"><p class="text-gray-400 text-center">No views yet.</p></div></div><div class="flex justify-end pt-2"><button id="toggle-link-active-btn"
+                        class="text-red-600 hover:text-red-800 text-sm font-medium">Deactivate Link</button></div></div></div></div><div id="tag-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"><h3 class="text-lg font-bold text-gray-900 mb-4">Manage Categories</h3><input type="hidden" id="tag-modal-estimate-id"><div id="tag-modal-checkboxes" class="space-y-2 max-h-60 overflow-y-auto border p-2 rounded mb-4"></div><div class="flex justify-end gap-2"><button id="cancel-tag-button" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button><button id="save-tag-button"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save</button></div></div></div><div id="category-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"><h3 class="text-lg font-bold text-gray-900 mb-2">Set Categories</h3><p class="text-sm text-gray-500 mb-4">Apply categories to <span id="category-modal-count"
+                    class="font-bold">0</span> item(s).</p><input type="hidden" id="category-modal-ids"><div id="category-modal-options" class="space-y-2 max-h-60 overflow-y-auto border p-2 rounded mb-4"></div><div class="flex justify-end gap-2"><button id="cancel-category-button"
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button><button id="save-category-button"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Apply Changes</button></div></div></div><div id="site-visit-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6"><h3 class="text-lg font-bold text-gray-900 mb-4" id="site-visit-modal-title">Add Site Visit</h3><input type="hidden" id="site-visit-estimate-id"><input type="hidden" id="site-visit-index"><div class="space-y-3"><div><label class="block text-sm font-medium text-gray-700">Date</label><input type="date"
+                        id="site-visit-date" class="w-full p-2 border rounded-md"></div><div><label class="block text-sm font-medium text-gray-700">Time</label><input type="time"
+                        id="site-visit-time" class="w-full p-2 border rounded-md"></div><div><label class="block text-sm font-medium text-gray-700">Description</label><input type="text"
+                        id="site-visit-description" class="w-full p-2 border rounded-md"></div><div class="flex items-center mt-2"><input type="checkbox" id="site-visit-completed"
+                        class="h-4 w-4 text-blue-600 rounded border-gray-300"><label for="site-visit-completed"
+                        class="ml-2 block text-sm text-gray-900">Mark as Completed</label></div></div><div class="flex justify-end gap-2 mt-6"><button id="cancel-site-visit-button"
+                    class="px-4 py-2 bg-gray-200 text-gray-800 rounded-md">Cancel</button><button id="save-site-visit-button"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Visit</button></div></div></div><div id="delete-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-sm mx-4 p-6 text-center"><div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4"><svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div><h3 class="text-lg font-bold text-gray-900 mb-2" id="delete-modal-title">Confirm Delete</h3><p class="text-sm text-gray-500 mb-6" id="delete-modal-text">Are you sure?</p><div class="flex gap-3"><button id="cancel-delete-button"
+                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300">Cancel</button><button id="confirm-delete-button"
+                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">Confirm</button></div></div></div><div id="sketch-selection-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center"><div class="bg-white rounded-lg shadow-xl w-full max-w-lg p-6"><h3 class="text-lg font-bold mb-4">Select Sketch to Load</h3><div id="sketch-selection-container" class="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-96 overflow-y-auto"></div><div class="mt-4 flex justify-end"><button id="cancel-sketch-selection-btn"
+                    class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-md font-medium">Cancel</button></div></div></div><div id="route-planner-modal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"><div class="p-5 border-b border-gray-100 bg-white flex justify-between items-center"><div><h3 class="font-bold text-xl text-gray-800">Route & Follow-Up Planner</h3><p class="text-sm text-gray-500">Drag to reorder stops.</p></div><button onclick="document.getElementById('route-planner-modal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-red-500 text-2xl font-bold">&times;</button></div><div class="p-0 overflow-y-auto flex-grow bg-gray-50"><table class="w-full text-left border-collapse"><thead class="bg-gray-100 text-xs font-bold text-gray-500 uppercase sticky top-0 z-10 shadow-sm"><tr><th class="p-3 w-10"></th><th class="p-3">#</th><th class="p-3">Client / Project</th><th class="p-3">Address</th><th class="p-3 text-right">Action</th></tr></thead><tbody id="route-planner-list" class="divide-y divide-gray-200"></tbody></table></div><div class="p-5 border-t border-gray-100 bg-white flex justify-between items-center"><div class="text-xs text-gray-500"><span id="route-count">0</span> stops selected.
+                </div><div class="flex gap-3"><button id="print-route-sheet-btn"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 border border-gray-300 rounded-lg font-bold hover:bg-gray-200 text-sm flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        Print Call Sheet
+                    </button><button id="launch-google-maps-btn"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold shadow-lg hover:bg-blue-700 text-sm flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.806-.98l-4.553-2.276M15 13h2m-2-2h2m-2 2v2m0-2v-2"></path></svg>
+                        Open Maps
+                    </button></div></div></div></div><div id="dashboard-print-container" class="hidden"></div><script>
+        function initMap() {
+            // This is a global callback for Google Maps. We will call the map rendering logic
+            // from estimator.js after it has loaded and is ready.
+            window.googleMapsApiLoaded = true;
+        }
+    </script><script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs&libraries=places&callback=initMap"></script><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, setDoc, getDoc, updateDoc, deleteDoc, writeBatch, arrayUnion, arrayRemove, addDoc, query, where, getDocs, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject, uploadString } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+
+        import { initializeEstimatorApp } from './estimator.js';
+
+        import { config } from '../../config.js';
+
+        document.title = `${config.name} Estimating Tool`;
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+            authDomain: "city-pave-estimator.firebaseapp.com",
+            projectId: "city-pave-estimator",
+            storageBucket: "city-pave-estimator.firebasestorage.app",
+            messagingSenderId: "111714884839",
+            appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.firebaseServices = {
+            auth,
+            db,
+            storage,
+            onAuthStateChanged,
+            signInAnonymously,
+            collection,
+            doc,
+            onSnapshot,
+            setDoc,
+            getDoc,
+            updateDoc,
+            deleteDoc,
+            writeBatch,
+            ref,
+            uploadBytes,
+            getDownloadURL,
+            deleteObject,
+            uploadString,
+            arrayUnion,
+            arrayRemove,
+            addDoc,
+            query,
+            where,
+            getDocs,
+            orderBy,
+            limit
+        };
+
+        window.appConfig = config;
+
+        // Initialize the main application logic now that Firebase is ready.
+        initializeEstimatorApp();
+    </script><script type="module" src="../../qa-agent.js"></script></body></html>

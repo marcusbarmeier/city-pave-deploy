@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safety Manual - City Pave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+</head>
+
+<body class="bg-gray-100 flex flex-col h-screen font-inter">
+    <div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script type="module" src="../../navigation.js"></script>
+    <div class="h-16 flex-shrink-0"></div> <!-- Spacer for fixed nav -->
+
+    <header class="bg-white shadow-sm p-4 z-10 flex items-center gap-3 flex-shrink-0">
+        <h1 class="font-bold text-lg text-gray-800">Safety Manual</h1>
+        <div class="ml-auto">
+            <button id="admin-bulk-btn"
+                class="hidden text-xs bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 mr-2">Bulk
+                Upload</button>
+            <button id="admin-edit-btn"
+                class="hidden text-xs bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300">Edit
+                Manual</button>
+        </div>
+    </header>
+
+    <div class="bg-white border-b border-gray-200 p-4 flex-shrink-0">
+        <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3">
+                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+            </span>
+            <input type="text" id="safety-search"
+                class="w-full py-2 pl-10 pr-4 bg-gray-100 border-transparent rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Search manual...">
+        </div>
+        <div class="flex gap-2 mt-3 overflow-x-auto pb-1 no-scrollbar" id="category-filters">
+            <button
+                class="category-btn active bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="all">All</button>
+            <button
+                class="category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="Policies">Policies</button>
+            <button
+                class="category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="Emergency">Emergency</button>
+            <button
+                class="category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="Heavy Equipment">Heavy Equipment</button>
+            <button
+                class="category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="Shop Tools">Shop Tools</button>
+            <button
+                class="category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="Work Activities">Work Activities</button>
+            <button
+                class="category-btn bg-gray-200 text-gray-700 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="PPE">PPE</button>
+            <button
+                class="category-btn bg-purple-100 text-purple-700 border border-purple-300 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap"
+                data-cat="Legislation">Legislation</button>
+        </div>
+    </div>
+
+    <main id="manual-content" class="flex-grow overflow-y-auto p-4 space-y-3">
+        <div class="text-center py-10 text-gray-500">Loading manual...</div>
+    </main>
+
+    <div id="doc-viewer-modal" class="hidden fixed inset-0 bg-gray-900 z-50 flex flex-col">
+        <div class="bg-gray-800 p-4 flex justify-between items-center flex-shrink-0">
+            <h3 id="viewer-title" class="text-white font-bold truncate pr-4">Document Title</h3>
+            <div class="flex items-center gap-3">
+                <button id="viewer-edit-btn"
+                    class="hidden text-sm bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Edit</button>
+                <button onclick="document.getElementById('doc-viewer-modal').classList.add('hidden')"
+                    class="text-gray-400 hover:text-white text-2xl">&times;</button>
+            </div>
+        </div>
+        <div id="viewer-body" class="flex-grow bg-white overflow-y-auto p-4 md:p-8 text-gray-800"></div>
+    </div>
+
+    <div id="admin-editor-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">Add / Edit Document</h3>
+                <button onclick="document.getElementById('admin-editor-modal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+            <div class="p-4 space-y-4 overflow-y-auto">
+                <input type="hidden" id="edit-doc-id">
+                <div>
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Title</label>
+                    <input type="text" id="edit-doc-title" class="w-full p-2 border rounded">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Category</label>
+                        <select id="edit-doc-category" class="w-full p-2 border rounded bg-white">
+                            <option>Policies</option>
+                            <option>Emergency</option>
+                            <option>Heavy Equipment</option>
+                            <option>Shop Tools</option>
+                            <option>Work Activities</option>
+                            <option>PPE</option>
+                            <option>Legislation</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
+                        <select id="edit-doc-type" class="w-full p-2 border rounded bg-white">
+                            <option value="text">Text / HTML</option>
+                            <option value="pdf">PDF Upload</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="editor-text-container">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Content</label>
+                    <textarea id="edit-doc-content" rows="10" class="w-full p-2 border rounded"
+                        placeholder="Type content here..."></textarea>
+                </div>
+                <div id="editor-pdf-container" class="hidden">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Upload PDF</label>
+                    <input type="file" id="edit-doc-file" accept="application/pdf" class="w-full text-sm">
+                    <p id="current-file-link" class="text-xs mt-2 text-blue-600 break-all"></p>
+                </div>
+            </div>
+            <div class="p-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button id="delete-doc-btn"
+                    class="text-red-600 hover:underline text-sm font-bold mr-auto hidden">Delete</button>
+                <button onclick="document.getElementById('admin-editor-modal').classList.add('hidden')"
+                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-bold">Cancel</button>
+                <button id="save-doc-btn"
+                    class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-bold">Save
+                    Document</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bulk Upload Modal -->
+    <div id="bulk-upload-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b flex justify-between items-center">
+                <h3 class="font-bold text-lg">Bulk Upload Manuals</h3>
+                <button onclick="document.getElementById('bulk-upload-modal').classList.add('hidden')"
+                    class="text-gray-500 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+
+            <div class="p-6 flex-grow overflow-hidden flex flex-col gap-4">
+                <!-- Drop Zone -->
+                <div id="drop-zone"
+                    class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:bg-blue-50 hover:border-blue-400 transition-colors cursor-pointer">
+                    <svg class="w-12 h-12 text-gray-400 mx-auto mb-3" fill="none" stroke="currentColor"
+                        viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                        </path>
+                    </svg>
+                    <p class="text-gray-600 font-medium">Click to select files or drag and drop PDFs here</p>
+                    <p class="text-xs text-gray-400 mt-1">Only PDF files are supported</p>
+                    <input type="file" id="bulk-file-input" multiple accept="application/pdf" class="hidden">
+                </div>
+
+                <!-- File List -->
+                <div class="flex-grow overflow-y-auto border rounded-lg bg-gray-50 p-2 space-y-2"
+                    id="upload-preview-list">
+                    <p class="text-center text-gray-400 py-8 text-sm">No files selected yet.</p>
+                </div>
+            </div>
+
+            <div class="p-4 border-t bg-gray-50 flex justify-end gap-3">
+                <button onclick="document.getElementById('bulk-upload-modal').classList.add('hidden')"
+                    class="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 text-sm font-bold">Cancel</button>
+                <button id="start-bulk-upload-btn" disabled
+                    class="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 text-sm font-bold disabled:opacity-50 disabled:cursor-not-allowed">
+                    Upload All Files
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs", authDomain: "city-pave-estimator.firebaseapp.com", projectId: "city-pave-estimator", storageBucket: "city-pave-estimator.firebasestorage.app", messagingSenderId: "111714884839", appId: "1:111714884839:web:2b782a1b7be5be8edc5642" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.firebaseServices = { auth, db, storage, collection, query, orderBy, getDocs, addDoc, updateDoc, deleteDoc, doc, getDoc, ref, uploadBytes, getDownloadURL, deleteObject };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                import('./safety-manual.js').then(module => module.initializeSafetyManual());
+                // The safety-manual.js script is now loaded via a <script src="..."> tag below.
+                // No need to import it here.
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+    <script type="module" src="./safety-manual.js"></script>
+    <script type="module" src="../../qa-agent.js"></script>
+</body>
+
+</html>

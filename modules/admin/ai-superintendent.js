@@ -1,0 +1,448 @@
+// © 2025 City Pave. All Rights Reserved.
+// Filename: ai-superintendent.js
+
+let currentMode = 'staff'; // 'staff' or 'client'
+
+export function initializeAISuperintendent(mode = 'staff') {
+    currentMode = mode;
+    if (!('webkitSpeechRecognition' in window)) {
+        console.warn("Web Speech API not supported in this browser.");
+        return;
+    }
+
+    createMicButton();
+}
+
+function createMicButton() {
+    const btn = document.createElement('button');
+    btn.id = 'ai-mic-btn';
+    btn.className = "fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all z-50 flex items-center justify-center";
+    btn.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>`;
+    btn.onclick = toggleListening;
+    document.body.appendChild(btn);
+}
+
+let recognition;
+let isListening = false;
+
+function toggleListening() {
+    if (isListening) {
+        recognition.stop();
+        return;
+    }
+
+    const btn = document.getElementById('ai-mic-btn');
+
+    recognition = new webkitSpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+        isListening = true;
+        btn.classList.add('animate-pulse', 'bg-red-600');
+        btn.classList.remove('bg-blue-600');
+        speak("I'm listening.");
+    };
+
+    recognition.onend = () => {
+        isListening = false;
+        btn.classList.remove('animate-pulse', 'bg-red-600');
+        btn.classList.add('bg-blue-600');
+    };
+
+    recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        console.log("AI Heard:", transcript);
+        handleVoiceCommand(transcript);
+    };
+
+    recognition.start();
+}
+
+async function handleVoiceCommand(transcript) {
+    const lower = transcript.toLowerCase();
+
+    // --- 0. LOGGING (Accountability) ---
+    await logVoiceCommand(transcript);
+
+    if (currentMode === 'client') {
+        await handleClientQuery(lower);
+        return;
+    }
+
+    // --- STAFF MODE ---
+
+    // 1. Routed Requests (Escalation)
+    // Mechanical
+    if (lower.includes('leak') || lower.includes('broken') || lower.includes('repair') || lower.includes('flat tire') || lower.includes('not working')) {
+        await handleRoutedRequest('mechanical', transcript);
+        return;
+    }
+    // HR / Payroll
+    if (lower.includes('clock out') || lower.includes('forgot') || lower.includes('pay') || lower.includes('timesheet')) {
+        await handleRoutedRequest('hr', transcript);
+        return;
+    }
+    // Operations / Material
+    if (lower.includes('shortage') || lower.includes('gravel') || lower.includes('material') || lower.includes('out of')) {
+        await handleRoutedRequest('ops', transcript);
+        return;
+    }
+
+    // 2. Smart Reply (Manager Response)
+    if (lower.includes('send him') || lower.includes('reply to') || lower.includes('tell him')) {
+        await handleSmartReply(transcript);
+        return;
+    }
+
+    // 3. Safety Query
+    if (lower.includes('safety') || lower.includes('swp') || lower.includes('procedure')) {
+        await handleSafetyQuery(lower);
+        return;
+    }
+
+    // 4. Job Query
+    if (lower.includes('job') || lower.includes('address') || lower.includes('where am i')) {
+        await handleJobQuery(lower);
+        return;
+    }
+
+    // 5. Asset Query
+    if (lower.includes('where is') || lower.includes('find the')) {
+        await handleAssetQuery(lower);
+        return;
+    }
+
+    speak("I didn't catch that. Try asking about Safety, Jobs, Assets, or report an Issue.");
+}
+
+async function handleSmartReply(transcript) {
+    const { db, collection, addDoc, auth } = window.firebaseServices;
+    const user = auth.currentUser;
+    const userName = user ? (user.displayName || user.email) : "Manager";
+
+    speak("Processing reply...");
+
+    // 1. Extract Document Request
+    let docUrl = null;
+    let docName = "";
+    const lower = transcript.toLowerCase();
+
+    if (lower.includes('shutoff') || lower.includes('diagram')) {
+        docName = "Emergency Shutoff Diagram";
+        docUrl = "https://example.com/shutoff_diagram.pdf";
+    } else if (lower.includes('schedule')) {
+        docName = "Updated Schedule";
+        docUrl = "https://example.com/schedule_v2.pdf";
+    }
+
+    // 2. Extract Message
+    // Simple logic: everything after "tell him" or "say"
+    let message = "Please see attached.";
+    if (lower.includes('tell him')) {
+        message = transcript.substring(lower.indexOf('tell him') + 9).trim();
+    } else if (lower.includes('say')) {
+        message = transcript.substring(lower.indexOf('say') + 4).trim();
+    }
+
+    // Clean up message (remove "that", "to", etc if needed, but keep simple for now)
+    // Capitalize first letter
+    message = message.charAt(0).toUpperCase() + message.slice(1);
+
+    // 3. Send Notification
+    try {
+        await addDoc(collection(db, "notifications"), {
+            toRole: "Original Sender", // In real app, this would be the specific user ID from context
+            fromUser: userName,
+            fromUid: user ? user.uid : null,
+            message: `${userName} says: '${message}'`,
+            attachmentName: docName || null,
+            attachmentUrl: docUrl || null,
+            type: 'reply',
+            status: 'Sent',
+            timestamp: new Date().toISOString(),
+            read: false
+        });
+
+        if (docName) {
+            speak(`Reply sent with ${docName}.`);
+        } else {
+            speak("Reply sent.");
+        }
+        console.log(`Smart Reply sent: "${message}" with ${docName}`);
+
+    } catch (e) {
+        console.error("Error sending smart reply:", e);
+        speak("I couldn't send the reply.");
+    }
+}
+
+async function handleRoutedRequest(type, transcript) {
+    const { db, collection, addDoc, auth } = window.firebaseServices;
+    const user = auth.currentUser;
+    const userName = user ? (user.displayName || user.email) : "Unknown User";
+
+    let role = "";
+    let department = "";
+
+    switch (type) {
+        case 'mechanical':
+            role = "Head Mechanic";
+            department = "Maintenance";
+            break;
+        case 'hr':
+            role = "Payroll Admin";
+            department = "HR";
+            break;
+        case 'ops':
+            role = "Project Manager";
+            department = "Operations";
+            break;
+    }
+
+    speak(`I've notified the ${role} about this issue.`);
+
+    try {
+        await addDoc(collection(db, "notifications"), {
+            toRole: role,
+            department: department,
+            fromUser: userName,
+            fromUid: user ? user.uid : null,
+            message: transcript,
+            type: type,
+            status: 'Sent',
+            timestamp: new Date().toISOString(),
+            read: false
+        });
+        console.log(`Notification sent to ${role}: ${transcript}`);
+    } catch (e) {
+        console.error("Error sending notification:", e);
+        speak("I tried to send the notification, but there was an error.");
+    }
+}
+
+async function handleClientQuery(query) {
+    // Client Intents
+    if (query.includes('start') || query.includes('when') || query.includes('schedule')) {
+        speak("Checking your project timeline...");
+        // In a real app, query the specific project ID loaded in the portal
+        const projectId = new URLSearchParams(window.location.search).get('id');
+        if (projectId) {
+            speak("Your project is scheduled to start on Monday. Please check the timeline for details.");
+        } else {
+            speak("I can't identify your project. Please ensure you used the correct link.");
+        }
+        return;
+    }
+
+    if (query.includes('contact') || query.includes('email') || query.includes('phone')) {
+        speak("You can reach us at info@citypave.ca or call 555-0199.");
+        return;
+    }
+
+    speak("I can help with project schedules and contact info. What do you need?");
+}
+
+// --- ACCOUNTABILITY & LOGGING ---
+
+async function logVoiceCommand(transcript) {
+    const { db, collection, addDoc, auth } = window.firebaseServices;
+    const user = auth.currentUser;
+
+    try {
+        await addDoc(collection(db, "voice_logs"), {
+            userId: user ? user.uid : 'anonymous',
+            userName: user ? (user.displayName || user.email) : 'Anonymous',
+            mode: currentMode,
+            transcript: transcript,
+            timestamp: new Date().toISOString()
+        });
+        console.log("Voice command logged.");
+    } catch (e) {
+        console.error("Error logging voice command:", e);
+    }
+}
+
+export async function markAsRead(notificationId) {
+    const { db, doc, updateDoc } = window.firebaseServices;
+    try {
+        const ref = doc(db, "notifications", notificationId);
+        await updateDoc(ref, {
+            read: true,
+            readAt: new Date().toISOString(),
+            status: 'Read'
+        });
+        console.log("Notification marked as read:", notificationId);
+    } catch (e) {
+        console.error("Error marking as read:", e);
+    }
+}
+
+// Simulated Escalation Check (Call this periodically or on admin load)
+export async function checkEscalations() {
+    const { db, collection, query, where, getDocs, addDoc } = window.firebaseServices;
+
+    console.log("Checking for escalations...");
+    // Find unread, urgent notifications older than 5 minutes
+    const fiveMinsAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+
+    // Note: Firestore compound queries have limitations. We'll filter client-side for this demo.
+    const q = query(collection(db, "notifications"), where("read", "==", false), where("status", "==", "Sent"));
+    const snap = await getDocs(q);
+
+    snap.forEach(async (doc) => {
+        const n = doc.data();
+        // Check if urgent type (Mechanical, Safety) and old enough
+        if ((n.type === 'mechanical' || n.type === 'safety') && n.timestamp < fiveMinsAgo) {
+
+            // Avoid duplicate escalations (check if we already escalated this ID)
+            // For simplicity, we'll just check if status is 'Escalated' (which we update below)
+
+            console.warn("ESCALATING:", doc.id);
+
+            // 1. Send Escalation Notification to Owner
+            await addDoc(collection(db, "notifications"), {
+                toRole: "Owner",
+                message: `ESCALATION: Unread ${n.type} issue from ${n.fromUser}: "${n.message}"`,
+                type: 'escalation',
+                status: 'Sent',
+                timestamp: new Date().toISOString(),
+                originalNotificationId: doc.id
+            });
+
+            // 2. Update Original Status
+            const ref = doc.ref; // Use doc.ref directly
+            // We need updateDoc here, assuming it's available in scope or we get it from window
+            const { updateDoc } = window.firebaseServices;
+            await updateDoc(ref, { status: 'Escalated' });
+        }
+    });
+}
+
+// --- INTENT HANDLERS ---
+
+async function handleSafetyQuery(query) {
+    const { db, collection, getDocs } = window.firebaseServices;
+
+    speak("Searching safety documents...");
+
+    try {
+        const snap = await getDocs(collection(db, "safety_manual"));
+        const keywords = query.toLowerCase().split(' ').filter(k => k.length > 3 && !['show', 'find', 'give', 'what', 'where'].includes(k));
+
+        let bestMatch = null;
+        let maxScore = 0;
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            const title = data.title.toLowerCase();
+            const category = data.category.toLowerCase();
+
+            let score = 0;
+            keywords.forEach(k => {
+                if (title.includes(k)) score += 2;
+                if (category.includes(k)) score += 1;
+            });
+
+            if (score > maxScore) {
+                maxScore = score;
+                bestMatch = data;
+            }
+        });
+
+        if (bestMatch && maxScore > 0) {
+            speak(`Opening ${bestMatch.title}.`);
+            if (bestMatch.type === 'pdf' && bestMatch.contentUrl) {
+                window.open(bestMatch.contentUrl, '_blank');
+            } else {
+                // For text docs, we can't deep link easily yet, so just open the manual
+                speak("This is a text document. Opening the Safety Manual.");
+                window.location.href = 'modules/safety/index.html';
+            }
+        } else {
+            speak("I couldn't find a specific safety document for that. Opening the full manual.");
+            window.location.href = 'modules/safety/index.html';
+        }
+    } catch (e) {
+        console.error("Error searching safety manual:", e);
+        speak("I had trouble accessing the safety manual.");
+    }
+}
+
+async function handleJobQuery(query) {
+    const { db, collection, query: fireQuery, where, getDocs, auth } = window.firebaseServices;
+    const user = auth.currentUser;
+
+    if (!user) {
+        speak("You are not logged in.");
+        return;
+    }
+
+    speak("Checking your schedule...");
+
+    const today = new Date().toISOString().split('T')[0];
+    const q = fireQuery(collection(db, "dispatch_schedule"), where("date", "==", today));
+    const snap = await getDocs(q);
+
+    let foundJob = null;
+    snap.forEach(doc => {
+        const data = doc.data();
+        // Check if user is in the crew
+        const isAssigned = Array.isArray(data.crew)
+            ? data.crew.some(c => c.userId === user.uid)
+            : false;
+
+        if (isAssigned) foundJob = data;
+    });
+
+    if (foundJob) {
+        const address = foundJob.siteAddress || "Unknown Location";
+        speak(`You are assigned to ${foundJob.clientName} at ${address}. Opening map.`);
+        window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`, '_blank');
+    } else {
+        speak("I don't see any jobs assigned to you for today.");
+    }
+}
+
+async function handleAssetQuery(query) {
+    const { db, collection, getDocs } = window.firebaseServices;
+
+    // Extract asset name (simple logic)
+    // "Where is the Bobcat" -> "bobcat"
+    let target = "";
+    if (query.includes("bobcat")) target = "Bobcat";
+    if (query.includes("paver")) target = "Paver";
+    if (query.includes("truck")) target = "Truck";
+    if (query.includes("excavator")) target = "Excavator";
+
+    if (!target) {
+        speak("Which asset are you looking for?");
+        return;
+    }
+
+    speak(`Locating ${target}...`);
+
+    const snap = await getDocs(collection(db, "assets"));
+    let foundAsset = null;
+    snap.forEach(doc => {
+        const a = doc.data();
+        if (a.type && a.type.toLowerCase().includes(target.toLowerCase())) {
+            foundAsset = a;
+        }
+    });
+
+    if (foundAsset) {
+        // In a real app, check 'lastLocation' or 'assignedJobId'
+        // For now, we'll assume it's at the Shop or a Job
+        const location = foundAsset.currentLocation || "the Main Shop";
+        speak(`The ${target} is currently at ${location}.`);
+    } else {
+        speak(`I couldn't find any ${target} in the fleet.`);
+    }
+}
+
+function speak(text) {
+    const utterance = new SpeechSynthesisUtterance(text);
+    window.speechSynthesis.speak(utterance);
+}

@@ -1,0 +1,387 @@
+// © 2025 City Pave. All Rights Reserved.
+// Filename: mechanic.js
+
+import { initializeInventoryManager } from '../inventory_manager/inventory-app.js';
+
+export async function initializeMechanicApp() {
+    console.log("Initializing Mechanic App...");
+    const { auth, onAuthStateChanged } = window.firebaseServices;
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            // userDisplay handled by global nav
+            setupNavigation();
+            setupNavigation();
+            loadTickets();
+
+            // Lazy load asset manager if possible, or just init it
+            import('./asset-manager.js').then(m => m.initializeAssetManager());
+
+            initializeInventoryManager(); // Re-use existing logic
+            setupInventoryUI(); // Additional UI setup for Mechanic view
+            setupMaintenance();
+        } else {
+            window.location.href = 'index.html';
+        }
+    });
+}
+
+function setupNavigation() {
+    const navs = {
+        'nav-tickets': 'view-tickets',
+        'nav-assets': 'view-assets',
+        'nav-maintenance': 'view-maintenance',
+        'nav-inventory': 'view-inventory'
+    };
+
+    Object.keys(navs).forEach(id => {
+        document.getElementById(id).addEventListener('click', (e) => {
+            // Reset all
+            Object.keys(navs).forEach(k => {
+                document.getElementById(k).classList.replace('bg-blue-50', 'text-gray-600');
+                document.getElementById(k).classList.replace('text-blue-600', 'hover:bg-gray-50');
+                document.getElementById(navs[k]).classList.add('hidden');
+            });
+
+            // Activate clicked
+            const btn = document.getElementById(id);
+            btn.classList.replace('text-gray-600', 'bg-blue-50');
+            btn.classList.replace('hover:bg-gray-50', 'text-blue-600');
+            document.getElementById(navs[id]).classList.remove('hidden');
+        });
+    });
+}
+
+// --- TICKET LOGIC ---
+function loadTickets() {
+    const { db, collection, query, orderBy, onSnapshot } = window.firebaseServices;
+
+    // Use maintenance_tickets to match Employee App
+    const q = query(collection(db, "maintenance_tickets"), orderBy("createdAt", "desc"));
+
+    onSnapshot(q, (snapshot) => {
+        const tickets = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        renderTickets(tickets);
+    });
+}
+
+function renderTickets(tickets) {
+    const cols = {
+        'Open': document.getElementById('col-open'),
+        'In Progress': document.getElementById('col-progress'),
+        'Completed': document.getElementById('col-completed')
+    };
+    const counts = {
+        'Open': document.getElementById('count-open'),
+        'In Progress': document.getElementById('count-progress'),
+        'Completed': document.getElementById('count-completed')
+    };
+
+    // Clear
+    Object.values(cols).forEach(el => el.innerHTML = '');
+    let countVals = { 'Open': 0, 'In Progress': 0, 'Completed': 0 };
+
+    tickets.forEach(ticket => {
+        const col = cols[ticket.status] || cols['Open']; // Default to Open if unknown
+        if (cols[ticket.status]) countVals[ticket.status]++;
+
+        const card = document.createElement('div');
+        card.className = "bg-white p-3 rounded shadow-sm border border-gray-200 cursor-pointer hover:shadow-md transition-shadow";
+        card.onclick = () => openTicketModal(ticket);
+
+        const priorityColors = {
+            'Pending Review': 'bg-purple-100 text-purple-800', // New Status
+            'Low': 'bg-green-100 text-green-800',
+            'Medium': 'bg-yellow-100 text-yellow-800',
+            'High': 'bg-orange-100 text-orange-800',
+            'Critical': 'bg-red-100 text-red-800'
+        };
+
+        // Determine priority color safely
+        const pColor = priorityColors[ticket.priority] || 'bg-gray-100 text-gray-800';
+
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <span class="font-bold text-gray-900 text-sm">${ticket.assetId || ticket.vehicleId || 'Unknown Asset'}</span>
+                <span class="text-xs px-2 py-0.5 rounded ${pColor}">${ticket.priority || 'Normal'}</span>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2">${ticket.description || ticket.issue || 'No description'}</p>
+            <div class="mt-2 flex justify-between items-center text-xs text-gray-400">
+                <span>${ticket.createdAt ? new Date(ticket.createdAt).toLocaleDateString() : 'N/A'}</span>
+                <span>${ticket.submittedByName || ticket.reportedBy || 'System'}</span>
+            </div>
+        `;
+        col.appendChild(card);
+    });
+
+    // Update counts
+    Object.keys(countVals).forEach(k => counts[k].textContent = countVals[k]);
+}
+
+function openTicketModal(ticket) {
+    const modal = document.getElementById('ticket-modal');
+    const content = document.getElementById('ticket-modal-content');
+    const saveBtn = document.getElementById('modal-save-btn');
+    const closeBtn = document.getElementById('close-ticket-modal');
+
+    modal.classList.remove('hidden');
+    document.getElementById('modal-ticket-title').textContent = `Ticket: ${ticket.assetId || ticket.vehicleId || ticket.equipmentId || 'Unknown'}`;
+
+    content.innerHTML = `
+        <div class="grid grid-cols-2 gap-4 text-sm">
+            <div>
+                <label class="block text-gray-500 text-xs uppercase">Reported By</label>
+                <p class="font-medium">${ticket.submittedByName || ticket.reportedBy || 'Unknown'}</p>
+            </div>
+            <div>
+                <label class="block text-gray-500 text-xs uppercase">Date</label>
+                <p class="font-medium">${ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : 'N/A'}</p>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-gray-500 text-xs uppercase mt-2">Description</label>
+            <p class="bg-gray-50 p-3 rounded border text-gray-700">${ticket.description || ticket.issue || 'No description provided.'}</p>
+        </div>
+
+        ${(ticket.attachments && ticket.attachments.length > 0) ? `
+        <div>
+            <label class="block text-gray-500 text-xs uppercase mt-2">Photos / Media</label>
+            <div class="flex gap-2 overflow-x-auto mt-1">
+                ${ticket.attachments.map(m => `
+                    <a href="${m.url}" target="_blank">
+                        ${m.type === 'video'
+            ? `<video src="${m.url}" class="h-32 rounded border"></video>`
+            : `<img src="${m.url}" class="h-32 rounded border hover:opacity-90 transition-opacity">`
+        }
+                    </a>
+                `).join('')}
+            </div>
+        </div>` : ''}
+
+        <div class="border-t pt-4 mt-4">
+            <label class="block text-gray-500 text-xs uppercase mb-1">Status</label>
+            <select id="modal-status" class="w-full border-gray-300 rounded-md shadow-sm">
+                <option value="Open" ${ticket.status === 'Open' ? 'selected' : ''}>Open</option>
+                <option value="Pending Review" ${ticket.status === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
+                <option value="In Progress" ${ticket.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                <option value="Completed" ${ticket.status === 'Completed' ? 'selected' : ''}>Completed</option>
+            </select>
+        </div>
+
+        <!-- PARTS & CANNIBALIZATION -->
+        <div class="mt-4 bg-slate-50 p-3 rounded border border-slate-200">
+            <label class="block text-gray-500 text-xs uppercase mb-2">Parts Used</label>
+            <div id="parts-list" class="space-y-2 mb-2 text-sm text-gray-600 italic">No parts logged.</div>
+            
+            <div class="grid grid-cols-2 gap-2">
+                <input type="text" id="part-name" placeholder="Part Name" class="text-sm border-gray-300 rounded">
+                <select id="part-source" class="text-sm border-gray-300 rounded" onchange="toggleSourceAsset()">
+                    <option value="Inventory">From Inventory</option>
+                    <option value="Cannibalize">Cannibalize (Steal)</option>
+                </select>
+            </div>
+            
+            <div id="source-asset-container" class="hidden mt-2">
+                <label class="block text-xs font-bold text-red-600 uppercase mb-1">Source Asset (Victim)</label>
+                <select id="source-asset-select" class="w-full text-sm border-red-300 rounded" onchange="checkCannibalizationRisk(this.value)">
+                    <option value="">Select Asset...</option>
+                </select>
+                <div id="cannibal-warning" class="hidden mt-2 bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded text-xs font-bold"></div>
+            </div>
+
+            <button onclick="addPartToTicket()" class="mt-2 text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded font-bold text-slate-700">+ Add Part Log</button>
+        </div>
+
+        <div>
+            <label class="block text-gray-500 text-xs uppercase mt-2">Mechanic Notes</label>
+            <textarea id="modal-notes" rows="3" class="w-full border-gray-300 rounded-md shadow-sm" placeholder="Work done...">${ticket.mechanicNotes || ''}</textarea>
+        </div>
+    `;
+
+    // Populate Assets for Cannibalization
+    const { db, collection, getDocs, query, where } = window.firebaseServices;
+    getDocs(collection(db, "assets")).then(snap => {
+        const sel = document.getElementById('source-asset-select');
+        if (sel) {
+            snap.forEach(doc => {
+                const a = doc.data();
+                const opt = document.createElement('option');
+                opt.value = a.unitId;
+                opt.textContent = `${a.unitId} - ${a.make} ${a.model} `;
+                sel.appendChild(opt);
+            });
+        }
+    });
+
+    closeBtn.onclick = () => modal.classList.add('hidden');
+
+    saveBtn.onclick = async () => {
+        const newStatus = document.getElementById('modal-status').value;
+        const notes = document.getElementById('modal-notes').value;
+        // Note: In a real app we'd save the parts list array too. For now we just save notes.
+
+        saveBtn.textContent = "Saving...";
+        try {
+            await updateDoc(doc(db, "repair_tickets", ticket.id), {
+                status: newStatus,
+                mechanicNotes: notes,
+                updatedAt: new Date().toISOString()
+            });
+            modal.classList.add('hidden');
+        } catch (e) {
+            console.error(e);
+            alert("Failed to save.");
+        } finally {
+            saveBtn.textContent = "Save Changes";
+        }
+    };
+}
+
+window.toggleSourceAsset = function () {
+    const source = document.getElementById('part-source').value;
+    const container = document.getElementById('source-asset-container');
+    if (source === 'Cannibalize') container.classList.remove('hidden');
+    else container.classList.add('hidden');
+};
+
+window.checkCannibalizationRisk = async function (assetId) {
+    const warningEl = document.getElementById('cannibal-warning');
+    warningEl.classList.add('hidden');
+    if (!assetId) return;
+
+    const { db, collection, getDocs, query, where } = window.firebaseServices;
+
+    // Check Dispatch Schedule for next 48h
+    // Simple check: fetch all active dispatches and filter in JS for speed/simplicity
+    const snap = await getDocs(collection(db, "dispatch_schedule"));
+    let conflict = null;
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+
+    snap.forEach(doc => {
+        const d = doc.data();
+        if (d.date === tomorrowStr && Array.isArray(d.crew)) {
+            const isAssigned = d.crew.some(m => m.assetId === assetId);
+            if (isAssigned) conflict = d.jobName;
+        }
+    });
+
+    if (conflict) {
+        warningEl.textContent = `⚠️ CRITICAL WARNING: ${assetId} is scheduled for "${conflict}" tomorrow! Disabling it may cause project delays.`;
+        warningEl.classList.remove('hidden');
+    }
+};
+
+window.addPartToTicket = function () {
+    const name = document.getElementById('part-name').value;
+    const source = document.getElementById('part-source').value;
+    const sourceAsset = document.getElementById('source-asset-select').value;
+
+    if (!name) return;
+
+    const list = document.getElementById('parts-list');
+    if (list.textContent === 'No parts logged.') list.innerHTML = '';
+
+    const div = document.createElement('div');
+    div.className = "flex justify-between items-center bg-white p-2 rounded border border-gray-100";
+    div.innerHTML = `< span > ${name}</span > <span class="text-xs ${source === 'Cannibalize' ? 'text-red-600 font-bold' : 'text-gray-500'}">${source} ${source === 'Cannibalize' ? `(${sourceAsset})` : ''}</span>`;
+    list.appendChild(div);
+
+    // Clear inputs
+    document.getElementById('part-name').value = '';
+};
+
+// --- INVENTORY UI ---
+function setupInventoryUI() {
+    // The inventory-manager.js handles loading the table.
+    // We just need to toggle the form visibility.
+    const addBtn = document.getElementById('add-part-btn');
+    const cancelBtn = document.getElementById('cancel-part-btn');
+    const form = document.getElementById('inventory-form-container');
+
+    if (addBtn) addBtn.addEventListener('click', () => form.classList.remove('hidden'));
+    if (cancelBtn) cancelBtn.addEventListener('click', () => form.classList.add('hidden'));
+}
+
+// --- MAINTENANCE SCHEDULE ---
+function setupMaintenance() {
+    const addBtn = document.getElementById('add-maintenance-btn');
+    addBtn.addEventListener('click', () => {
+        const description = prompt("Maintenance Description (e.g. Oil Change Truck 05):");
+        if (!description) return;
+        const date = prompt("Due Date (YYYY-MM-DD):", new Date().toISOString().split('T')[0]);
+        if (!date) return;
+
+        addMaintenanceItem(description, date);
+    });
+
+    loadMaintenance();
+}
+
+async function addMaintenanceItem(desc, date) {
+    const { db, collection, addDoc } = window.firebaseServices;
+    try {
+        await addDoc(collection(db, "maintenance_schedule"), {
+            description: desc,
+            dueDate: date,
+            status: 'Pending',
+            createdAt: new Date().toISOString()
+        });
+        loadMaintenance(); // Refresh
+    } catch (e) { alert(e.message); }
+}
+
+async function loadMaintenance() {
+    const { db, collection, getDocs, query, orderBy } = window.firebaseServices;
+    const list = document.getElementById('maintenance-list');
+    list.innerHTML = '<li class="p-4 text-center text-gray-500">Loading...</li>';
+
+    try {
+        const q = query(collection(db, "maintenance_schedule"), orderBy("dueDate", "asc"));
+        const snap = await getDocs(q);
+
+        list.innerHTML = '';
+        if (snap.empty) {
+            list.innerHTML = '<li class="p-4 text-center text-gray-500">No scheduled maintenance.</li>';
+            return;
+        }
+
+        snap.forEach(doc => {
+            const item = doc.data();
+            const li = document.createElement('li');
+            li.className = "block hover:bg-gray-50";
+
+            // Check if overdue
+            const isOverdue = new Date(item.dueDate) < new Date() && item.status !== 'Completed';
+            const statusColor = item.status === 'Completed' ? 'text-green-600' : (isOverdue ? 'text-red-600' : 'text-gray-500');
+
+            li.innerHTML = `
+        < div class="px-4 py-4 sm:px-6 flex items-center justify-between" >
+                    <div class="flex items-center truncate">
+                        <div class="ml-2 flex-shrink-0 flex flex-col">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.status === 'Completed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}">
+                                ${item.status}
+                            </span>
+                            <p class="text-sm font-medium text-blue-600 truncate mt-1">${item.description}</p>
+                        </div>
+                    </div>
+                    <div class="ml-2 flex-shrink-0 flex flex-col items-end">
+                        <p class="text-sm ${statusColor}">Due: ${item.dueDate}</p>
+                        ${item.status !== 'Completed' ? `<button class="text-xs text-blue-600 hover:underline mt-1" onclick="completeMaintenance('${doc.id}')">Mark Complete</button>` : ''}
+                    </div>
+                </div >
+        `;
+            list.appendChild(li);
+        });
+    } catch (e) { console.error(e); }
+}
+
+window.completeMaintenance = async function (id) {
+    if (!confirm("Mark as completed?")) return;
+    const { db, doc, updateDoc } = window.firebaseServices;
+    await updateDoc(doc(db, "maintenance_schedule", id), { status: 'Completed', completedAt: new Date().toISOString() });
+    loadMaintenance();
+};

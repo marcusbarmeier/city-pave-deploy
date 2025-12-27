@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Developer Command Center | The Brain</title>
+    <!-- Fonts: Inter for high-density UI -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./styles.css">
+</head>
+
+<body class="theme-dark">
+
+    <div class="app-shell">
+
+        <!-- 1. Command Rail (Main Context Switcher) -->
+        <aside class="command-rail">
+            <div class="rail-brand">🧠</div>
+
+            <nav class="rail-nav">
+                <button class="rail-btn active" data-context="dashboard" title="Dashboard">
+                    <span class="icon">📊</span>
+                    <span class="label">Overview</span>
+                </button>
+                <button class="rail-btn" data-context="tenants" title="Tenant Management">
+                    <span class="icon">👥</span>
+                    <span class="label">Tenants</span>
+                </button>
+                <button class="rail-btn" data-context="ops" title="Operations & Monitor">
+                    <span class="icon">💬</span>
+                    <span class="label">Ops</span>
+                </button>
+                <button class="rail-btn" data-context="platform" title="Platform Settings">
+                    <span class="icon">🛠️</span>
+                    <span class="label">Platform</span>
+                </button>
+                <button class="rail-btn" data-context="business" title="Business Analytics">
+                    <span class="icon">📈</span>
+                    <span class="label">Business</span>
+                </button>
+                <button class="rail-btn" data-context="legal" title="Legal & Compliance">
+                    <span class="icon">⚖️</span>
+                    <span class="label">Legal</span>
+                </button>
+            </nav>
+
+            <div class="rail-footer">
+                <div class="status-indicator-mini pulse" title="System Nominal"></div>
+                <div class="avatar">DA</div>
+            </div>
+        </aside>
+
+        <!-- 2. Main Content Area -->
+        <div class="main-content">
+
+            <!-- Global Header (Context Specific) -->
+            <header class="global-header">
+                <h2 id="context-title">Dashboard</h2>
+                <div class="header-tools">
+                    <input type="text" class="global-search" placeholder="Command + K to search...">
+                </div>
+            </header>
+
+            <!-- WORKSPACE: DASHBOARD -->
+            <div class="workspace active" id="ws-dashboard">
+                <div class="dashboard-grid">
+                    <div class="stat-card">
+                        <h3>MRR</h3>
+                        <div class="val">$42.5k</div>
+                        <div class="trend up">+12%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Active Users</h3>
+                        <div class="val">1,240</div>
+                        <div class="trend up">+5%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Errors (24h)</h3>
+                        <div class="val">3</div>
+                        <div class="trend down">-20%</div>
+                    </div>
+                    <div class="stat-card">
+                        <h3>Avg Latency</h3>
+                        <div class="val">42ms</div>
+                        <div class="trend flat">0%</div>
+                    </div>
+                </div>
+                <!-- Placeholder for big widgets -->
+                <div class="center-message" style="margin-top:2rem;">System Overview Widgets</div>
+            </div>
+
+            <!-- WORKSPACE: TENANTS (The Master-Detail View) -->
+            <div class="workspace" id="ws-tenants" style="height: calc(100vh - 60px);">
+                <!-- Re-using existing structure -->
+                <div class="view-container active" style="height:100%;">
+                    <!-- Column 1 -->
+                    <section class="col-master">
+                        <div class="col-header">
+                            <h3>Tenants</h3>
+                            <div class="search-bar"><input type="text" id="subscriber-search" placeholder="Search...">
+                            </div>
+                        </div>
+                        <div class="list-view" id="subscriber-list"></div>
+                        <div class="col-footer"><button class="btn-sm">+ New Tenant</button></div>
+                    </section>
+                    <!-- Column 2 -->
+                    <section class="col-context">
+                        <div class="col-header">
+                            <h3>Modules</h3>
+                        </div>
+                        <div id="module-grid-empty" class="empty-state">Select Tenant</div>
+                        <div class="grid-view hidden" id="module-grid"></div>
+                    </section>
+                    <!-- Column 3 -->
+                    <section class="col-detail">
+                        <div class="col-header">
+                            <h3>Action Panel</h3>
+                        </div>
+                        <div id="action-panel-empty" class="empty-state">Select Module</div>
+                        <div class="detail-content hidden" id="action-panel-content"></div>
+                    </section>
+                </div>
+            </div>
+
+            <!-- WORKSPACE: OPS (Smart Monitor) -->
+            <div class="workspace" id="ws-ops">
+                <!-- Populated by monitor.js -->
+                <div id="view-monitor" style="height:100%;"></div>
+            </div>
+
+            <!-- WORKSPACE: PLATFORM -->
+            <div class="workspace" id="ws-platform" style="padding:2rem; overflow-y:auto;">
+                <h2 style="margin-bottom:2rem;">Platform Settings</h2>
+                <!-- Injected by platform.js and team.js -->
+            </div>
+
+            <!-- Other workspaces... -->
+
+        </div>
+    </div>
+
+    <script type="module" src="./console.js"></script>
+</body>
+
+</html>

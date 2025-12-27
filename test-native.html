@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Native Bridge Test</title>
+    <script type="module">
+        import { NativeBridge } from './native-bridge.js';
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const output = document.getElementById('output');
+            const log = (msg) => output.innerHTML += `<div>${msg}</div>`;
+
+            log(`Platform: ${NativeBridge.getPlatform()}`);
+            log(`Is Native: ${NativeBridge.isNative()}`);
+
+            const perm = await NativeBridge.requestPermission('camera');
+            log(`Camera Permission: ${perm}`);
+        });
+    </script>
+</head>
+
+<body>
+    <h1>Native Bridge Test</h1>
+    <div id="output" style="font-family: monospace; padding: 10px; background: #eee;"></div>
+    <script type="module" src="qa-agent.js"></script>
+</body>
+
+</html>

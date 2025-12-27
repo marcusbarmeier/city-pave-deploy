@@ -1,0 +1,370 @@
+// © 2025 City Pave. All Rights Reserved.
+// Filename: tickets.js
+
+let sigPad = null;
+let aggregator = null; // Declare aggregator globally
+import { TicketAggregator } from './modules/tickets/ticket-aggregator.js';
+
+export async function initializeTicketApp() {
+    const canvas = document.getElementById('signature-pad');
+    if (canvas) {
+        resizeCanvas(); // Ensure high DPI
+        sigPad = new SignaturePad(canvas, { backgroundColor: 'rgb(255, 255, 255)' });
+        window.addEventListener("resize", resizeCanvas);
+    }
+
+    // WAIT FOR AUTH
+    const { auth } = window.firebaseServices || {};
+    if (!auth || !auth.currentUser) {
+        // Retry or wait - handled by onAuthStateChanged in the HTML
+        return;
+    }
+
+    document.getElementById('clear-sig-btn')?.addEventListener('click', () => sigPad.clear());
+    document.getElementById('submit-ticket-btn')?.addEventListener('click', () => processTicketSubmission(false)); // Changed to processTicketSubmission
+    document.getElementById('submit-and-new-btn')?.addEventListener('click', () => processTicketSubmission(true)); // Changed to processTicketSubmission
+
+    // Mode Selection Handlers
+    document.getElementById('manual-create-btn')?.addEventListener('click', () => showFormMode());
+    // document.getElementById('smart-create-btn') ... (If we had a button, but it's auto-scan)
+
+    aggregator = new TicketAggregator(window.firebaseServices);
+    await loadJobsAndPrefill(); // For manual select
+
+    // Check for candidates
+    checkForSmartCandidates();
+
+    // Original date input logic (kept as it's not explicitly removed by the new snippet)
+    const dateInput = document.getElementById('ticket-date');
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
+
+    // if (btnAddAnother) btnAddAnother.addEventListener('click', () => processTicketSubmission(false)); // False = Stay 
+    // ^-- Corrected reference, assumed btnAddAnother was defined but it is not in this scope. 
+    // Using the ID directly as we did above.
+
+    // File Listeners
+    const photoInput = document.getElementById('ticket-photo');
+    if (photoInput) photoInput.addEventListener('change', handleTicketUpload);
+
+    const scaleInput = document.getElementById('scale-tickets-input');
+    if (scaleInput) {
+        scaleInput.addEventListener('change', (e) => {
+            const count = e.target.files.length;
+            document.getElementById('scale-tickets-preview').textContent = count > 0 ? `${count} ticket(s) selected` : "No extra tickets attached.";
+        });
+    }
+}
+
+function showFormMode() {
+    document.getElementById('mode-selection-section').classList.add('hidden');
+    document.getElementById('ticket-form-section').classList.remove('hidden');
+
+    // Resize canvas now that it is visible
+    setTimeout(() => resizeCanvas(), 50); // Small delay to ensure layout paint
+
+    // Ensure jobs are loaded if not already
+    const select = document.getElementById('ticket-job-select');
+    if (select && select.options.length <= 1) {
+        loadJobsAndPrefill();
+    }
+}
+
+async function checkForSmartCandidates() {
+    const list = document.getElementById('smart-candidates-list');
+    if (!list) return;
+
+    if (!aggregator) {
+        // Retry if aggregator isn't ready
+        setTimeout(checkForSmartCandidates, 500);
+        return;
+    }
+
+    const { auth } = window.firebaseServices;
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        console.log("Starting Smart Scan...");
+
+        // Race against a 3-second timeout
+        const scanPromise = aggregator.findTicketCandidates(user.uid);
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error("Scan Timeout")), 3000));
+
+        const candidates = await Promise.race([scanPromise, timeoutPromise]);
+
+        console.log("Smart Scan Results:", candidates);
+        list.innerHTML = '';
+
+        if (candidates.length === 0) {
+            list.innerHTML = `<p class="text-xs text-blue-200">No recent active work logs found.</p>`;
+            return;
+        }
+
+        candidates.forEach(c => {
+            const btn = document.createElement('button');
+            btn.className = "w-full text-left bg-white/10 hover:bg-white/20 p-2 rounded text-sm text-white flex justify-between items-center transition-colors";
+            btn.innerHTML = `
+                <span><strong>${c.jobName}</strong> <span class="opacity-75">(${c.date})</span></span>
+                <span class="bg-blue-800 text-xs px-2 py-1 rounded">Auto-Fill &rarr;</span>
+            `;
+            btn.onclick = () => autoFillTicket(c);
+            list.appendChild(btn);
+        });
+
+    } catch (e) {
+        console.error("Smart Scan Error:", e);
+        list.innerHTML = `<p class="text-xs text-red-300">Scan failed (${e.message}). Try manual.</p>`;
+    }
+}
+
+async function autoFillTicket(candidate) {
+    showFormMode();
+    const jobSelect = document.getElementById('ticket-job-select');
+    jobSelect.value = candidate.jobId;
+
+    // Trigger change if needed, or just set it
+    if (candidate.jobId && jobSelect.value !== candidate.jobId) {
+        // If job not in list?
+        const opt = document.createElement('option');
+        opt.value = candidate.jobId;
+        opt.textContent = candidate.jobName;
+        opt.selected = true;
+        jobSelect.appendChild(opt);
+    }
+
+    // Fetch full data
+    const fullData = await aggregator.aggregateJobData(window.firebaseServices.auth.currentUser.uid, candidate.jobId, candidate.date);
+
+    // Populate form
+    document.getElementById('ticket-date').value = candidate.date.split('T')[0]; // Simple formatting
+
+    /* 
+       Auto-Fill logic:
+       - Hours: derived from time logs
+       - Description: "Work performed [date]"
+    */
+    if (fullData.summary.totalTime > 0) {
+        document.getElementById('ticket-hours').value = fullData.summary.totalTime;
+        document.getElementById('ticket-uom').value = 'Hours';
+    }
+
+    document.getElementById('ticket-desc').value = `Work performed on ${candidate.date}. (Auto-Generated)`;
+
+    // Add effect
+    document.getElementById('ticket-form-section').classList.add('animate-pulse');
+    setTimeout(() => document.getElementById('ticket-form-section').classList.remove('animate-pulse'), 500);
+}
+
+function resizeCanvas() {
+    const canvas = document.getElementById('signature-pad');
+    if (canvas) {
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        canvas.width = canvas.offsetWidth * ratio;
+        canvas.height = canvas.offsetHeight * ratio;
+        canvas.getContext("2d").scale(ratio, ratio);
+        if (sigPad) sigPad.clear();
+    }
+}
+
+// --- OCR LOGIC ---
+async function handleTicketUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const descField = document.getElementById('ticket-desc');
+    descField.placeholder = "Scanning ticket...";
+
+    try {
+        const worker = await Tesseract.createWorker('eng');
+        const { data: { text } } = await worker.recognize(file);
+        await worker.terminate();
+        parseTicketData(text);
+        descField.placeholder = "e.g. Hauled 4 loads...";
+    } catch (error) {
+        console.error("OCR Error:", error);
+        descField.placeholder = "Scan failed. Enter manually.";
+    }
+}
+
+function parseTicketData(text) {
+    const lowerText = text.toLowerCase();
+
+    const netMatch = lowerText.match(/(?:net|weight|total|qty)\D{0,10}(\d{1,5}(?:\.\d{1,3})?)/);
+    if (netMatch) {
+        const val = parseFloat(netMatch[1]);
+        if (!isNaN(val)) document.getElementById('ticket-hours').value = val;
+    } else {
+        const numbers = text.match(/\d+\.\d{2}/g);
+        if (numbers) {
+            const maxVal = Math.max(...numbers.map(n => parseFloat(n)));
+            document.getElementById('ticket-hours').value = maxVal;
+        }
+    }
+
+    const unitSelect = document.getElementById('ticket-uom');
+    if (lowerText.includes('tn') || lowerText.includes('tonne') || lowerText.includes('kg')) unitSelect.value = 'Tonnes';
+    else if (lowerText.includes('yd') || lowerText.includes('m3')) unitSelect.value = 'Loads';
+
+    const ticketMatch = text.match(/(?:ticket|inv|no\.?|#)\s*[:.]?\s*(\d+)/i);
+    const descField = document.getElementById('ticket-desc');
+    if (ticketMatch) {
+        const ticketNum = ticketMatch[1];
+        if (!descField.value.includes(ticketNum)) {
+            descField.value = `Ticket #${ticketNum} - ${descField.value}`;
+        }
+    }
+}
+
+// --- GPS HELPER ---
+function getCurrentPosition() {
+    return new Promise((resolve) => {
+        if (!navigator.geolocation) resolve(null);
+        navigator.geolocation.getCurrentPosition(
+            (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+            (err) => { console.warn("GPS Error:", err); resolve(null); },
+            { enableHighAccuracy: true, timeout: 5000 }
+        );
+    });
+}
+
+async function loadJobsAndPrefill() {
+    const select = document.getElementById('ticket-job-select');
+    const { db, collection, query, where, getDocs } = window.firebaseServices;
+    const urlParams = new URLSearchParams(window.location.search);
+
+    try {
+        const q = query(collection(db, "estimates"), where("status", "in", ["Accepted", "In Progress", "Work Starting"]));
+        const snapshot = await getDocs(q);
+
+        select.innerHTML = '<option value="">Select Job...</option>';
+
+        const preJobId = urlParams.get('jobId');
+        const preClient = urlParams.get('client');
+
+        if (preJobId === 'external' && preClient) {
+            const extOption = document.createElement('option');
+            extOption.value = 'external';
+            extOption.textContent = `(External) ${preClient}`;
+            extOption.selected = true;
+            select.appendChild(extOption);
+        }
+
+        snapshot.forEach((doc) => {
+            const job = doc.data();
+            const option = document.createElement('option');
+            option.value = doc.id;
+            option.textContent = `${job.customerInfo?.name} - ${job.customerInfo?.address}`;
+            if (preJobId && preJobId === doc.id) option.selected = true;
+            select.appendChild(option);
+        });
+
+        if (urlParams.get('unit')) document.getElementById('ticket-unit').value = urlParams.get('unit');
+        if (urlParams.get('desc')) document.getElementById('ticket-desc').value = urlParams.get('desc');
+
+    } catch (error) {
+        console.error("Error loading jobs:", error);
+    }
+}
+
+// --- CORE SUBMISSION LOGIC ---
+async function processTicketSubmission(shouldExit) {
+    const { db, collection, addDoc, storage, ref, uploadString, uploadBytes, getDownloadURL, auth } = window.firebaseServices;
+    const user = auth.currentUser;
+
+    const btn = shouldExit ? document.getElementById('submit-ticket-btn') : document.getElementById('submit-and-new-btn');
+    const otherBtn = shouldExit ? document.getElementById('submit-and-new-btn') : document.getElementById('submit-ticket-btn');
+
+    const jobId = document.getElementById('ticket-job-select').value;
+    const jobNameSelect = document.getElementById('ticket-job-select');
+    const jobName = jobNameSelect.options[jobNameSelect.selectedIndex]?.text;
+    const qty = document.getElementById('ticket-hours').value;
+    const mainFile = document.getElementById('ticket-photo').files[0];
+
+    if (!jobId || !qty) return alert("Please select a Job and enter Quantity.");
+    if (sigPad.isEmpty() && !mainFile) return alert("Please provide a Signature OR a Paper Ticket photo.");
+
+    if (btn) btn.disabled = true;
+    if (otherBtn) otherBtn.disabled = true;
+    if (btn) btn.textContent = "Acquiring GPS & Uploading...";
+
+    try {
+        const location = await getCurrentPosition();
+        const ticketId = `ticket_${Date.now()}`;
+        const dateFolder = new Date().toISOString().split('T')[0];
+
+        let paperTicketUrl = null;
+        if (mainFile) {
+            const photoRef = ref(storage, `time_tickets/${dateFolder}/${ticketId}_MAIN_${mainFile.name}`);
+            const snapshot = await uploadBytes(photoRef, mainFile);
+            paperTicketUrl = await getDownloadURL(snapshot.ref);
+        }
+
+        let signatureUrl = null;
+        if (!sigPad.isEmpty()) {
+            const sigRef = ref(storage, `time_tickets/${dateFolder}/${ticketId}_SIG.png`);
+            await uploadString(sigRef, sigPad.toDataURL('image/png'), 'data_url');
+            signatureUrl = await getDownloadURL(sigRef);
+        }
+
+        const scaleFiles = document.getElementById('scale-tickets-input').files;
+        const scaleTicketUrls = [];
+        if (scaleFiles.length > 0) {
+            for (let i = 0; i < scaleFiles.length; i++) {
+                const file = scaleFiles[i];
+                const scaleRef = ref(storage, `time_tickets/${dateFolder}/${ticketId}_SCALE_${i}_${file.name}`);
+                const snapshot = await uploadBytes(scaleRef, file);
+                const url = await getDownloadURL(snapshot.ref);
+                scaleTicketUrls.push(url);
+            }
+        }
+
+        await addDoc(collection(db, "time_tickets"), {
+            ticketId,
+            userId: user.uid,
+            userName: user.displayName || "Crew Member",
+            jobId,
+            jobName,
+            date: document.getElementById('ticket-date').value,
+            unit: document.getElementById('ticket-unit').value,
+            description: document.getElementById('ticket-desc').value,
+            quantity: parseFloat(qty),
+            unitType: document.getElementById('ticket-uom').value,
+            travelTime: parseFloat(document.getElementById('ticket-travel').value) || 0,
+            clientName: document.getElementById('client-name').value,
+            signatureUrl,
+            paperTicketUrl,
+            scaleTicketUrls,
+            location,
+            createdAt: new Date().toISOString(),
+            status: "Submitted"
+        });
+
+        alert("Ticket Saved Successfully!");
+
+        if (shouldExit) {
+            window.location.href = '/modules/employee/index.html';
+        } else {
+            // RESET FORM FOR NEXT TICKET
+            document.getElementById('ticket-photo').value = '';
+            document.getElementById('scale-tickets-input').value = '';
+            document.getElementById('scale-tickets-preview').textContent = "No extra tickets attached.";
+            document.getElementById('ticket-desc').value = '';
+            document.getElementById('ticket-hours').value = '';
+            document.getElementById('client-name').value = '';
+            sigPad.clear();
+
+            if (btn) btn.disabled = false;
+            if (otherBtn) otherBtn.disabled = false;
+            if (btn) btn.textContent = "Submit & Add Another Ticket";
+        }
+
+    } catch (error) {
+        console.error("Submission Error:", error);
+        alert("Error: " + error.message);
+        if (btn) btn.disabled = false;
+        if (otherBtn) otherBtn.disabled = false;
+        if (btn) btn.textContent = shouldExit ? "Submit & Finish Day" : "Submit & Add Another Ticket";
+    }
+}

@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing Wizard Module</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 h-screen flex overflow-hidden">
+
+    <!-- Sidebar / Steps -->
+    <div class="w-64 bg-white border-r border-gray-200 flex flex-col">
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <svg class="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z">
+                    </path>
+                </svg>
+                Pricing Wizard
+            </h1>
+            <p class="text-xs text-gray-500 mt-1">Build custom calculators</p>
+        </div>
+
+        <nav class="flex-grow p-4 space-y-2">
+            <button
+                class="step-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-3 transition-colors bg-indigo-50 text-indigo-700"
+                data-step="info">
+                <div
+                    class="w-6 h-6 rounded-full bg-indigo-200 text-indigo-700 flex items-center justify-center text-xs font-bold">
+                    1</div>
+                Basic Info
+            </button>
+            <button
+                class="step-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-3 text-gray-600 hover:bg-gray-50 transition-colors"
+                data-step="inputs">
+                <div
+                    class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">
+                    2</div>
+                Define Inputs
+            </button>
+            <button
+                class="step-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-3 text-gray-600 hover:bg-gray-50 transition-colors"
+                data-step="formulas">
+                <div
+                    class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">
+                    3</div>
+                Formulas & Logic
+            </button>
+            <button
+                class="step-btn w-full text-left px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-3 text-gray-600 hover:bg-gray-50 transition-colors"
+                data-step="outputs">
+                <div
+                    class="w-6 h-6 rounded-full bg-gray-200 text-gray-600 flex items-center justify-center text-xs font-bold">
+                    4</div>
+                Outputs & Preview
+            </button>
+        </nav>
+
+        <div class="p-4 border-t border-gray-200">
+            <div class="bg-yellow-50 border border-yellow-200 rounded p-3 text-xs text-yellow-800">
+                <strong>Beta Mode:</strong> Changes are local. Export JSON to use in Estimator.
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="flex-grow flex flex-col bg-gray-50">
+        <!-- Toolbar -->
+        <header class="bg-white border-b border-gray-200 p-4 flex justify-between items-center shadow-sm z-10">
+            <h2 id="step-title" class="text-lg font-semibold text-gray-800">Basic Information</h2>
+            <div class="flex gap-2">
+                <button id="btn-reset"
+                    class="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800">Reset</button>
+                <button id="btn-export-json"
+                    class="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 shadow flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export JSON
+                </button>
+            </div>
+        </header>
+
+        <!-- Dynamic Content -->
+        <main id="wizard-content" class="flex-grow p-8 overflow-y-auto">
+            <!-- Step Rendering Target -->
+        </main>
+
+        <!-- Navigation Footer -->
+        <footer class="bg-white border-t border-gray-200 p-4 flex justify-between items-center">
+            <button id="btn-prev"
+                class="px-6 py-2 border border-gray-300 text-gray-700 font-medium rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+            </button>
+            <div class="flex gap-2">
+                <button id="btn-next"
+                    class="px-6 py-2 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 shadow disabled:opacity-50 disabled:cursor-not-allowed">
+                    Next Step
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Preview Panel (Right Side, collapsible) -->
+    <div class="w-96 bg-white border-l border-gray-200 flex flex-col shadow-xl z-20 transition-transform duration-300"
+        id="preview-panel">
+        <div class="p-4 border-b border-gray-200 bg-gray-50 flex justify-between items-center">
+            <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">Live Preview</h3>
+            <span
+                class="text-xs px-2 py-1 bg-green-100 text-green-700 rounded-full border border-green-200">Interactive</span>
+        </div>
+        <div class="p-6 flex-grow overflow-y-auto bg-gray-50/50">
+            <!-- Mock Device/Panel Frame -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" id="preview-container">
+                <!-- Preview Content Injected Here -->
+                <div class="p-8 text-center text-gray-400">
+                    <p>Start building to see preview</p>
+                </div>
+            </div>
+        </div>
+        <div class="p-4 border-t border-gray-200 bg-gray-100 text-xs text-mono text-gray-500 overflow-x-auto whitespace-pre h-32"
+            id="json-preview">
+            // JSON Output Preview
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="tpl-step-info">
+        <div class="max-w-2xl mx-auto space-y-6">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Calculator Name</label>
+                <input type="text" id="inp-name"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="e.g. Advanced Snow Estimator">
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea id="inp-desc" rows="3"
+                    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    placeholder="Briefly describe what this calculator does..."></textarea>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select id="inp-category" class="w-full p-3 border border-gray-300 rounded-lg bg-white">
+                    <option value="excavation">Excavation & Dirt</option>
+                    <option value="paving">Asphalt & Paving</option>
+                    <option value="snow">Snow & Winter</option>
+                    <option value="concrete">Concrete</option>
+                    <option value="other">Other / Custom</option>
+                </select>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-step-inputs">
+        <div class="max-w-4xl mx-auto">
+            <div class="mb-6 flex justify-between items-center">
+                <p class="text-gray-600">Define the variables users will interact with.</p>
+                <button id="btn-add-input"
+                    class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-200 text-sm flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Input Variable
+                </button>
+            </div>
+
+            <div id="inputs-list" class="space-y-4">
+                <!-- Inputs injected here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-input-item">
+        <div
+            class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm relative group transition-all hover:shadow-md">
+            <button
+                class="btn-remove-input absolute top-4 right-4 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+            <div class="grid grid-cols-12 gap-4">
+                <div class="col-span-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Variable ID</label>
+                    <input type="text"
+                        class="inp-id w-full p-2 border border-gray-300 rounded bg-gray-50 font-mono text-sm"
+                        placeholder="e.g. depth">
+                </div>
+                <div class="col-span-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Type</label>
+                    <select class="inp-type w-full p-2 border border-gray-300 rounded bg-white text-sm">
+                        <option value="number">Number Input</option>
+                        <option value="select">Dropdown Select</option>
+                        <option value="system">System (e.g. Area)</option>
+                    </select>
+                </div>
+                <div class="col-span-4">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Label</label>
+                    <input type="text" class="inp-label w-full p-2 border border-gray-300 rounded text-sm"
+                        placeholder="Display Label">
+                </div>
+                <div class="col-span-2">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Default</label>
+                    <input type="text" class="inp-default w-full p-2 border border-gray-300 rounded text-sm">
+                </div>
+            </div>
+            <!-- Type Specific Settings -->
+            <div class="mt-3 pt-3 border-t border-gray-100 hidden settings-select">
+                <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Options (Comma separated:
+                    Label:Value)</label>
+                <input type="text" class="inp-options w-full p-2 border border-gray-300 rounded text-sm"
+                    placeholder="Small:1, Medium:2, Large:3">
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-step-formulas">
+        <div class="max-w-4xl mx-auto">
+            <div class="mb-6 flex justify-between items-center">
+                <p class="text-gray-600">Create logic to calculate costs and quantities.</p>
+                <button id="btn-add-formula"
+                    class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg font-medium hover:bg-indigo-200 text-sm flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Add Calculation
+                </button>
+            </div>
+
+            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
+                <h4 class="font-bold text-blue-800 text-sm mb-2">Available Variables:</h4>
+                <div id="available-vars" class="flex flex-wrap gap-2 text-sm">
+                    <!-- Badges injected here -->
+                </div>
+            </div>
+
+            <div id="formulas-list" class="space-y-4">
+                <!-- Formulas injected here -->
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-formula-item">
+        <div class="bg-white p-4 rounded-lg border border-gray-200 shadow-sm relative group hover:shadow-md">
+            <button
+                class="btn-remove-formula absolute top-4 right-4 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+            <div class="grid grid-cols-12 gap-4 items-center">
+                <div class="col-span-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Result ID</label>
+                    <input type="text"
+                        class="form-id w-full p-2 border border-gray-300 rounded bg-gray-50 font-mono text-sm"
+                        placeholder="e.g. total_vol">
+                </div>
+                <div class="col-span-1 text-center pt-5">
+                    <span class="font-bold text-xl text-gray-400">=</span>
+                </div>
+                <div class="col-span-8">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Formula (JS expression)</label>
+                    <div class="flex gap-2">
+                        <input type="text"
+                            class="form-expression w-full p-2 border border-gray-300 rounded font-mono text-sm"
+                            placeholder="area * depth">
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3 flex gap-4 items-center">
+                <label class="flex items-center gap-2 text-sm text-gray-600">
+                    <input type="checkbox" class="form-is-cost rounded text-indigo-600 focus:ring-indigo-500">
+                    Is Final Cost?
+                </label>
+                <div class="flex-grow">
+                    <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Display Label</label>
+                    <input type="text" class="form-label w-full p-2 border border-gray-300 rounded text-sm"
+                        placeholder="e.g. Total Volume">
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="tpl-step-outputs">
+        <div class="max-w-2xl mx-auto text-center space-y-4">
+            <div
+                class="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-800">Ready to Export!</h3>
+            <p class="text-gray-600">Your calculator logic is defined. You can now export the JSON configuration to be
+                used in the Estimator App.</p>
+
+            <div class="p-6 bg-white border border-gray-200 rounded-lg shadow-sm text-left">
+                <h4 class="font-bold text-gray-700 mb-2">Summary</h4>
+                <ul class="space-y-2 text-sm text-gray-600">
+                    <li class="flex justify-between">
+                        <span>Inputs Defined:</span>
+                        <span id="summary-inputs-count" class="font-bold">0</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span>Formulas:</span>
+                        <span id="summary-formulas-count" class="font-bold">0</span>
+                    </li>
+                    <li class="flex justify-between">
+                        <span>Category:</span>
+                        <span id="summary-category" class="font-bold">None</span>
+                    </li>
+                </ul>
+            </div>
+
+            <button id="btn-final-export"
+                class="bg-indigo-600 text-white px-8 py-3 rounded-lg font-bold shadow hover:bg-indigo-700 transition-transform hover:-translate-y-0.5">
+                Download JSON Configuration
+            </button>
+        </div>
+    </template>
+
+    <script src="wizard.js"></script>
+</body>
+
+</html>

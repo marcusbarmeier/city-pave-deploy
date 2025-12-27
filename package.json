@@ -1,0 +1,21 @@
+{
+    "name": "city-pave-estimator",
+    "version": "1.0.0",
+    "description": "City Pave Estimator Application",
+    "scripts": {
+        "build": "python3 build.py",
+        "deploy": "firebase deploy",
+        "deploy:hosting": "firebase deploy --only hosting"
+    },
+    "dependencies": {
+        "@capacitor/android": "^5.0.0",
+        "@capacitor/core": "^5.0.0",
+        "@capacitor/ios": "^5.0.0",
+        "firebase": "^9.6.10"
+    },
+    "devDependencies": {
+        "@capacitor/cli": "^5.0.0",
+        "firebase-tools": "^12.0.0"
+    },
+    "private": true
+}

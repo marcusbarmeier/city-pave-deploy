@@ -1,0 +1,22 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>City Pave - Expense Manager</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../style.css"><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { config } from '../../config.js';
+
+        const app = initializeApp(config.firebase);
+        window.firebaseServices = {
+            db: getFirestore(app),
+            storage: getStorage(app),
+            auth: getAuth(app),
+            collection, addDoc, getDocs, query, where, ref, uploadBytes, getDownloadURL
+        };
+        // Mock User for standalone
+        window.currentUser = { uid: 'test-user', displayName: 'Test User' };
+    </script></head><body class="bg-gray-100 h-screen flex flex-col items-center justify-center p-4"><div class="bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden"><header class="bg-gray-800 text-white p-4"><h1 class="text-lg font-bold">Submit Expense</h1></header><div id="expense-app-container" class="p-6"></div></div><script type="module">
+        import { renderExpenseForm } from './expense-app.js';
+        // Wait for Firebase shim
+        setTimeout(() => renderExpenseForm('expense-app-container'), 500);
+    </script></body></html>

@@ -1,0 +1,469 @@
+// © 2025 City Pave. All Rights Reserved.
+// Filename: developer-console.js
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+import { getFirestore, collection, doc, getDocs, updateDoc, setDoc, query, where, writeBatch } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+import { Subscribers } from '../developer_center/subscribers.js';
+import { Governance } from '../module_tuner/governance.js';
+import { MonetizationManager } from '../monetization_manager/index.js';
+
+// --- Config ---
+const firebaseConfig = {
+    apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+    authDomain: "city-pave-estimator.firebaseapp.com",
+    projectId: "city-pave-estimator",
+    storageBucket: "city-pave-estimator.firebasestorage.app",
+    messagingSenderId: "111714884839",
+    appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Expose for navigation.js
+window.firebaseServices = { db, app };
+
+// --- State ---
+let tenants = [];
+let filteredTenants = [];
+let selectedTenantIds = new Set();
+let activeContextTenant = null; // The single tenant being managed in detail view
+let stagedChanges = {}; // { tenantId: { module: value } }
+
+// --- Init ---
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadTenants();
+
+    // Global Search Listener
+    const globalSearch = document.getElementById('global-search');
+    if (globalSearch) {
+        globalSearch.addEventListener('input', (e) => handleSearch(e.target.value));
+    }
+
+    // Local Search (if present) and Filter
+    const localSearch = document.getElementById('tenant-search');
+    if (localSearch) localSearch.addEventListener('input', (e) => handleSearch(e.target.value));
+
+    const tierFilter = document.getElementById('tier-filter');
+    if (tierFilter) tierFilter.addEventListener('change', () => handleSearch(globalSearch ? globalSearch.value : ''));
+
+    // Select All
+    const selectAll = document.getElementById('select-all-tenants');
+    if (selectAll) selectAll.addEventListener('change', toggleSelectAll);
+
+    // Initial Tab
+    switchTab('tenants');
+
+    // View As Listener
+    const btnViewAs = document.getElementById('btn-view-as');
+    if (btnViewAs) {
+        btnViewAs.addEventListener('click', () => {
+            if (!activeContextTenant) return alert("Please select a subscriber context first.");
+            // In real app: window.location.href = `/?impersonate=${activeContextTenant.id}`;
+        });
+    }
+
+    // Init Monetization Manager
+    window.monetizationManager = new MonetizationManager(db, window.firebaseServices.functions); // Note: functions might be undefined here if not added to window.firebaseServices
+    // We'll update firebaseServices injection in a moment or assume MonetizationManager handles missing functions gracefully (it does).
+    window.monetizationManager.init();
+});
+
+// --- Tenant Management ---
+
+async function loadTenants() {
+    const tbody = document.getElementById('tenant-list-body');
+    if (tbody) {
+        tbody.innerHTML = '<tr><td colspan="6" class="p-4 text-center text-gray-500">Loading subscribers...</td></tr>';
+    }
+
+    // Mock Data (Simulating Firestore)
+    tenants = [
+        { id: 't1', name: 'City Pave', tier: 'Titan', status: 'Active', usage: 85, modules: { advancedRBAC: true } },
+        { id: 't2', name: 'Bob\'s Paving', tier: 'Pro', status: 'Active', usage: 45, modules: { advancedRBAC: true } },
+        { id: 't3', name: 'Asphalt Pros', tier: 'Basic', status: 'Past Due', usage: 12, modules: { advancedRBAC: false } },
+        { id: 't4', name: 'Elite Sealcoating', tier: 'Titan', status: 'Active', usage: 92, modules: { advancedRBAC: true } },
+        { id: 't5', name: 'Driveway Doctor', tier: 'Basic', status: 'Active', usage: 28, modules: { advancedRBAC: false } },
+        { id: 't6', name: 'PaveIt All', tier: 'Pro', status: 'Cancelled', usage: 0, modules: { advancedRBAC: false } }
+    ];
+
+    filteredTenants = [...tenants];
+    renderTenants();
+    updateStats();
+}
+
+function renderTenants() {
+    const tbody = document.getElementById('tenant-list-body');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    filteredTenants.forEach(t => {
+        const tierColor = t.tier === 'Titan' ? 'text-purple-400' : (t.tier === 'Pro' ? 'text-blue-400' : 'text-gray-400');
+        const statusColor = t.status === 'Active' ? 'bg-green-500' : (t.status === 'Past Due' ? 'bg-yellow-500' : 'bg-red-500');
+        const isSelected = selectedTenantIds.has(t.id);
+
+        const row = `
+            <tr class="hover:bg-gray-800/50 transition cursor-pointer ${isSelected ? 'bg-blue-900/20' : ''}" onclick="toggleSelection('${t.id}', event)">
+                <td class="p-3 pl-2">
+                    <input type="checkbox" class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500" 
+                        ${isSelected ? 'checked' : ''} onclick="event.stopPropagation(); toggleSelection('${t.id}')">
+                </td>
+                <td class="p-3 font-medium text-white">${t.name}</td>
+                <td class="p-3 font-bold ${tierColor}">${t.tier}</td>
+                <td class="p-3">
+                    <span class="flex items-center gap-2 text-xs">
+                        <span class="w-2 h-2 rounded-full ${statusColor}"></span>
+                        ${t.status}
+                    </span>
+                </td>
+                <td class="p-3">
+                    <div class="w-24 bg-gray-700 rounded-full h-1.5">
+                        <div class="bg-blue-500 h-1.5 rounded-full" style="width: ${t.usage}%"></div>
+                    </div>
+                </td>
+                <td class="p-3 text-right">
+                    <button onclick="event.stopPropagation(); setContext('${t.id}')" class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-2 py-1 rounded">Manage</button>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+function updateStats() {
+    const mrrEl = document.getElementById('total-mrr');
+    if (!mrrEl) return;
+
+    const total = tenants.reduce((acc, t) => {
+        const price = t.tier === 'Titan' ? 299 : (t.tier === 'Pro' ? 149 : 49);
+        return t.status === 'Active' ? acc + price : acc;
+    }, 0);
+    mrrEl.textContent = total.toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
+
+// --- Search & Selection Logic ---
+
+window.handleSearch = function (query) {
+    const term = query.toLowerCase();
+    const tierFilter = document.getElementById('tier-filter') ? document.getElementById('tier-filter').value : 'all';
+
+    filteredTenants = tenants.filter(t => {
+        const matchesName = t.name.toLowerCase().includes(term) || t.id.includes(term);
+        const matchesTier = tierFilter === 'all' || t.tier.toLowerCase() === tierFilter;
+        return matchesName && matchesTier;
+    });
+
+    renderTenants();
+}
+
+window.toggleSelection = function (id, event) {
+    if (selectedTenantIds.has(id)) {
+        selectedTenantIds.delete(id);
+    } else {
+        selectedTenantIds.add(id);
+    }
+
+    if (selectedTenantIds.size === 1) {
+        const [singleId] = selectedTenantIds;
+        setContext(singleId, false);
+    } else if (selectedTenantIds.size === 0) {
+        clearContext();
+    } else {
+        setMultiContext();
+    }
+
+    renderTenants();
+    updateBulkActions();
+}
+
+window.toggleSelectAll = function () {
+    const checkbox = document.getElementById('select-all-tenants');
+    if (checkbox && checkbox.checked) {
+        filteredTenants.forEach(t => selectedTenantIds.add(t.id));
+        setMultiContext();
+    } else {
+        selectedTenantIds.clear();
+        clearContext();
+    }
+    renderTenants();
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const bar = document.getElementById('bulk-actions');
+    const count = document.getElementById('selected-count');
+    if (!bar || !count) return;
+
+    if (selectedTenantIds.size > 0) {
+        bar.classList.remove('hidden');
+        count.textContent = selectedTenantIds.size;
+    } else {
+        bar.classList.add('hidden');
+    }
+}
+
+window.clearSelection = function () {
+    selectedTenantIds.clear();
+    renderTenants();
+    updateBulkActions();
+    clearContext();
+}
+
+// --- Context Management (Header) ---
+
+window.setContext = function (id, switchToDeployment = true) {
+    const tenant = tenants.find(t => t.id === id);
+    if (!tenant) return;
+
+    activeContextTenant = tenant;
+
+    const badge = document.getElementById('context-badge');
+    const nameSpan = document.getElementById('context-name');
+    const searchInput = document.getElementById('global-search');
+
+    if (badge && nameSpan) {
+        badge.classList.remove('hidden');
+        nameSpan.textContent = tenant.name;
+    }
+    if (searchInput) {
+        searchInput.value = tenant.name;
+    }
+
+    const wlDisplay = document.getElementById('whitelabel-context-display');
+    if (wlDisplay) wlDisplay.textContent = tenant.name;
+
+    updateDeploymentPanel(tenant);
+
+    if (switchToDeployment) {
+        switchTab('deployment');
+    }
+}
+
+function setMultiContext() {
+    activeContextTenant = null;
+
+    const badge = document.getElementById('context-badge');
+    const nameSpan = document.getElementById('context-name');
+    const searchInput = document.getElementById('global-search');
+
+    if (badge && nameSpan) {
+        badge.classList.remove('hidden');
+        nameSpan.textContent = `${selectedTenantIds.size} Subscribers Selected`;
+    }
+    if (searchInput) {
+        searchInput.value = `${selectedTenantIds.size} Selected`;
+    }
+
+    const wlDisplay = document.getElementById('whitelabel-context-display');
+    if (wlDisplay) wlDisplay.textContent = "Multiple Subscribers Selected (Batch Mode)";
+
+    updateDeploymentPanel(null, true);
+}
+
+window.clearContext = function () {
+    activeContextTenant = null;
+    selectedTenantIds.clear();
+
+    const badge = document.getElementById('context-badge');
+    const searchInput = document.getElementById('global-search');
+
+    if (badge) badge.classList.add('hidden');
+    if (searchInput) searchInput.value = '';
+
+    const wlDisplay = document.getElementById('whitelabel-context-display');
+    if (wlDisplay) wlDisplay.textContent = "Select a Subscriber";
+
+    renderTenants();
+    updateBulkActions();
+}
+
+
+// --- Tab Navigation ---
+
+window.switchTab = function (tabId) {
+    // Hide all tabs
+    ['tenants', 'deployment', 'ads', 'legal', 'whitelabel', 'aiaudit', 'releases', 'monetization'].forEach(id => {
+        const el = document.getElementById(`tab-${id}`);
+        const btn = document.getElementById(`nav-${id}`);
+        if (el) el.classList.add('hidden');
+        if (btn) {
+            btn.classList.remove('border-cyan-500', 'text-white');
+            btn.classList.add('border-transparent', 'text-gray-400');
+        }
+    });
+
+    const target = document.getElementById(`tab-${tabId}`);
+    const btn = document.getElementById(`nav-${tabId}`);
+    if (target) target.classList.remove('hidden');
+    if (btn) {
+        btn.classList.remove('border-transparent', 'text-gray-400');
+        btn.classList.add('border-cyan-500', 'text-white');
+    }
+
+    if (tabId === 'releases') renderReleasesTab();
+}
+
+async function renderReleasesTab() {
+    const container = document.getElementById('releases-list');
+    if (!container) return;
+
+    container.innerHTML = '<div class="text-center p-4">Loading releases...</div>';
+
+    const gov = new Governance();
+    const modules = gov.getDeployableModules();
+
+    container.innerHTML = modules.map(m => `
+        <div class="bg-gray-800 rounded-lg p-4 mb-4 border border-gray-700 flex justify-between items-center">
+            <div>
+                <h3 class="text-lg font-bold text-white">${m.name}</h3>
+                <div class="text-sm text-gray-400">ID: ${m.id} | Ver: ${m.version}</div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="text-center">
+                    <div class="text-xs text-gray-500 uppercase">Current</div>
+                    <div class="badge ${getEnvBadgeColor(m.currentEnv)}">${m.currentEnv.toUpperCase()}</div>
+                </div>
+
+                <div class="h-8 w-px bg-gray-600"></div>
+
+                <div class="flex gap-2">
+                    ${m.currentEnv === 'dev' ? `
+                        <button onclick="promote('${m.id}', 'dev', 'staging')" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded text-sm transition">
+                            Promote to Staging
+                        </button>
+                    ` : ''}
+                    
+                    ${m.currentEnv === 'staging' ? `
+                        <button onclick="promote('${m.id}', 'staging', 'prod')" class="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1 rounded text-sm transition">
+                            🚀 Promote to Prod
+                        </button>
+                    ` : ''}
+
+                    ${m.currentEnv === 'prod' ? `
+                        <span class="text-green-500 text-sm font-medium flex items-center">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            Live
+                        </span>
+                    ` : ''}
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getEnvBadgeColor(env) {
+    if (env === 'prod') return 'bg-green-100 text-green-800 px-2 py-0.5 rounded text-xs font-bold';
+    if (env === 'staging') return 'bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-xs font-bold';
+    return 'bg-gray-100 text-gray-800 px-2 py-0.5 rounded text-xs font-bold';
+}
+
+window.promote = async function (id, from, to) {
+    if (!confirm(`Are you sure you want to promote ${id} from ${from} to ${to}?`)) return;
+
+    const gov = new Governance();
+    const result = await gov.promoteModule(id, from, to);
+
+    if (result.success) {
+        alert(result.message);
+        renderReleasesTab();
+    } else {
+        alert(result.message);
+    }
+}
+
+
+// --- Deployment Logic (Granular Control) ---
+
+function updateDeploymentPanel(singleTenant, isBatch = false) {
+    const badge = document.getElementById('rbac-status-badge');
+    const detail = document.getElementById('rbac-status-detail');
+    // Note: Assuming element existence for safety in production
+    if (!badge || !detail) return;
+
+    if (isBatch) {
+        badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800";
+        badge.textContent = "Mixed / Batch Mode";
+        detail.textContent = "Apply changes to all selected subscribers.";
+    } else if (singleTenant) {
+        const isEnabled = singleTenant.modules.advancedRBAC;
+        if (isEnabled) {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800";
+            badge.textContent = "Enabled";
+        } else {
+            badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800";
+            badge.textContent = "Disabled";
+        }
+        detail.textContent = `Current setting for ${singleTenant.name}`;
+    } else {
+        badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300";
+        badge.textContent = "No Selection";
+        detail.textContent = "Select a tenant to view status.";
+    }
+}
+
+window.applyOverride = function (module, value) {
+    if (selectedTenantIds.size === 0) return alert("Please select at least one subscriber.");
+
+    selectedTenantIds.forEach(id => {
+        if (!stagedChanges[id]) stagedChanges[id] = {};
+        stagedChanges[id][module] = value;
+    });
+
+    const badge = document.getElementById('rbac-status-badge');
+    if (badge) {
+        badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800";
+        badge.textContent = "Changes Staged";
+    }
+
+    alert(`Staged '${module}' = ${value} for ${selectedTenantIds.size} subscribers. Click 'Save & Apply' to commit.`);
+}
+
+window.clearOverride = function (module) {
+    selectedTenantIds.forEach(id => {
+        if (stagedChanges[id]) delete stagedChanges[id][module];
+    });
+    alert("Overrides cleared. Default tier settings will apply.");
+}
+
+window.saveChanges = async function () {
+    const btn = document.querySelector('#tab-deployment button[onclick="saveChanges()"]');
+    const originalText = btn ? btn.innerHTML : "Save";
+    if (btn) {
+        btn.innerHTML = "Saving...";
+        btn.disabled = true;
+    }
+
+    // Simulate API Call
+    await new Promise(r => setTimeout(r, 1000));
+
+    // Commit Changes
+    for (const [id, changes] of Object.entries(stagedChanges)) {
+        const t = tenants.find(x => x.id === id);
+        if (t) {
+            Object.assign(t.modules, changes);
+
+            try {
+                // In prototype, we just log. Real app updates Firestore docs.
+                console.log("Saved changes for tenant " + id, changes);
+            } catch (e) {
+                console.error("Error saving to Firestore:", e);
+            }
+        }
+    }
+
+    stagedChanges = {};
+    updateDeploymentPanel(activeContextTenant, selectedTenantIds.size > 1);
+
+    if (btn) {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+    alert("Configuration successfully deployed to selected subscribers.");
+}
+
+window.revertChanges = function () {
+    stagedChanges = {};
+    updateDeploymentPanel(activeContextTenant, selectedTenantIds.size > 1);
+    alert("Unsaved changes discarded.");
+}

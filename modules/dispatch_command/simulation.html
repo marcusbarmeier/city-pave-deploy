@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dispatch Simulation - The Flexible Fleet</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .sim-log {
+            font-family: monospace;
+            font-size: 12px;
+        }
+
+        .pass {
+            color: green;
+            font-weight: bold;
+        }
+
+        .fail {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-8">
+
+    <div class="max-w-4xl mx-auto space-y-8">
+        <!-- Header -->
+        <div class="bg-white p-6 rounded shadow">
+            <h1 class="text-2xl font-bold mb-2">Module Simulation: Dispatch Command</h1>
+            <p class="text-gray-600">Scenario: "The Flexible Fleet" (Broadcast & Claim)</p>
+            <div class="mt-4 flex gap-4">
+                <button id="run-sim-btn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Run
+                    Simulation</button>
+                <button onclick="location.reload()"
+                    class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">Reset</button>
+            </div>
+        </div>
+
+        <!-- Simulation Log -->
+        <div class="bg-black text-green-400 p-4 rounded shadow h-64 overflow-y-auto" id="console-output">
+            <div class="text-gray-500">Ready to start simulation...</div>
+        </div>
+
+        <!-- HIDDEN MODULE DOM ELEMENTS (Required for Module to run) -->
+        <div id="module-dom-root"
+            class="opacity-50 pointer-events-none grayscale border-2 border-dashed border-gray-400 p-4 rounded bg-white">
+            <h3 class="text-sm font-bold text-gray-400 mb-4">Module DOM (Visualizing State)</h3>
+
+            <!-- Job List Container -->
+            <div id="unscheduled-list" class="space-y-2 mb-4"></div>
+
+            <!-- Date Picker -->
+            <input type="date" id="dispatch-date-picker" value="2025-06-15" class="border p-1">
+
+            <!-- Schedule List -->
+            <div id="daily-schedule-list" class="space-y-2"></div>
+
+            <!-- Dispatch Modal -->
+            <div id="dispatch-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center">
+                <div class="bg-white p-4 w-96">
+                    <input id="dispatch-job-id" type="hidden">
+                    <input id="dispatch-client-name" value="Test Client">
+                    <input id="dispatch-date" value="2025-06-15">
+                    <input id="dispatch-job-type" value="Paving">
+                    <input id="dispatch-shop-time" value="07:00">
+                    <input id="dispatch-site-time" value="08:00">
+                    <input id="dispatch-site-loc" value="123 Main St">
+                    <input id="dispatch-dump-loc">
+                    <input id="dispatch-toolbox-loc">
+                    <input id="dispatch-toolbox-time">
+                    <input id="dispatch-contact">
+                    <input id="dispatch-material">
+                    <input id="dispatch-equipment">
+                    <input id="dispatch-tools">
+                    <textarea id="dispatch-notes"></textarea>
+
+                    <input type="checkbox" id="dispatch-lmha-required">
+                    <input id="dispatch-lmha-when">
+                    <input id="dispatch-lmha-where">
+
+                    <div id="dispatch-swp-container"></div>
+                    <div id="lmha-config" class="hidden"></div>
+
+                    <div id="Custom Hazards">
+                        <input id="dispatch-custom-hazard">
+                        <button id="add-custom-hazard-btn">Add</button>
+                        <div id="custom-hazards-list"></div>
+                    </div>
+
+                    <div id="dispatch-crew-list"></div>
+
+                    <!-- NEW: Broadcast Toggle (Simulation Target) -->
+                    <div class="border-t pt-2 mt-2">
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" id="dispatch-broadcast-mode">
+                            <span>Broadcast to Pool?</span>
+                        </label>
+                        <select id="dispatch-target-group" class="border p-1 text-sm w-full mt-1">
+                            <option value="laborers">Laborers</option>
+                            <option value="drivers">Drivers</option>
+                        </select>
+                    </div>
+
+                    <input type="checkbox" id="dispatch-notify-crew" checked>
+
+                    <button id="save-dispatch-btn">Send Dispatch</button>
+                    <button id="dispatch-drive-time"></button>
+
+                    <!-- Client Selector Mock -->
+                    <button id="dispatch-select-client-btn"></button>
+                    <div id="client-select-modal" class="hidden">
+                        <div id="client-list-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Client Select Modal -->
+        </div>
+    </div>
+
+    <!-- Simulator Script -->
+    <script type="module" src="./test-simulator.js"></script>
+</body>
+
+</html>

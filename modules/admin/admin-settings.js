@@ -1,0 +1,281 @@
+// © 2025 City Pave. All Rights Reserved.
+// Filename: admin-settings.js
+
+import { collection, getDocs, doc, setDoc, updateDoc, deleteDoc, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+let pricingItems = [];
+let currentEditId = null;
+
+export function initializeAdminSettings() {
+    const tabAdmin = document.getElementById('tab-admin');
+    const viewAdmin = document.getElementById('view-admin');
+
+    if (tabAdmin && viewAdmin) {
+        tabAdmin.addEventListener('click', () => {
+            document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
+            tabAdmin.classList.add('active');
+            viewAdmin.classList.remove('hidden');
+            loadGlobalSettings();
+            loadPricingLibrary();
+        });
+    }
+
+    // Global Settings Save
+    const saveGlobalBtn = document.getElementById('save-global-settings-btn');
+    if (saveGlobalBtn) saveGlobalBtn.addEventListener('click', saveGlobalSettings);
+
+    // Pricing Library Actions
+    const addPricingBtn = document.getElementById('add-pricing-item-btn');
+    if (addPricingBtn) addPricingBtn.addEventListener('click', () => openPricingModal());
+
+    const pricingSearch = document.getElementById('admin-pricing-search');
+    if (pricingSearch) pricingSearch.addEventListener('input', (e) => filterPricingList(e.target.value));
+
+    const savePricingBtn = document.getElementById('save-pricing-item-btn');
+    if (savePricingBtn) savePricingBtn.addEventListener('click', savePricingItem);
+
+    // Modal UI Logic
+    const editMode = document.getElementById('edit-item-mode');
+    if (editMode) editMode.addEventListener('change', toggleModePanels);
+
+    const addVariantBtn = document.getElementById('add-variant-btn');
+    if (addVariantBtn) addVariantBtn.addEventListener('click', addVariantRow);
+
+    // Fuel Preview Logic
+    ['admin-fuel-base', 'admin-fuel-current', 'admin-fuel-threshold', 'admin-fuel-rate'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', calculateFuelSurchargePreview);
+    });
+}
+
+async function loadGlobalSettings() {
+    const { db } = window.firebaseServices;
+    try {
+        const docRef = doc(db, 'pricing_library', 'global_settings');
+        const snap = await getDoc(docRef);
+
+        if (snap.exists()) {
+            const data = snap.data();
+            document.getElementById('admin-tax-rate').value = (data.taxRate * 100).toFixed(0);
+
+            if (data.fuel) {
+                document.getElementById('admin-fuel-active').checked = data.fuel.isActive;
+                document.getElementById('admin-fuel-base').value = data.fuel.baselinePrice;
+                document.getElementById('admin-fuel-current').value = data.fuel.currentPrice;
+                document.getElementById('admin-fuel-threshold').value = data.fuel.threshold;
+                document.getElementById('admin-fuel-rate').value = data.fuel.surchargeRate;
+                calculateFuelSurchargePreview();
+            }
+        }
+    } catch (error) {
+        console.error("Error loading global settings:", error);
+    }
+}
+
+function calculateFuelSurchargePreview() {
+    const base = parseFloat(document.getElementById('admin-fuel-base').value) || 0;
+    const current = parseFloat(document.getElementById('admin-fuel-current').value) || 0;
+    const threshold = parseFloat(document.getElementById('admin-fuel-threshold').value) || 0.05;
+    const rate = parseFloat(document.getElementById('admin-fuel-rate').value) || 1;
+
+    if (!document.getElementById('admin-fuel-active').checked) {
+        document.getElementById('admin-fuel-preview').textContent = "Surcharge Inactive";
+        return;
+    }
+
+    const diff = current - base;
+    let surcharge = 0;
+
+    if (diff > 0) {
+        const steps = Math.floor(diff / threshold);
+        surcharge = steps * rate;
+    }
+
+    document.getElementById('admin-fuel-preview').textContent = `Current Surcharge: ${surcharge.toFixed(1)}%`;
+}
+
+async function saveGlobalSettings() {
+    const { db } = window.firebaseServices;
+    const btn = document.getElementById('save-global-settings-btn');
+    btn.textContent = "Saving...";
+    btn.disabled = true;
+
+    const settings = {
+        taxRate: parseFloat(document.getElementById('admin-tax-rate').value) / 100,
+        fuel: {
+            isActive: document.getElementById('admin-fuel-active').checked,
+            baselinePrice: parseFloat(document.getElementById('admin-fuel-base').value),
+            currentPrice: parseFloat(document.getElementById('admin-fuel-current').value),
+            threshold: parseFloat(document.getElementById('admin-fuel-threshold').value),
+            surchargeRate: parseFloat(document.getElementById('admin-fuel-rate').value)
+        },
+        updatedAt: new Date().toISOString()
+    };
+
+    try {
+        await setDoc(doc(db, 'pricing_library', 'global_settings'), settings, { merge: true });
+        alert("Global settings saved successfully.");
+    } catch (e) {
+        alert("Error saving settings: " + e.message);
+    } finally {
+        btn.textContent = "Save Changes";
+        btn.disabled = false;
+    }
+}
+
+async function loadPricingLibrary() {
+    const { db } = window.firebaseServices;
+    const tbody = document.getElementById('admin-pricing-body');
+    tbody.innerHTML = '<tr><td colspan="4" class="p-6 text-center">Loading library...</td></tr>';
+
+    try {
+        const q = query(collection(db, "pricing_library"), orderBy("category"), orderBy("name"));
+        const snapshot = await getDocs(q);
+
+        pricingItems = [];
+        snapshot.forEach(doc => {
+            if (doc.id !== 'global_settings' && !doc.id.startsWith('engine_')) {
+                pricingItems.push({ id: doc.id, ...doc.data() });
+            }
+        });
+
+        renderPricingList(pricingItems);
+    } catch (error) {
+        console.error("Error loading pricing:", error);
+        tbody.innerHTML = `<tr><td colspan="4" class="p-6 text-center text-red-500">Error: ${error.message}</td></tr>`;
+    }
+}
+
+function renderPricingList(items) {
+    const tbody = document.getElementById('admin-pricing-body');
+    tbody.innerHTML = '';
+
+    items.forEach(item => {
+        let priceDisplay = '-';
+        if (item.mode === 'simple') priceDisplay = `$${item.defaultPrice}`;
+        else if (item.mode === 'variant') priceDisplay = `${item.variants.length} Variants`;
+        else if (item.mode === 'dynamic') priceDisplay = 'Calculated';
+
+        const fuelBadge = item.consumesFuel
+            ? `<span class="bg-orange-100 text-orange-800 text-[10px] px-1 rounded ml-1" title="Fuel Surcharge Applies">⛽</span>`
+            : '';
+
+        const row = `
+            <tr class="bg-white border-b hover:bg-gray-50 group">
+                <td class="px-4 py-3">
+                    <div class="font-bold text-gray-800 text-sm">${item.name} ${fuelBadge}</div>
+                    <div class="text-xs text-gray-500">${item.category || 'General'}</div>
+                </td>
+                <td class="px-4 py-3 text-xs uppercase font-semibold text-gray-500">${item.mode}</td>
+                <td class="px-4 py-3 text-right text-sm font-mono">${priceDisplay}</td>
+                <td class="px-4 py-3 text-right">
+                    <button onclick="window.editPricingItem('${item.id}')" class="text-blue-600 hover:underline text-xs font-bold">Edit</button>
+                </td>
+            </tr>
+        `;
+        tbody.innerHTML += row;
+    });
+}
+
+function filterPricingList(term) {
+    const lower = term.toLowerCase();
+    const filtered = pricingItems.filter(i => i.name.toLowerCase().includes(lower) || i.category.toLowerCase().includes(lower));
+    renderPricingList(filtered);
+}
+
+// --- MODAL LOGIC ---
+
+window.editPricingItem = function (id) {
+    const item = pricingItems.find(i => i.id === id);
+    if (!item) return;
+    openPricingModal(item);
+};
+
+function openPricingModal(item = null) {
+    const modal = document.getElementById('pricing-editor-modal');
+    const title = document.getElementById('pricing-modal-title');
+
+    currentEditId = item ? item.id : null;
+    title.textContent = item ? 'Edit Item' : 'New Item';
+
+    // 1. Reset Form
+    document.getElementById('edit-item-name').value = item ? item.name : '';
+    document.getElementById('edit-item-category').value = item ? item.category : '';
+    document.getElementById('edit-item-desc').value = item ? item.description : '';
+    document.getElementById('edit-item-fuel').checked = item ? (item.consumesFuel || false) : false;
+
+    const modeSelect = document.getElementById('edit-item-mode');
+    modeSelect.value = item ? item.mode : 'simple';
+    modeSelect.disabled = !!item; // Lock mode if editing existing
+
+    // 2. Populate Specific Fields based on Mode
+    toggleModePanels(); // Clear panels first
+
+    if (!item || item.mode === 'simple') {
+        document.getElementById('edit-item-price').value = item ? item.defaultPrice : '';
+    } else if (item.mode === 'variant') {
+        const container = document.getElementById('variant-list');
+        container.innerHTML = '';
+        (item.variants || []).forEach(v => addVariantRow(v));
+    }
+
+    modal.classList.remove('hidden');
+}
+
+function toggleModePanels() {
+    const mode = document.getElementById('edit-item-mode').value;
+    document.querySelectorAll('.mode-panel').forEach(p => p.classList.add('hidden'));
+    document.getElementById(`mode-${mode}`).classList.remove('hidden');
+}
+
+function addVariantRow(data = { name: '', price: '' }) {
+    const container = document.getElementById('variant-list');
+    const div = document.createElement('div');
+    div.className = 'flex gap-2 variant-row';
+    div.innerHTML = `
+        <input type="text" placeholder="Name (e.g. 6 inch)" class="table-input w-2/3 variant-name" value="${data.name}">
+        <input type="number" placeholder="Price" class="table-input w-1/3 variant-price" value="${data.price}">
+        <button onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700">×</button>
+    `;
+    container.appendChild(div);
+}
+
+async function savePricingItem() {
+    const { db } = window.firebaseServices;
+    const name = document.getElementById('edit-item-name').value;
+    const category = document.getElementById('edit-item-category').value;
+    const mode = document.getElementById('edit-item-mode').value;
+    const desc = document.getElementById('edit-item-desc').value;
+    const consumesFuel = document.getElementById('edit-item-fuel').checked;
+
+    if (!name) return alert("Name is required");
+
+    const data = {
+        name, category, mode, description: desc, consumesFuel,
+        updatedAt: new Date().toISOString()
+    };
+
+    if (mode === 'simple') {
+        data.defaultPrice = parseFloat(document.getElementById('edit-item-price').value) || 0;
+    } else if (mode === 'variant') {
+        data.variants = [];
+        document.querySelectorAll('.variant-row').forEach(row => {
+            data.variants.push({
+                name: row.querySelector('.variant-name').value,
+                price: parseFloat(row.querySelector('.variant-price').value) || 0
+            });
+        });
+    }
+
+    const id = currentEditId || `item_${Date.now()}`;
+
+    try {
+        await setDoc(doc(db, 'pricing_library', id), data, { merge: true });
+        document.getElementById('pricing-editor-modal').classList.add('hidden');
+        loadPricingLibrary();
+        alert("Item saved!");
+    } catch (e) {
+        alert("Save failed: " + e.message);
+    }
+}

@@ -1,0 +1,152 @@
+{
+    "estimator": {
+        "files": [
+            "index.html",
+            "estimator.js",
+            "estimator-ui.js",
+            "estimator-calculations.js",
+            "estimator-data.js",
+            "estimator-events.js",
+            "estimator-state.js",
+            "estimator-utils.js",
+            "outputGenerator.js",
+            "pricing.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "operations": {
+        "files": [
+            "index.html",
+            "operations.js",
+            "dispatch.html",
+            "dispatch.js",
+            "gantt-chart.js",
+            "weather-service.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "fleet": {
+        "files": [
+            "index.html",
+            "mechanic.js",
+            "maintenance.js",
+            "repair-requests.js",
+            "inventory-manager.js",
+            "asset-manager.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "growth": {
+        "files": [
+            "index.html",
+            "growth.js",
+            "chatbot.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "sketch": {
+        "files": [
+            "index.html",
+            "sketch.js",
+            "calculators.js",
+            "snow-calculator.js",
+            "excavation.html",
+            "excavation.js",
+            "measure.html",
+            "measure.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "employee": {
+        "files": [
+            "index.html",
+            "employee.js",
+            "user-manager.js",
+            "dashcam.js",
+            "expense-manager.js",
+            "invoice-scanner.js",
+            "forms.html",
+            "forms.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "client_portal": {
+        "files": [
+            "index.html",
+            "client-portal.js",
+            "portal.html",
+            "portal.js",
+            "share.html",
+            "share.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "admin": {
+        "files": [
+            "index.html",
+            "admin-dashboard.js",
+            "developer-console.html",
+            "developer-console.js",
+            "admin-settings.js",
+            "ai-auditor.js",
+            "ai-superintendent.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "safety": {
+        "files": [
+            "index.html",
+            "safety-manual.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "communication": {
+        "files": [
+            "overlay.js",
+            "notification-engine.js",
+            "styles.css"
+        ],
+        "mainHtml": ""
+    },
+    "user_admin": {
+        "files": [
+            "index.html",
+            "employees.html",
+            "store.html",
+            "deployment.html",
+            "legal.html",
+            "app.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "marketplace": {
+        "files": [
+            "index.html",
+            "marketplace.js",
+            "ai-agent.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "subcontractor_portal": {
+        "files": [
+            "index.html",
+            "portal.js"
+        ],
+        "mainHtml": "index.html"
+    },
+    "ai_overlay": {
+        "files": [
+            "index.html",
+            "ai-overlay.js",
+            "context.js",
+            "bridge.js",
+            "admin.js",
+            "ui.js",
+            "voice-manager.js",
+            "smart-queue.js",
+            "GeofenceService.js",
+            "style.css"
+        ],
+        "mainHtml": "index.html"
+    }
+}

@@ -1,0 +1,237 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Nav Integration Sim</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../style.css"><style>
+        #sim-console {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.95);
+            border-top: 2px solid #ccc;
+            overflow-y: auto;
+            padding: 10px;
+            z-index: 9999;
+        }
+    </style></head><body class="bg-gray-900 h-screen overflow-hidden"><div id="nav-map" class="absolute inset-0 z-0 bg-gray-800"></div><div id="nav-ui" class="absolute inset-0 z-10 pointer-events-none"></div><div id="sim-console"><h3 class="font-bold text-gray-800 border-b mb-2">🤖 Integration Logs</h3><div id="sim-output"></div></div><script>
+        // Global Error Handler
+        function logError(msg) {
+            const out = document.getElementById('sim-output');
+            if (out) {
+                const div = document.createElement('div');
+                div.textContent = "FATAL: " + msg;
+                div.style.color = 'red';
+                out.appendChild(div);
+            }
+        }
+        window.onerror = function (msg, url, line) {
+            logError(`${msg} (${url}:${line})`);
+            return false;
+        };
+        window.onunhandledrejection = function (e) {
+            logError(`Unhandled Rejection: ${e.reason}`);
+        };
+
+        window.google = {
+            maps: {
+                Map: class {
+                    panTo() { }
+                    setCenter() { }
+                    setZoom() { }
+                },
+                DirectionsRenderer: class { setMap() { } },
+                Marker: class {
+                    setPosition() { }
+                    setIcon() { }
+                    getIcon() { return {}; }
+                    setMap() { }
+                },
+                SymbolPath: { FORWARD_CLOSED_ARROW: 1 },
+                Geocoder: class { },
+                Polygon: class { setMap() { } },
+                LatLng: class { constructor(lat, lng) { this.lat = () => lat; this.lng = () => lng; } },
+                geometry: {
+                    spherical: {
+                        computeOffset: () => ({ lat: () => 0, lng: () => 0 })
+                    },
+                    poly: {
+                        containsLocation: () => false
+                    }
+                },
+                event: {
+                    trigger: () => { }
+                }
+            }
+        };
+
+        // Mock Firebase Services globally BEFORE module imports
+        window.firebaseServices = {
+            auth: {
+                currentUser: { uid: 'test-user', displayName: 'Test Driver' },
+                onAuthStateChanged: (cb) => cb({ uid: 'test-user', displayName: 'Test Driver' })
+            },
+            storage: { ref: () => ({}) },
+            ref: () => { },
+            uploadBytes: async () => ({ ref: {} }),
+            getDownloadURL: async () => "http://fake.url",
+            addDoc: async () => ({ id: '123' }),
+            collection: () => { },
+            query: () => { },
+            where: () => { },
+            onSnapshot: () => { },
+            doc: () => { },
+            getDoc: async () => ({ exists: () => true, data: () => ({ permissions: {} }) })
+        };
+    </script><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        const app = initializeApp({ apiKey: "test" });
+
+        import { NavigationApp } from './nav-app.js';
+
+        // ... rest of imports
+
+        /**
+         * Integration Test for Navigation + Dashcam
+         * (Embedded to avoid MIME issues)
+         */
+        class IntegrationSimulator {
+            constructor(navApp) {
+                this.app = navApp;
+                this.stepDelay = 1000;
+            }
+
+            async run() {
+                console.clear();
+                console.log("%c🚗 Nav+Dashcam Integration Test", "color: #00ff00; font-weight: bold; font-size: 14px;");
+                this.setupMocks();
+
+                try {
+                    await this.step(1, "Check Nav Loaded", async () => {
+                        if (!document.getElementById('nav-dashcam-btn')) throw new Error("Nav UI not rendered");
+                    });
+
+                    await this.step(2, "Toggle Dashcam ON", async () => {
+                        const btn = document.getElementById('nav-dashcam-btn');
+                        btn.click();
+
+                        // Wait for bay expansion animation (css duration-300)
+                        await new Promise(r => setTimeout(r, 600));
+
+                        // Check Bay is visible
+                        const bay = document.getElementById('nav-dashcam-bay');
+                        if (!bay || bay.clientHeight < 10) throw new Error("Dashcam Bay did not expand");
+
+                        // Check Video Element inside bay
+                        const video = document.getElementById('nav-dashcam-bay-video');
+                        if (!video) throw new Error("Video element not found in bay");
+
+                        // Check if 'REC' is pulsing in the top bar (NavigationUI)
+                        const indicator = document.getElementById('dashcam-indicator');
+                        if (!indicator.classList.contains('bg-red-600')) throw new Error("Indicator did not turn red");
+                    });
+
+                    await this.step(3, "Wait for Buffer", async () => {
+                        // Let it record for 3 seconds
+                        await new Promise(r => setTimeout(r, 3000));
+                    });
+
+                    await this.step(4, "Trigger Incident (Widget)", async () => {
+                        // New ID format: containerId + '-btn-incident'
+                        const btn = document.getElementById('nav-dashcam-bay-btn-incident');
+                        if (!btn) throw new Error("Incident button not found in widget");
+
+                        btn.click();
+
+                        await new Promise(r => setTimeout(r, 500));
+                        if (!btn.disabled) throw new Error("Button should be disabled during upload");
+                        if (!btn.textContent.includes("UPLOADING")) throw new Error("Button text should be UPLOADING...");
+
+                        // Wait for 'upload' to finish (mocked 1.5s)
+                        await new Promise(r => setTimeout(r, 2000));
+
+                        if (!btn.textContent.includes("SAVED")) throw new Error("Button text should be SAVED! Got: " + btn.textContent);
+                    });
+
+                    await this.step(5, "Toggle Dashcam OFF", async () => {
+                        const btn = document.getElementById('nav-dashcam-btn');
+                        btn.click();
+
+                        await new Promise(r => setTimeout(r, 600));
+                        const bay = document.getElementById('nav-dashcam-bay');
+                        if (bay.clientHeight > 10) throw new Error("Dashcam Bay did not collapse");
+                    });
+
+                    this.logToScreen("✅ Integration Test Passed", "green");
+
+                } catch (error) {
+                    this.logToScreen("❌ Test Failed: " + error.message, "red");
+                    console.error(error);
+                }
+            }
+
+            async step(num, name, action) {
+                this.logToScreen(`Step ${num}: ${name}...`, "black");
+                await action();
+                this.logToScreen(`Step ${num}: PASS`, "green");
+                await new Promise(r => setTimeout(r, this.stepDelay));
+            }
+
+            logToScreen(msg, color) {
+                const output = document.getElementById('sim-output');
+                if (output) {
+                    const line = document.createElement('div');
+                    line.textContent = msg;
+                    line.style.color = color;
+                    line.style.fontFamily = 'monospace';
+                    output.appendChild(line);
+                }
+            }
+
+            setupMocks() {
+                // Mock Camera
+                if (!navigator.mediaDevices) navigator.mediaDevices = {};
+                navigator.mediaDevices.getUserMedia = async () => {
+                    return {
+                        getTracks: () => [{ stop: () => { } }]
+                    };
+                };
+
+                // Mock MediaRecorder
+                window.MediaRecorder = class MockMediaRecorder {
+                    constructor(stream, options) {
+                        this.state = 'inactive';
+                        this.ondataavailable = null;
+                    }
+                    start(timeslice) {
+                        this.state = 'recording';
+                        setInterval(() => {
+                            if (this.ondataavailable) this.ondataavailable({ data: new Blob(["data"], { type: 'video/webm' }) });
+                        }, 100);
+                    }
+                    stop() { this.state = 'inactive'; }
+                    static isTypeSupported() { return true; }
+                };
+
+                // Mock Firebase (Already mocked at top level)
+                if (!window.firebaseServices) window.firebaseServices = {};
+                // We keep this structure just in case the simulator class needs to refresh it, 
+                // but the critical part is ensuring it exists before NavApp inits.
+                Object.assign(window.firebaseServices, {
+                    // specific simulator overrides if needed
+                });
+            }
+        }
+
+
+        // Init App
+        const appInstance = new NavigationApp('nav-map', 'nav-ui');
+        window.navApp = appInstance;
+
+        // Mock Nav Init (skip auth wait)
+        appInstance.init({ uid: 'test', displayName: 'Tester' });
+
+        // Run Sim
+        setTimeout(() => {
+            const sim = new IntegrationSimulator(appInstance);
+            sim.run();
+        }, 1000);
+    </script></body></html>

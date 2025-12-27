@@ -1,0 +1,45 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Growth & Relationships - City Pave</title><script src="https://cdn.tailwindcss.com"></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../../style.css"><script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script></head><body class="bg-gray-100 flex flex-col h-screen font-inter text-gray-800"><div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div><script type="module" src="../../navigation.js"></script><div class="h-16 flex-shrink-0"></div><header class="bg-white border-b border-gray-200 px-6 py-3 z-20 flex items-center justify-between flex-shrink-0"><div class="flex items-center gap-6"><h1 class="text-lg font-bold text-gray-800 tracking-tight">Growth Command Center</h1></div><div class="flex items-center gap-2"><button id="sync-contacts-btn"
+                class="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-green-700 shadow flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                Sync from Estimator
+            </button><button id="import-contacts-btn"
+                class="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-blue-700 shadow flex items-center gap-2"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                Import CSV
+            </button><input type="file" id="csv-upload-input" class="hidden" accept=".csv"></div></header><main class="flex-grow flex flex-col md:flex-row overflow-hidden"><div class="w-full md:w-80 bg-white border-r border-gray-200 flex flex-col z-10 shadow-md"><div class="p-4 border-b bg-gray-50"><h2 class="font-bold text-gray-700">The Hopper</h2><p class="text-xs text-gray-500">Unsorted contacts from imports</p></div><div id="hopper-list" class="flex-grow overflow-y-auto p-2 space-y-2"><p class="text-center text-gray-400 text-sm py-10">No unsorted contacts.</p></div></div><div class="flex-grow flex flex-col overflow-hidden bg-gray-50"><div class="bg-white p-4 border-b flex gap-4 items-center shadow-sm"><input type="text" id="search-leads" placeholder="Search relationships..."
+                    class="border border-gray-300 rounded-full px-4 py-2 text-sm w-64 focus:ring-2 focus:ring-blue-500 outline-none"><div class="flex gap-2"><button
+                        class="filter-btn active px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-800 border border-blue-200"
+                        data-filter="all">All</button><button
+                        class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                        data-filter="vip">VIP (9-10)</button><button
+                        class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                        data-filter="warm">Warm (6-8)</button><button
+                        class="filter-btn px-3 py-1 rounded-full text-xs font-bold bg-white text-gray-600 border border-gray-300 hover:bg-gray-50"
+                        data-filter="cold">Cold (1-5)</button></div></div><div id="leads-grid" class="p-6 overflow-y-auto grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6"><p class="col-span-full text-center text-gray-400">Loading relationships...</p></div></div></main><div id="qualify-modal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"><div class="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden"><div class="p-6 border-b bg-gray-50"><h3 class="text-xl font-bold text-gray-800">Qualify Contact</h3><p class="text-sm text-gray-500">Is this person worth building a relationship with?</p></div><div class="p-6 space-y-4"><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Name</label><input type="text" id="qualify-name"
+                        class="w-full p-3 border rounded-lg text-lg font-bold bg-gray-50"></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Relationship Score
+                        (1-10)</label><input type="range" id="qualify-score" min="1" max="10" value="5"
+                        class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"><div class="flex justify-between text-xs text-gray-400 mt-1"><span>1 (Stranger)</span><span id="score-display" class="font-bold text-blue-600 text-lg">5</span><span>10 (Raving Fan)</span></div></div><div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Context / Memory Jogger</label><textarea id="qualify-notes" rows="2" class="w-full p-3 border rounded-lg text-sm"
+                        placeholder="e.g. Met at Hockey, Cousins with Steve..."></textarea></div></div><div class="p-6 border-t bg-gray-50 flex justify-between"><button id="trash-contact-btn" class="px-4 py-2 text-red-500 hover:bg-red-50 rounded-lg font-bold">Trash
+                    (Ignore)</button><div class="flex gap-2"><button onclick="document.getElementById('qualify-modal').classList.add('hidden')"
+                        class="px-4 py-2 text-gray-600 hover:bg-gray-200 rounded-lg font-bold">Cancel</button><button id="save-lead-btn"
+                        class="px-6 py-2 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow">Add to
+                        Rolodex</button></div></div></div></div><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, deleteDoc, query, where, addDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs", authDomain: "city-pave-estimator.firebaseapp.com", projectId: "city-pave-estimator", storageBucket: "city-pave-estimator.firebasestorage.app", messagingSenderId: "111714884839", appId: "1:111714884839:web:2b782a1b7be5be8edc5642" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        window.firebaseServices = { auth, db, collection, doc, setDoc, getDocs, updateDoc, deleteDoc, query, where, addDoc };
+
+        import { initializeGrowthApp } from './growth.js';
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) { initializeGrowthApp(); }
+            else { window.location.href = 'index.html'; }
+        });
+    </script><script type="module" src="../../qa-agent.js"></script></body></html>

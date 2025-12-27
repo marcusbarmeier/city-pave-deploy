@@ -1,0 +1,151 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to get user role
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isAdmin() {
+      return getUserRole() == 'admin';
+    }
+
+    function isSupervisor() {
+      return getUserRole() == 'supervisor';
+    }
+
+    function isMechanic() {
+      return getUserRole() == 'mechanic';
+    }
+
+    function isLaborer() {
+      return getUserRole() == 'laborer';
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin() || isSupervisor());
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // Assets
+    match /assets/{assetId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (isAdmin() || isMechanic());
+    }
+
+    // Estimates (Jobs)
+    match /estimates/{estimateId} {
+      allow read: if request.auth != null; 
+      allow write: if request.auth != null && (isAdmin() || isSupervisor());
+    }
+
+    // Daily Roster
+    match /daily_roster/{rosterId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (isAdmin() || isSupervisor());
+    }
+
+    // Time Logs
+    match /time_logs/{logId} {
+      allow read: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin() || isSupervisor());
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin() || isSupervisor());
+    }
+
+    // Maintenance Tickets
+    match /maintenance_tickets/{ticketId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (isAdmin() || isMechanic() || isSupervisor()) 
+                   && (
+                     // Allow any change if not changing status
+                     !request.resource.data.diff(resource.data).affectedKeys().hasAny(['status'])
+                     ||
+                     // Valid Status Transitions
+                     (
+                       // Open -> In Progress
+                       (resource.data.status == 'open' && request.resource.data.status == 'in_progress') ||
+                       // In Progress -> Completed
+                       (resource.data.status == 'in_progress' && request.resource.data.status == 'completed') ||
+                       // Completed -> Archived
+                       (resource.data.status == 'completed' && request.resource.data.status == 'archived') ||
+                       // Admin can force any status
+                       isAdmin()
+                     )
+                   );
+    }
+    
+    // Shared Links (Client Portal)
+    match /sharedLinks/{linkId} {
+      allow read: if true; // Public read needed for client portal token validation
+      allow write: if request.auth != null && (isAdmin() || isSupervisor());
+    }
+
+    // Route Logs
+    match /route_logs/{logId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+    }
+
+    // Pricing Library
+    match /pricing_library/{document=**} {
+      allow read: if request.auth != null; 
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // --- NEW COLLECTIONS (v2) ---
+
+    // Dashcam Clips
+    match /dashcam_clips/{clipId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null; // Allow drivers to save clips
+      allow update, delete: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin());
+    }
+
+    // Dispatch Schedule
+    match /dispatch_schedule/{dispatchId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (isAdmin() || isSupervisor());
+    }
+
+    // Job Tickets (Load Sheets)
+    match /job_tickets/{ticketId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin() || isSupervisor());
+    }
+
+    // Time Tickets (Paper Tickets / Signatures)
+    match /time_tickets/{ticketId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null && (request.auth.uid == resource.data.userId || isAdmin() || isSupervisor());
+    }
+
+    // Snow Routes
+    match /snow_routes/{routeId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (isAdmin() || isSupervisor());
+    }
+
+    // Form Submissions
+    match /form_submissions/{formId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null 
+                   && request.resource.data.keys().hasAll(['type', 'submittedAt', 'userId']);
+    }
+
+    // App Settings (RBAC)
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+    
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

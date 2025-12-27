@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Admin | City Pave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .glass-panel {
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .action-card:hover {
+            transform: translateY(-2px);
+            border-color: #3b82f6;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 font-inter text-slate-900">
+    <div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div>
+    <!-- Script loading -->
+    <script type="module" src="../../navigation.js"></script>
+
+    <div class="pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Header -->
+        <div class="mb-10 flex flex-col md:flex-row md:items-end md:justify-between">
+            <div>
+                <h6 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-1">Organization Control</h6>
+                <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Business Dashboard</h1>
+                <p class="mt-2 text-slate-500">Manage your subscription, compliance, and team deployment.</p>
+            </div>
+
+            <div class="mt-6 md:mt-0 flex flex-wrap gap-3">
+                <a href="employees.html"
+                    class="inline-flex items-center px-5 py-2.5 border border-slate-300 shadow-sm text-sm font-bold rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition">
+                    Manage Staff
+                </a>
+                <a href="store.html"
+                    class="inline-flex items-center px-5 py-2.5 border border-transparent shadow-sm text-sm font-bold rounded-lg text-white bg-blue-600 hover:bg-blue-700 transition">
+                    + Add Modules
+                </a>
+            </div>
+        </div>
+
+        <!-- KPI Cards -->
+        <div class="grid grid-cols-1 gap-6 sm:grid-cols-3 mb-10">
+            <!-- Current Subscription -->
+            <div class="glass-panel rounded-xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                    <svg class="h-24 w-24 text-blue-900" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M10 2a8 8 0 100 16 8 8 0 000-16zm0 14a6 6 0 110-12 6 6 0 010 12z" />
+                    </svg>
+                </div>
+                <dt class="text-sm font-bold text-slate-500 uppercase tracking-wider">Subscription Tier</dt>
+                <dd class="mt-2 text-3xl font-extrabold text-slate-900">Professional</dd>
+                <dd class="text-sm text-blue-600 mt-1 font-medium">Auto-renewal active</dd>
+            </div>
+
+            <!-- Monthly Bill -->
+            <div class="glass-panel rounded-xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                    <svg class="h-24 w-24 text-green-900" fill="currentColor" viewBox="0 0 20 20">
+                        <path
+                            d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" />
+                    </svg>
+                </div>
+                <dt class="text-sm font-bold text-slate-500 uppercase tracking-wider">Monthly Est.</dt>
+                <dd class="mt-2 text-3xl font-extrabold text-slate-900">$249.00</dd>
+                <dd class="text-sm text-slate-400 mt-1 font-medium">Next invoice: Dec 15</dd>
+            </div>
+
+            <!-- Deployment Status -->
+            <div class="glass-panel rounded-xl p-6 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
+                    <svg class="h-24 w-24 text-purple-900" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fill-rule="evenodd"
+                            d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <dt class="text-sm font-bold text-slate-500 uppercase tracking-wider">Module Health</dt>
+                <div class="flex items-baseline gap-2 mt-2">
+                    <dd class="text-3xl font-extrabold text-slate-900">100%</dd>
+                    <span
+                        class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Operational</span>
+                </div>
+                <dd class="text-sm text-slate-400 mt-1 font-medium">5 Modules Deployed</dd>
+            </div>
+        </div>
+
+        <!-- Enhanced Links Section -->
+        <h3 class="text-xl font-bold text-slate-900 mb-6">Admin Controls</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6 mb-12">
+
+            <!-- Deployment Strategy -->
+            <a href="deployment.html"
+                class="action-card bg-white p-8 rounded-xl shadow-sm border border-slate-200 transition-all group">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-indigo-100 rounded-lg p-3 group-hover:bg-indigo-600 transition-colors">
+                        <svg class="h-8 w-8 text-indigo-600 group-hover:text-white" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                        </svg>
+                    </div>
+                    <div class="ml-6">
+                        <h4 class="text-xl font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                            Deployment & RBAC</h4>
+                        <p class="mt-2 text-slate-500 text-base leading-relaxed">
+                            Configure which roles have access to specific modules. Manage your organization's "Blast
+                            Radius" and security permissions.
+                        </p>
+                        <span class="mt-4 inline-flex items-center text-sm font-bold text-indigo-600">
+                            Manage Deployment &rarr;
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Legal & Compliance -->
+            <a href="legal.html"
+                class="action-card bg-white p-8 rounded-xl shadow-sm border border-slate-200 transition-all group">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-slate-100 rounded-lg p-3 group-hover:bg-slate-700 transition-colors">
+                        <svg class="h-8 w-8 text-slate-600 group-hover:text-white" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3" />
+                        </svg>
+                    </div>
+                    <div class="ml-6">
+                        <h4 class="text-xl font-bold text-slate-900 group-hover:text-slate-800 transition-colors">Legal
+                            & Compliance Hub</h4>
+                        <p class="mt-2 text-slate-500 text-base leading-relaxed">
+                            Manage liability waivers, review contracts, and access your privacy audit logs. Keep your
+                            paperwork in check.
+                        </p>
+                        <span class="mt-4 inline-flex items-center text-sm font-bold text-slate-600">
+                            Open Legal Hub &rarr;
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+            <!-- Financial Policy -->
+            <a href="financial_policy.html"
+                class="action-card bg-white p-8 rounded-xl shadow-sm border border-slate-200 transition-all group">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 bg-green-100 rounded-lg p-3 group-hover:bg-green-600 transition-colors">
+                        <svg class="h-8 w-8 text-green-600 group-hover:text-white" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="ml-6">
+                        <h4 class="text-xl font-bold text-slate-900 group-hover:text-green-600 transition-colors">
+                            Financial Policy</h4>
+                        <p class="mt-2 text-slate-500 text-base leading-relaxed">
+                            Configure expense reimbursement methods (Payroll, Direct Deposit, Trash) for your employees.
+                        </p>
+                        <span class="mt-4 inline-flex items-center text-sm font-bold text-green-600">
+                            Configure Policy &rarr;
+                        </span>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <!-- Organization Details -->
+            <div class="bg-white shadow-sm border border-slate-200 rounded-xl p-8">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-slate-900">Organization Settings</h3>
+                    <button class="text-sm font-bold text-blue-600 hover:text-blue-800">Edit Details</button>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-4">
+                        <div class="text-sm font-medium text-gray-500">Legal Name</div>
+                        <div class="col-span-2 text-sm font-bold text-gray-900">City Pave Ltd.</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 border-b border-gray-100 pb-4">
+                        <div class="text-sm font-medium text-gray-500">Billing Email</div>
+                        <div class="col-span-2 text-sm font-bold text-gray-900">billing@citypave.ca</div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4 pb-4">
+                        <div class="text-sm font-medium text-gray-500">Address</div>
+                        <div class="col-span-2 text-sm text-gray-900">123 Construction Way<br>Builder City, BC V8V 1A1
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script type="module" src="app.js"></script>
+</body>
+
+</html>

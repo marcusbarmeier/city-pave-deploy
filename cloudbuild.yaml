@@ -1,0 +1,23 @@
+steps:
+  # 1. Install Dependencies
+  - name: 'node:18'
+    entrypoint: 'npm'
+    args: ['install']
+
+  # 2. Build Web Application
+  - name: 'python:3.9'
+    entrypoint: 'python3'
+    args: ['build.py']
+
+  # 3. Deploy to Firebase Hosting
+  - name: 'gcr.io/$PROJECT_ID/firebase'
+    args: ['deploy', '--project', '$PROJECT_ID', '--only', 'hosting']
+
+# Upload build artifacts (optional, for debugging)
+artifacts:
+  objects:
+    location: 'gs://$PROJECT_ID-build-artifacts/$BUILD_ID'
+    paths: ['dist/**']
+
+# Timeout
+timeout: '1200s'

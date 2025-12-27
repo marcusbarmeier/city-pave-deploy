@@ -1,0 +1,165 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Work Order Details</title><script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet"><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, doc, getDoc, collection } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+            authDomain: "city-pave-estimator.firebaseapp.com",
+            projectId: "city-pave-estimator",
+            storageBucket: "city-pave-estimator.firebasestorage.app",
+            messagingSenderId: "111714884839",
+            appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Expose for the internal script
+        window.firebaseServices = { db, doc, getDoc, collection };
+
+        // Auth Logic: Ensure signed in (Anonymous or otherwise)
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                console.log("WorkOrder: User authenticated", user.uid);
+                window.firebaseInitialized = true;
+                document.dispatchEvent(new Event('firebase-ready'));
+            } else {
+                console.log("WorkOrder: Signing in anonymously...");
+                signInAnonymously(auth).catch(e => {
+                    console.error("Auth Failed", e);
+                    document.getElementById('loading').textContent = "Authentication Failed.";
+                });
+            }
+        });
+    </script><style>
+        body {
+            font-family: 'Inter', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+    </style></head><body class="bg-gray-100 min-h-screen pb-20"><div class="bg-slate-900 text-white p-5 sticky top-0 z-50 shadow-md flex items-center justify-between"><div><h1 class="text-xl font-bold uppercase tracking-wider">Work Order</h1><p class="text-xs text-slate-400">Dispatch Details</p></div><button onclick="window.close()" class="bg-slate-800 p-2 rounded-lg text-slate-300 hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button></div><div id="loading" class="text-center p-10 text-gray-500">Loading Dispatch Data...</div><div id="content" class="hidden max-w-2xl mx-auto p-4 space-y-4"><div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5"><div class="flex justify-between items-start mb-4"><div><h2 id="client-name" class="text-2xl font-black text-gray-900">Loading...</h2><p id="job-type" class="text-indigo-600 font-bold text-sm uppercase mt-1">TYPE</p></div><div class="text-right"><p class="text-xs text-gray-400 uppercase font-bold">Date</p><p id="job-date" class="font-mono font-bold text-lg text-gray-800">--/--</p></div></div><div class="space-y-4"><div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-xl">📍</span><div><p class="text-xs font-bold text-gray-400 uppercase">Site Address</p><p id="site-address" class="font-bold text-gray-800">--</p></div></div><div class="flex items-start gap-3 p-3 bg-gray-50 rounded-lg"><span class="text-xl">🗑️</span><div><p class="text-xs font-bold text-gray-400 uppercase">Dump Site</p><p id="dump-address" class="font-medium text-gray-700">--</p></div></div><div class="grid grid-cols-2 gap-3"><div class="bg-blue-50 p-3 rounded-lg text-center border border-blue-100"><p class="text-xs font-bold text-blue-400 uppercase">Shop Time</p><p id="shop-time" class="text-xl font-black text-blue-900">--:--</p></div><div class="bg-green-50 p-3 rounded-lg text-center border border-green-100"><p class="text-xs font-bold text-green-400 uppercase">Site Time</p><p id="site-time" class="text-xl font-black text-green-900">--:--</p></div></div></div></div><div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5"><h3 class="text-sm font-black text-slate-800 uppercase border-b pb-2 mb-3">Scope & Notes</h3><div id="job-notes"
+                class="text-gray-700 whitespace-pre-wrap text-sm leading-relaxed min-h-[60px] bg-slate-50 p-3 rounded-lg"></div></div><div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5"><h3 class="text-sm font-black text-slate-800 uppercase border-b pb-2 mb-3">Resources</h3><div class="mb-4"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Equipment</p><p id="equipment-list" class="text-sm font-medium text-gray-800">--</p></div><div class="mb-4"><p class="text-xs font-bold text-gray-400 uppercase mb-1">Materials</p><p id="material-list" class="text-sm font-medium text-gray-800">--</p></div><div><p class="text-xs font-bold text-gray-400 uppercase mb-1">Tools</p><p id="tools-list" class="text-sm font-medium text-gray-800">--</p></div></div><div class="bg-red-50 rounded-xl shadow-sm border border-red-100 p-5"><div class="flex items-center gap-2 mb-3 border-b border-red-200 pb-2"><span class="text-xl">🦺</span><h3 class="text-sm font-black text-red-900 uppercase">Safety Protocol</h3></div><div class="grid grid-cols-2 gap-4 mb-3"><div><p class="text-[10px] font-bold text-red-400 uppercase">Toolbox Location</p><p id="safety-toolbox-loc" class="font-bold text-red-900 text-sm">--</p></div><div><p class="text-[10px] font-bold text-red-400 uppercase">Toolbox Time</p><p id="safety-toolbox-time" class="font-bold text-red-900 text-sm">--:--</p></div></div><div id="hazards-section" class="mb-3 hidden"><p class="text-[10px] font-bold text-red-400 uppercase mb-1">Hazards</p><div id="hazards-list" class="flex flex-wrap gap-1"></div></div><div id="swp-section" class="hidden"><p class="text-[10px] font-bold text-red-400 uppercase mb-1">Required SWPs</p><ul id="swp-list" class="list-disc pl-4 text-xs text-red-800"></ul></div><a href="../employee/forms.html"
+                class="block w-full text-center mt-4 bg-red-600 text-white font-bold py-2 rounded-lg hover:bg-red-700 text-sm">
+                Open Safety Forms
+            </a></div></div><script type="module">
+        // Remove import since we use window.firebaseServices
+        // import { initializeFirebase } from '../../firebase-config.js';
+
+        async function load() {
+            // Wait for Firebase
+            if (!window.firebaseInitialized) {
+                await new Promise(resolve => document.addEventListener('firebase-ready', resolve));
+            }
+
+            const params = new URLSearchParams(window.location.search);
+            const jobId = params.get('id');
+
+            if (!jobId || jobId.startsWith('custom-')) {
+                document.getElementById('loading').textContent = "This is a custom/ad-hoc job. No dispatch record exists.";
+                return;
+            }
+
+            const { db, doc, getDoc } = window.firebaseServices;
+
+            try {
+                const ref = doc(db, "dispatch_schedule", jobId);
+                const snap = await getDoc(ref);
+
+                if (!snap.exists()) {
+                    document.getElementById('loading').textContent = "Work Order not found.";
+                    return;
+                }
+
+                render(snap.data());
+                listenToLogs(jobId); // Start Real-Time Listener
+            } catch (e) {
+                console.error(e);
+                document.getElementById('loading').textContent = "Error loading data.";
+            }
+        }
+
+        function render(data) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+
+            setText('client-name', data.clientName);
+            setText('job-type', data.jobType);
+            setText('job-date', data.date);
+            setText('site-address', data.siteAddress);
+            setText('dump-address', data.dumpAddress || 'None');
+            setText('shop-time', data.shopTime || '--:--');
+            setText('site-time', data.siteTime || '--:--');
+            setText('job-notes', data.notes || 'No notes.');
+
+            setText('equipment-list', data.equipment || 'None required');
+            setText('material-list', data.material || 'None required');
+            setText('tools-list', data.tools || 'Standard tools');
+
+            setText('safety-toolbox-loc', data.toolboxLocation || 'Site');
+            setText('safety-toolbox-time', data.toolboxTime || data.siteTime);
+
+            // Haz
+            if (data.customHazards && data.customHazards.length) {
+                document.getElementById('hazards-section').classList.remove('hidden');
+                document.getElementById('hazards-list').innerHTML = data.customHazards.map(h =>
+                    `<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-bold">${h}</span>`
+                ).join('');
+            }
+
+            // SWP
+            if (data.swpList && data.swpList.length) {
+                document.getElementById('swp-section').classList.remove('hidden');
+                document.getElementById('swp-list').innerHTML = data.swpList.map(s => `<li>${s}</li>`).join('');
+            }
+        }
+
+        function setText(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = val;
+        }
+
+        load();
+
+        function listenToLogs(jobId) {
+            const { db, collection, query, where, onSnapshot } = window.firebaseServices;
+            const q = query(
+                collection(db, "daily_logs"),
+                where("jobId", "==", jobId),
+                where("type", "in", ["load", "ticket"]) // Listen for loads/tickets
+            );
+
+            onSnapshot(q, (snapshot) => {
+                const logs = [];
+                snapshot.forEach(doc => logs.push(doc.data()));
+                // Sort desc
+                logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                renderLogs(logs);
+            });
+        }
+
+        function renderLogs(logs) {
+            const container = document.getElementById('logistics-list');
+            const totalEl = document.getElementById('total-tons');
+
+            if (logs.length === 0) {
+                container.innerHTML = '<p class="text-center text-xs text-blue-400 italic py-4">No loads recorded yet today.</p>';
+                totalEl.textContent = "0.00";
+                return;
+            }
+
+            let total = 0;
+            container.innerHTML = logs.map(log => {
+                const tons = parseFloat(log.tons || 0);
+                total += tons;
+                const time = new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+                return `
+                    <div class="bg-white p-2 rounded border border-blue-100 flex justify-between items-center text-sm"><div><p class="font-bold text-gray-800">Ticket #${log.ticketNumber || 'N/A'}</p><p class="text-[10px] text-gray-500">${time}</p></div><div class="text-right"><p class="font-mono font-bold text-blue-800">${tons.toFixed(2)} T</p><p class="text-[10px] text-gray-400 truncate w-20">${log.material || 'Mat'}</p></div></div>
+                `;
+            }).join('');
+
+            totalEl.textContent = total.toFixed(2);
+        }
+    </script></body></html>

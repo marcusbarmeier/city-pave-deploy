@@ -1,0 +1,290 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>City Pave - Sketch Tool</title><script src="https://cdn.tailwindcss.com"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="../../style.css"><style>
+        /* Layout & Map Positioning */
+        body {
+            overflow: hidden;
+        }
+
+        #map-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        #map {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        #drawing-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* Google Autocomplete Z-Index Fix */
+        .pac-container {
+            z-index: 1055 !important;
+        }
+
+        /* Sidebar Transitions */
+        #side-panel {
+            transition: transform 0.3s ease-in-out;
+        }
+
+        /* Accordion Animation */
+        .accordion-content {
+            transition: max-height 0.3s ease-out;
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .accordion-content.open {
+            max-height: 1000px;
+        }
+
+        .accordion-header.active svg {
+            transform: rotate(180deg);
+        }
+
+        /* Custom Scrollbar for Sidebar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style></head><body class="bg-gray-100 flex flex-col h-screen font-inter"><div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div><script type="module" src="../../navigation.js"></script><div class="h-16 flex-shrink-0"></div><header id="top-bar"
+        class="bg-white shadow-sm p-3 z-40 flex justify-between items-center flex-shrink-0 border-b border-gray-200"><div class="flex items-center gap-4"><h1 id="page-title" class="text-lg font-bold text-gray-800 pl-4">Sketch Tool</h1></div><input type="hidden" id="estimate-number"><div class="flex items-center gap-2"><button id="undo-btn"
+                class="p-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300 transition-colors"
+                title="Undo"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6" /><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" /></svg></button><button id="redo-btn"
+                class="p-2 text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-md border border-gray-300 transition-colors"
+                title="Redo"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6" /><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13" /></svg></button><div class="h-6 w-px bg-gray-300 mx-2"></div><button id="save-btn"
+                class="px-5 py-2 bg-blue-600 text-white font-bold text-sm rounded-md hover:bg-blue-700 shadow-sm transition-all active:scale-95 flex items-center gap-2"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path
+                        d="M7.707 10.293a1 1 0 10-1.414 1.414l3 3a1 1 0 001.414 0l3-3a1 1 0 00-1.414-1.414L11 11.586V6h5a2 2 0 012 2v7a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2h5v5.586l-1.293-1.293zM9 4a1 1 0 012 0v2H9V4z" /></svg>
+                Save Sketch
+            </button></div></header><main class="flex-grow flex flex-col md:flex-row min-h-0 relative"><div id="side-panel"
+            class="w-full md:w-96 bg-white shadow-xl z-30 flex flex-col overflow-y-auto border-r border-gray-200 flex-shrink-0"><div class="p-4 space-y-5 pb-24"><div class="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm"><h3 class="font-bold text-blue-900 mb-3 text-sm flex items-center uppercase tracking-wide"><span
+                            class="bg-blue-600 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] mr-2">1</span>
+                        Job Details
+                    </h3><div class="space-y-3"><div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Location /
+                                Address</label><input type="text" id="pac-input"
+                                class="w-full p-2 border border-gray-300 rounded bg-white text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 shadow-sm"
+                                placeholder="Search address..."></div><div class="grid grid-cols-2 gap-2"><div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Client
+                                    Name</label><input type="text" id="client-name"
+                                    class="w-full p-2 border border-gray-300 rounded bg-white text-sm shadow-sm"></div><div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Sketch
+                                    Title</label><input type="text" id="sketch-title"
+                                    class="w-full p-2 border border-gray-300 rounded bg-white text-sm shadow-sm"></div></div><div id="site-notes-wrapper"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Site Notes</label><textarea id="site-notes" rows="2"
+                                class="w-full p-2 border border-gray-300 rounded bg-white text-sm shadow-sm resize-none"></textarea></div></div></div><div id="calculator-panel"
+                    class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden flex flex-col hidden"></div><div id="default-tools-panel"
+                    class="bg-white p-0 rounded-lg border border-gray-200 shadow-sm overflow-hidden"><div class="bg-gray-50 p-3 border-b border-gray-200"><h3 class="font-bold text-gray-800 text-sm flex items-center uppercase tracking-wide"><span
+                                class="bg-gray-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] mr-2">2</span>
+                            Drawing Tools
+                        </h3></div><div class="p-3"><div class="grid grid-cols-4 gap-2 mb-4"><button id="tool-select"
+                                class="tool-btn active flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Select"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"></path></svg><span class="text-[10px] font-semibold text-gray-600">Select</span></button><button id="tool-pan"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Pan"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 00-3 0v2a7.5 7.5 0 0015 0v-5a1.5 1.5 0 00-3 0m-6-3V11m0-5.5v-1a1.5 1.5 0 013 0v1m0 0V11m0-5.5a1.5 1.5 0 013 0v3m0 0V11"></path></svg><span class="text-[10px] font-semibold text-gray-600">Pan</span></button><button id="tool-polygon"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Area"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M6.185 3.185a2 2 0 00-2.172 2.656l2.228 7.957a2 2 0 001.636 1.42l8.235 1.216a2 2 0 002.354-2.656L16.238 5.82a2 2 0 00-1.636-1.42l-8.235-1.216z"></path></svg><span class="text-[10px] font-semibold text-gray-600">Area</span></button><button id="tool-line"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Line"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 20h16M4 4h16M6 9h12M6 15h12"></path></svg><span class="text-[10px] font-semibold text-gray-600">Line</span></button><button id="tool-freeDraw"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Draw"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L14.732 3.732z"></path></svg><span class="text-[10px] font-semibold text-gray-600">Draw</span></button><button id="tool-circle"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Circle"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" stroke-width="2"></circle></svg><span class="text-[10px] font-semibold text-gray-600">Circle</span></button><button id="tool-text"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Text"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 6h16M4 12h16m-7 6h7"></path></svg><span class="text-[10px] font-semibold text-gray-600">Text</span></button><button id="tool-gpsMarker"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Marker"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg><span class="text-[10px] font-semibold text-gray-600">Mark</span></button><button id="tool-depthPoint"
+                                class="tool-btn flex flex-col items-center justify-center p-2 rounded hover:bg-gray-100 border border-transparent hover:border-gray-300 transition-all"
+                                title="Depth"><svg class="w-5 h-5 mb-1 text-gray-700" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg><span class="text-[10px] font-semibold text-gray-600">Depth</span></button></div><div class="grid grid-cols-2 gap-3 pt-3 border-t border-gray-100"><div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Color</label><input type="color" id="color-picker" value="#ff0000"
+                                    class="w-full h-8 p-0 border-0 rounded cursor-pointer"></div><div><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Size: <span
+                                        id="stroke-width-value">5</span></label><input type="range" id="stroke-width" min="1" max="50" value="5"
+                                    class="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"></div><div class="col-span-2"><label class="block text-[10px] font-bold text-gray-500 uppercase mb-1">Opacity: <span
+                                        id="opacity-value">100</span>%</label><input type="range" id="opacity" min="0.1" max="1" step="0.1" value="1"
+                                    class="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"></div></div></div><div class="accordion-section border-t border-gray-200" id="image-controls-panel"><button
+                            class="accordion-header w-full flex justify-between items-center p-3 bg-gray-50 hover:bg-gray-100 transition-colors"><span class="text-xs font-bold text-gray-700 uppercase tracking-wide">Site Plan
+                                Overlay</span><svg class="w-4 h-4 text-gray-500 transform transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path></svg></button><div class="accordion-content bg-white"><div class="p-3 space-y-3"><div class="flex gap-2"><button id="add-image-btn"
+                                        class="flex-1 py-1.5 bg-blue-50 text-blue-700 rounded text-xs font-bold border border-blue-200 hover:bg-blue-100">Upload</button><button id="remove-image-btn"
+                                        class="py-1.5 px-3 bg-red-50 text-red-700 rounded text-xs font-bold border border-red-200 hover:bg-red-100">Clear</button><input type="file" id="image-upload-input" class="hidden"
+                                        accept="image/*,application/pdf"></div><div class="space-y-2"><div><label
+                                            class="block text-[10px] font-bold text-gray-500 uppercase">Opacity</label><input type="range" id="image-opacity-slider" min="0" max="1" step="0.05"
+                                            value="0.7"
+                                            class="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"><div class="text-right text-[10px] text-gray-400"><span
+                                                id="image-opacity-value">70</span>%</div></div><div><label class="block text-[10px] font-bold text-gray-500 uppercase">Scale</label><input type="range" id="image-scale-slider" min="0.1" max="5" step="0.0025"
+                                            value="1"
+                                            class="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"><div class="text-right text-[10px] text-gray-400"><span
+                                                id="image-scale-value">100</span>%</div></div><div><label
+                                            class="block text-[10px] font-bold text-gray-500 uppercase">Rotation</label><input type="range" id="image-rotation-slider" min="0" max="360" step="0.25"
+                                            value="0"
+                                            class="w-full h-1 bg-gray-300 rounded-lg appearance-none cursor-pointer"><div class="text-right text-[10px] text-gray-400"><span
+                                                id="image-rotation-value">0</span>°</div></div></div></div></div></div></div><div id="measurements-panel-wrapper"
+                    class="bg-white rounded-lg border border-gray-200 overflow-hidden flex flex-col shadow-sm"><div class="bg-gray-50 p-3 border-b border-gray-200 flex justify-between items-center"><h3 class="font-bold text-gray-800 text-sm flex items-center uppercase tracking-wide"><span
+                                class="bg-gray-700 text-white w-5 h-5 rounded-full flex items-center justify-center text-[10px] mr-2">3</span>
+                            Line Items
+                        </h3><button id="measurements-toggle-btn" class="text-gray-500 hover:text-gray-700"><svg id="measurements-toggle-icon" class="w-4 h-4 transition-transform" fill="none"
+                                viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7" /></svg></button></div><div id="measurement-list" class="p-2 space-y-2 overflow-y-auto max-h-96 bg-gray-50"><p class="text-gray-400 text-xs p-4 text-center italic">Draw on the map to add items.</p></div></div><div id="snow-route-panel" class="hidden flex flex-col h-full"><div class="p-4 bg-purple-50 rounded-lg border border-purple-200 mb-4"><h2 class="text-sm font-bold text-purple-900 uppercase tracking-wide mb-1">Snow Route Planner
+                        </h2><p class="text-xs text-purple-700">Drag items to reorder. Route calculates automatically.</p></div><div id="snow-route-waypoints"
+                        class="flex-grow overflow-y-auto p-2 space-y-2 border rounded-lg bg-white mb-4 min-h-[200px]"><p class="text-gray-500 text-sm p-2 text-center">Loading route...</p></div><div id="snow-route-summary" class="p-4 bg-white border rounded-lg shadow-sm"><h3 class="font-bold text-gray-800 mb-2 border-b pb-1 text-sm">Route Totals</h3><div class="text-xs space-y-1"><div class="flex justify-between"><span>Driving Dist:</span><span id="route-total-distance"
+                                    class="font-mono font-bold">--</span></div><div class="flex justify-between"><span>Est. Time:</span><span id="route-total-time"
+                                    class="font-mono font-bold">--</span></div></div><button id="print-snow-route-btn"
+                            class="mt-3 w-full py-2 bg-purple-600 text-white font-bold text-xs rounded hover:bg-purple-700">Print
+                            Route Sheet</button></div></div><div class="grid grid-cols-2 gap-3 pt-2"><button id="clear-btn"
+                        class="py-2 bg-white border border-red-200 text-red-600 rounded text-xs font-bold hover:bg-red-50 transition-colors">Clear
+                        All</button><button id="print-btn"
+                        class="py-2 bg-white border border-gray-300 text-gray-700 rounded text-xs font-bold hover:bg-gray-50 transition-colors">Download
+                        Image</button></div></div></div><div id="map-wrapper" class="flex-grow relative bg-gray-200 overflow-hidden"><div id="totals-panel"
+                class="absolute top-4 right-4 z-20 w-72 bg-white/90 backdrop-blur-md shadow-2xl rounded-xl border border-white/50 overflow-hidden transition-all duration-300"><div class="bg-gray-900 p-3 flex justify-between items-center"><h3 class="text-white font-bold text-xs uppercase tracking-wide">Project Totals</h3><span class="text-[10px] text-green-400 font-mono bg-gray-800 px-2 py-0.5 rounded-full">LIVE</span></div><div class="p-4 space-y-3"><div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-2"><span class="text-xs text-gray-500 font-semibold uppercase">Subtotal</span><span id="total-subtotal" class="font-bold text-gray-800 text-lg">$0.00</span></div><div class="flex justify-between items-end border-b border-dashed border-gray-300 pb-2"><span class="text-xs text-gray-500 font-semibold uppercase">GST (5%)</span><span id="total-gst" class="font-medium text-gray-600">$0.00</span></div><div class="flex justify-between items-end pt-1"><span class="text-sm text-gray-800 font-bold">Grand Total</span><span id="total-estimate" class="font-extrabold text-2xl text-blue-600">$0.00</span></div></div></div><div class="absolute top-4 left-4 z-20 flex flex-col gap-2"><div class="bg-white/90 backdrop-blur rounded-lg shadow-lg border border-white/50 p-1 flex flex-col"><button id="zoom-in-btn" class="p-2 hover:bg-gray-100 rounded text-gray-600 transition-colors"
+                        title="Zoom In"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button><div class="h-px bg-gray-200 mx-1"></div><button id="zoom-out-btn" class="p-2 hover:bg-gray-100 rounded text-gray-600 transition-colors"
+                        title="Zoom Out"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button></div><button id="toggle-location-btn"
+                    class="bg-white/90 backdrop-blur rounded-lg shadow-lg border border-white/50 p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                    title="My Location"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><line x1="22" x2="18" y1="12" y2="12" /><line x1="6" x2="2" y1="12" y2="12" /><line x1="12" x2="12" y1="6" y2="2" /><line x1="12" x2="12" y1="22" y2="18" /></svg></button><button id="side-panel-toggle"
+                    class="md:hidden bg-white rounded-lg shadow-lg border border-gray-200 p-2 text-gray-600 mt-2"><svg id="toggle-icon" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16" /></svg></button></div><div id="map"></div><canvas id="drawing-canvas"></canvas><div id="unified-edit-panel"
+                class="hidden absolute bottom-6 left-1/2 transform -translate-x-1/2 z-40 bg-white rounded-xl shadow-2xl border border-gray-200 p-3 flex items-center gap-4 animate-fade-in-up"><div class="flex flex-col items-center"><label class="text-[10px] font-bold text-gray-500 uppercase mb-1">Color</label><input type="color" id="prop-color-picker"
+                        class="w-8 h-8 p-0 border-0 rounded-full cursor-pointer shadow-sm hover:scale-110 transition-transform"></div><div class="h-8 w-px bg-gray-200"></div><div class="flex flex-col w-24"><label class="text-[10px] font-bold text-gray-500 uppercase mb-1 flex justify-between">Size <span
+                            id="prop-width-value">5</span></label><input type="range" id="prop-width-slider" min="1" max="20" value="5"
+                        class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"></div><div class="h-8 w-px bg-gray-200"></div><div class="flex flex-col w-24"><label class="text-[10px] font-bold text-gray-500 uppercase mb-1 flex justify-between">Opacity <span
+                            id="prop-opacity-value">100</span>%</label><input type="range" id="prop-opacity-slider" min="0.1" max="1" step="0.1" value="1"
+                        class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer"></div><div class="h-8 w-px bg-gray-200"></div><div class="flex items-center gap-2"><button id="duplicate-selected-btn"
+                        class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        title="Duplicate"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg></button><button id="delete-selected-btn"
+                        class="p-2 text-red-500 hover:text-white hover:bg-red-500 rounded-md transition-colors"
+                        title="Delete"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button></div></div></div></main><div id="sketch-modal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50 flex items-center justify-center"><div class="relative bg-white rounded-xl shadow-2xl max-w-md w-full mx-4 p-6 border border-gray-200"><div class="text-center"><div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4"><svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></div><h3 id="sketch-modal-title" class="text-lg font-bold text-gray-900">Title</h3><div class="mt-2 px-2"><p id="sketch-modal-text" class="text-sm text-gray-500">Message text.</p></div><div id="sketch-modal-buttons" class="mt-6 flex justify-center gap-3"></div></div></div></div><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+            authDomain: "city-pave-estimator.firebaseapp.com",
+            projectId: "city-pave-estimator",
+            storageBucket: "city-pave-estimator.firebasestorage.app",
+            messagingSenderId: "111714884839",
+            appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+        };
+
+        try {
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            const storage = getStorage(app);
+
+            window.db = db;
+            window.storage = storage;
+
+            // Expose services for navigation.js
+            window.firebaseServices = {
+                auth,
+                db,
+                storage,
+                doc,
+                getDoc
+            };
+
+            // Use existing auth session
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    console.log("Sketch App: User authenticated", user.uid);
+                    // User is logged in, proceed
+                } else {
+                    console.warn("Sketch App: No user logged in. Redirecting...");
+                    // Optional: Allow viewing but not saving? For now, force login.
+                    // window.location.href = 'index.html'; 
+                    // Commented out redirect for dev testing, but normally we'd redirect.
+                    // For now, let's just alert.
+                    // alert("Please log in to save sketches.");
+                }
+            });
+
+        } catch (fbError) {
+            console.error("Firebase Init Error:", fbError);
+            alert("Critical Error: Could not initialize app.");
+        }
+
+        (function () {
+            const script = document.createElement('script');
+            const GOOGLE_MAPS_API_KEY = "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs";
+            script.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places,drawing,geometry&callback=onGoogleMapsReady`;
+            script.async = true;
+            script.onerror = () => alert("Critical Error: Google Maps failed to load.");
+            document.head.appendChild(script);
+        })();
+
+        window.onGoogleMapsReady = async function () {
+            try {
+                const { initializeSketchApp } = await import('./sketch.js');
+                initializeSketchApp();
+            } catch (initError) {
+                console.error("App Init Error:", initError);
+            }
+        }
+
+        // UI Toggles logic is mirrored here to ensure interactions work immediately
+        document.addEventListener('DOMContentLoaded', () => {
+            // Toggle Sidebar on Mobile
+            const toggleBtn = document.getElementById('side-panel-toggle');
+            const sidePanel = document.getElementById('side-panel');
+
+            if (toggleBtn && sidePanel) {
+                toggleBtn.addEventListener('click', () => {
+                    sidePanel.classList.toggle('hidden');
+                    sidePanel.classList.toggle('absolute');
+                    sidePanel.classList.toggle('h-full');
+                    sidePanel.classList.toggle('z-50');
+                });
+            }
+        });
+    </script><script type="module" src="../../qa-agent.js"></script></body></html>

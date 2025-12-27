@@ -1,0 +1,5 @@
+firebase deploy --only functions
+
+firebase deploy --only functions
+cd /Users/marcusbarmeier/Desktop/city-pave-estimator/functions
+firebase deploy --only functions

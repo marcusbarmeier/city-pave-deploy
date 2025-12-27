@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave - Navigation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="../../style.css">
+    <link rel="stylesheet" href="../ai-overlay/style.css">
+    <style>
+        .animate-bounce-in {
+            animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.1);
+                opacity: 0;
+            }
+
+            60% {
+                transform: scale(1.1);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 h-screen overflow-hidden select-none">
+
+    <!-- Map Canvas (Background) -->
+    <div id="nav-map" class="absolute inset-0 z-0 bg-gray-900"
+        style="background-image: linear-gradient(#374151 1px, transparent 1px), linear-gradient(90deg, #374151 1px, transparent 1px); background-size: 40px 40px; opacity: 0.5;">
+    </div>
+
+    <!-- UI Overlay (HUD) -->
+    <div id="nav-ui" class="absolute inset-0 z-10 pointer-events-none">
+        <!-- Injected by nav-ui.js -->
+    </div>
+
+    <!-- Dash Cam Layer (z-index 20, below UI but above map) -->
+    <div id="dashcam-display" class="absolute inset-0 z-20 pointer-events-none"></div>
+
+    <!-- DEBUG CONSOLE (Hidden) -->
+    <div id="debug-console" class="hidden"></div>
+    <script>
+        // Script 1: Debug Console Setup
+        (function () {
+            try {
+                const logDiv = document.getElementById('debug-console');
+                function log(type, args) {
+                    if (!logDiv) return;
+                    const line = document.createElement('div');
+                    line.textContent = `[${type}] ` + Array.from(args).map(a => String(a)).join(' ');
+                    if (type === 'error') line.style.color = 'red';
+                    logDiv.appendChild(line);
+                    logDiv.scrollTop = logDiv.scrollHeight;
+                }
+                const origLog = console.log; console.log = function () { log('LOG', arguments); origLog.apply(console, arguments); };
+                const origWarn = console.warn; console.warn = function () { log('WARN', arguments); origWarn.apply(console, arguments); };
+                const origError = console.error; console.error = function () { log('ERROR', arguments); origError.apply(console, arguments); };
+                window.onerror = function (msg, url, line) { log('FATAL', [msg, url, line]); };
+            } catch (e) {
+                console.error("Debug Console Init Failed", e);
+            }
+        })();
+    </script>
+
+    <script>
+        // Script 2: Force Start Helper (Isolated)
+        console.log("Defining forceStart...");
+        window.forceStart = () => {
+            console.warn("Manual Force Start Triggered");
+            const screen = document.getElementById('start-screen');
+            if (screen) {
+                screen.classList.add('hidden');
+                screen.style.display = 'none';
+            }
+            if (!window.navApp) {
+                console.log("Attempting to dynamically import NavigationApp...");
+                import('./nav-app.js').then(module => {
+                    const app = new module.NavigationApp('nav-map', 'nav-ui');
+                    app.init({ uid: 'guest', displayName: 'Forced User' });
+                    window.navApp = app;
+                }).catch(e => {
+                    console.error("Force Start Failed:", e);
+                    alert("App Crash: " + e.message);
+                });
+            }
+        };
+    </script>
+
+    <!-- Start Overlay (Simulate Dispatch) -->
+    <div id="start-screen" class="absolute inset-0 z-50 bg-gray-900 flex items-center justify-center">
+        <div class="text-center text-white space-y-4">
+            <h1 class="text-3xl font-bold">Navigation & Logistics</h1>
+            <p id="loading-text" class="text-gray-400">Waiting for GPS...</p>
+            <!-- Fallback for Dev stuck states -->
+            <button id="force-start-btn" class="hidden mt-4 px-4 py-2 bg-red-600 rounded text-xs font-mono"
+                onclick="window.forceStart()">FORCE START (DEV)</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, where, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { activeConfig } from "../../firebase-config.js";
+        import { NavigationApp } from './nav-app.js';
+
+        // 1. Initialize Firebase
+        const app = initializeApp(activeConfig);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+        const auth = getAuth(app);
+
+        // 2. Expose Services for Modules (nav-app.js, dash-cam.js)
+        window.firebaseServices = {
+            db, storage, auth,
+            collection, addDoc, query, where, onSnapshot, getDocs,
+            ref, uploadBytes, getDownloadURL
+        };
+        console.log("Firebase Services Initialized & Exposed");
+
+        // Global Force Start helper for stuck states
+        // This was moved to the non-module script above.
+
+        // Show Force Button after 5s
+        setTimeout(() => {
+            const btn = document.getElementById('force-start-btn');
+            if (btn) btn.classList.remove('hidden');
+        }, 5000);
+
+        const waitForMaps = () => {
+            if (window.google && window.google.maps) {
+                console.log("Maps Loaded. Starting App...");
+                startApp();
+            } else {
+                console.log("Waiting for Maps...");
+                setTimeout(waitForMaps, 500);
+            }
+        };
+
+        const injectMockMaps = () => {
+            console.log("Injecting Mock Maps...");
+            if (window.google && window.google.maps) return;
+
+            window.google = {
+                maps: {
+                    Map: class {
+                        constructor(div) {
+                            this.div = div;
+                            this.controls = { TOP_CENTER: [], LEFT_BOTTOM: [] };
+                            // Add Grid Visuals to the div
+                            if (typeof div === 'string') div = document.getElementById(div);
+                            if (div) {
+                                div.style.background = 'repeating-linear-gradient(45deg, #1f2937 0px, #1f2937 10px, #111827 10px, #111827 20px)';
+                                div.style.position = 'relative';
+                                div.innerHTML = '<div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:gray;font-family:monospace;">MOCK MAP MODE</div>';
+                            }
+                        }
+                        setCenter(latlng) { }
+                        setZoom(z) { }
+                        setOptions(opt) { }
+                        panTo(latlng) { console.log("MockMap.panTo", latlng); }
+                    },
+                    Marker: class {
+                        constructor(opts) {
+                            this.map = opts.map;
+                            this.position = opts.position;
+                            this.icon = opts.icon;
+                            this.element = document.createElement('div');
+                            this.render();
+                        }
+                        setMap(map) { this.map = map; this.render(); }
+                        setPosition(pos) { this.position = pos; this.render(); }
+                        setIcon(icon) { this.icon = icon; }
+                        getIcon() { return this.icon; } // Added
+                        render() {
+                            // Simple DOM rendering for Mock Markers
+                            if (this.map && this.map.div) {
+                                let container = typeof this.map.div === 'string' ? document.getElementById(this.map.div) : this.map.div;
+                                if (container && !this.element.parentElement) {
+                                    this.element.style.width = '12px';
+                                    this.element.style.height = '12px';
+                                    this.element.style.backgroundColor = 'blue';
+                                    this.element.style.borderRadius = '50%';
+                                    this.element.style.position = 'absolute';
+                                    this.element.style.top = '50%';
+                                    this.element.style.left = '50%'; // Static overlap
+                                    this.element.style.boxShadow = '0 0 5px cyan';
+                                    this.element.style.zIndex = '50';
+                                    container.appendChild(this.element);
+                                }
+                            }
+                        }
+                    },
+                    Polygon: class {
+                        constructor(opts) { this.map = opts.map; this.paths = opts.paths; }
+                        setMap(map) { this.map = map; }
+                        setOptions(opt) { }
+                    },
+                    Size: class { constructor(w, h) { this.width = w; this.height = h; } },
+                    LatLng: class { constructor(lat, lng) { this.lat = () => lat; this.lng = () => lng; } },
+                    Geocoder: class {
+                        geocode(req, cb) {
+                            cb([{ geometry: { location: { lat: () => 34.0522, lng: () => -118.2437 } }, formatted_address: "Mock Address, Los Angeles, CA" }], "OK");
+                        }
+                    },
+                    DirectionsService: class {
+                        route(req, cb) {
+                            cb({
+                                routes: [{
+                                    legs: [{
+                                        distance: { text: "5.0 mi", value: 8046 },
+                                        duration: { text: "15 mins", value: 900 },
+                                        start_address: "Origin",
+                                        end_address: "Destination",
+                                        steps: []
+                                    }],
+                                    overview_path: []
+                                }]
+                            }, "OK");
+                        }
+                    },
+                    DirectionsRenderer: class {
+                        setMap(map) { }
+                        setDirections(res) { }
+                    },
+                    TravelMode: { DRIVING: 'DRIVING', WALKING: 'WALKING' },
+                    ControlPosition: { TOP_CENTER: 1, LEFT_BOTTOM: 2 },
+                    SymbolPath: { FORWARD_CLOSED_ARROW: 1 },
+                    geometry: {
+                        poly: {
+                            containsLocation: (latLng, polygon) => {
+                                // Simple mock: always return false or true based on testing needs
+                                // For now, prevent crash.
+                                return false;
+                            }
+                        }
+                    }
+                }
+            };
+            console.log("Mock Maps Injected Successfully.");
+        };
+
+        const startApp = () => {
+            let authTriggered = false;
+
+            const initNav = (user) => {
+                if (window.navApp) return;
+                console.log("Initializing Nav App with user:", user);
+                const screen = document.getElementById('start-screen');
+                if (screen) {
+                    screen.classList.add('hidden');
+                    screen.style.display = 'none';
+                }
+
+                try {
+                    const app = new NavigationApp('nav-map', 'nav-ui');
+                    app.init(user);
+                    window.navApp = app;
+                } catch (err) {
+                    console.error("FATAL: NavigationApp Init Failed", err);
+                    document.getElementById('loading-text').innerText = "Init Failed: " + err.message;
+                }
+            };
+
+            onAuthStateChanged(auth, (user) => {
+                console.log("Auth State Changed:", user ? "User Found" : "No User");
+                authTriggered = true;
+                initNav(user || { uid: 'guest', displayName: 'Guest Driver' });
+            });
+
+            setTimeout(() => {
+                if (!authTriggered) {
+                    console.warn("Auth timeout - forcing Guest Mode");
+                    initNav({ uid: 'guest', displayName: 'Offline Driver' });
+                }
+            }, 1500);
+        };
+
+        // SMART MAP LOADING (Modified: Always attempt real maps per user request)
+        // Only fallback to mock if API fails.
+        const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        if (isLocal) console.log("Localhost environment: Attempting to load Real Maps...");
+
+        const script = document.createElement('script');
+        // Note: API Key restriction might block localhost, causing fallback.
+        const API_KEY = "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs";
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=geometry,places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = waitForMaps;
+        script.onerror = () => {
+            console.warn("Google Maps Script Failed to Load (Network/Key Error). Using Mock.");
+            injectMockMaps();
+            startApp();
+        };
+        document.head.appendChild(script);
+
+        // FORCE MOCK MAPS - REMOVED per user request
+        // Auto-start if real maps fail is handled by onerror above
+        // just wait for maps or fallback
+
+
+        // OCR Library (Required for Invoice Scanner)
+        const tesseractScript = document.createElement('script');
+        tesseractScript.src = 'https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js';
+        document.head.appendChild(tesseractScript);
+
+        // --- SIMULATION LOGIC ---
+        import { TestSimulator } from './test-simulator.js';
+
+        const simBtn = document.createElement('button');
+        simBtn.className = "hidden fixed bottom-4 right-4 z-50 bg-indigo-600 text-white px-4 py-2 rounded-full shadow-lg font-bold text-xs hover:bg-indigo-500 transition-all";
+        simBtn.innerHTML = "▶ Run Test Scenario";
+        simBtn.onclick = () => {
+            if (!window.navApp) { alert("App not ready"); return; }
+            window.SIM_MODE = true;
+            const sim = new TestSimulator(window.navApp);
+            sim.start();
+            simBtn.classList.add('hidden'); // Hide button once started
+        };
+        document.body.appendChild(simBtn);
+    </script>
+</body>
+
+</html>

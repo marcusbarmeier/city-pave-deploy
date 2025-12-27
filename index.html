@@ -1,0 +1,405 @@
+<!-- © 2025 City Pave. All Rights Reserved. -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave - Secure Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-100 flex items-center justify-center min-h-screen font-inter py-10">
+    <div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script type="module" src="navigation.js"></script>
+
+    <div id="loading-overlay" class="fixed inset-0 bg-white z-50 flex flex-col items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+        <p class="text-gray-500 text-sm font-medium">Loading System...</p>
+    </div>
+
+    <div id="login-screen" class="hidden w-full max-w-md px-4">
+        <div class="bg-white rounded-xl shadow-2xl p-8 text-center border border-gray-100">
+            <img src="https://images.squarespace-cdn.com/content/v1/68406fe582974844d20a0b16/d1433f9a-1614-4f5e-8418-44f37be7804e/In+Partnership+with+DT+city+pave+logo+light+Background+copy.png?format=1500w"
+                alt="Logo" class="h-16 mx-auto mb-6 logo-light">
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Employee Sign In</h2>
+            <p class="text-sm text-gray-500 mb-6">Access the City Pave Estimator Suite</p>
+
+            <form id="login-form" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Email</label>
+                    <input type="email" id="login-email"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="name@citypave.ca" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Password</label>
+                    <input type="password" id="login-password"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                        placeholder="••••••••" required>
+                </div>
+                <button type="submit" id="login-btn"
+                    class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 shadow-lg transition-transform active:scale-95">
+                    Sign In
+                </button>
+            </form>
+
+            <p id="login-error" class="text-red-500 text-sm mt-4 hidden"></p>
+        </div>
+        <p class="text-center text-xs text-gray-400 mt-8">© 2025 City Pave. Authorized Personnel Only.</p>
+    </div>
+
+    <div id="main-menu" class="hidden text-center w-full max-w-5xl px-4 py-10">
+        <header class="mb-12 flex flex-col items-center relative">
+            <button id="logout-btn"
+                class="absolute top-0 right-0 text-sm text-red-500 font-bold hover:text-red-700 border border-red-100 bg-red-50 px-3 py-1 rounded-md transition-colors">Log
+                Out</button>
+
+            <img src="https://images.squarespace-cdn.com/content/v1/68406fe582974844d20a0b16/d1433f9a-1614-4f5e-8418-44f37be7804e/In+Partnership+with+DT+city+pave+logo+light+Background+copy.png?format=1500w"
+                alt="City Pave Logo" class="h-20 mb-4 logo-light">
+            <h1 class="text-4xl font-bold text-gray-800">Welcome to City Pave Tools</h1>
+            <p class="text-gray-600 mt-2" id="user-greeting">Select an application to start.</p>
+        </header>
+
+        <main class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left" id="dashboard-grid">
+
+            <a href="/modules/estimator/index.html" data-roles="estimator,admin,super_admin"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 group border border-transparent hover:border-blue-100">
+                <div class="flex justify-between items-start">
+                    <h2 class="text-2xl font-bold text-gray-900 group-hover:text-blue-600">Estimates Dashboard</h2>
+                    <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2 py-1 rounded">Office</span>
+                </div>
+                <p class="text-gray-600 mt-2">Create, manage, and track detailed client estimates.</p>
+            </a>
+
+            <button id="open-sketch-modal-btn" data-roles="estimator,admin,super_admin,sales"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 text-left w-full group border border-transparent hover:border-green-100">
+                <div class="flex justify-between items-start">
+                    <h2 class="text-2xl font-bold text-gray-900 group-hover:text-green-600">New Sketch & Quick Estimate
+                    </h2>
+                    <span class="bg-green-100 text-green-800 text-xs font-bold px-2 py-1 rounded">Sales</span>
+                </div>
+                <p class="text-gray-600 mt-2">Mark up a map to get measurements and basic pricing.</p>
+            </button>
+
+            <a href="/modules/growth/index.html" data-roles="sales,admin,super_admin"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-teal-500">
+                <h2 class="text-2xl font-bold text-gray-900">Growth & Relationships</h2>
+                <p class="text-gray-600 mt-2">Manage referral sources and qualify new leads.</p>
+            </a>
+
+            <a href="/modules/employee/index.html" data-roles="crew,foreman,admin,super_admin"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-blue-500">
+                <h2 class="text-2xl font-bold text-gray-900">Employee Portal</h2>
+                <p class="text-gray-600 mt-2">Crew access for time tracking, safety forms, and schedules.</p>
+            </a>
+
+            <a href="/modules/operations/index.html" data-roles="manager,admin,super_admin"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-purple-500">
+                <h2 class="text-2xl font-bold text-gray-900">Operations Hub</h2>
+                <p class="text-gray-600 mt-2">Manage repair tickets, equipment, and safety logs.</p>
+            </a>
+
+            <a href="/modules/operations/dispatch.html" data-roles="manager,admin,super_admin"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-indigo-500">
+                <h2 class="text-2xl font-bold text-gray-900">Dispatch Command Center</h2>
+                <p class="text-gray-600 mt-2">Schedule jobs, assign crews, and optimize routes.</p>
+            </a>
+
+
+            <a href="/modules/sketch/excavation.html" data-roles="estimator,admin,super_admin"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-orange-500">
+                <h2 class="text-2xl font-bold text-gray-900">Excavation Planner</h2>
+                <p class="text-gray-600 mt-2">Calculate volumes and truck cycles.</p>
+            </a>
+
+            <a href="/modules/safety/index.html" data-roles="all"
+                class="dashboard-card block p-8 bg-white rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 border-l-4 border-red-500">
+                <h2 class="text-2xl font-bold text-gray-900">Safety Manual</h2>
+                <p class="text-gray-600 mt-2">Access safety policies, SWPs, and emergency procedures.</p>
+            </a>
+
+        </main>
+    </div>
+
+    <div id="new-sketch-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div class="relative top-20 mx-auto p-5 border w-full max-w-lg shadow-lg rounded-md bg-white">
+            <div class="mt-3">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Create New Sketch</h3>
+                <div class="mt-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Option 1: Create a New Estimate</label>
+                        <button id="sketch-for-new-estimate-btn"
+                            class="mt-1 w-full p-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-bold">Create
+                            New Lead & Sketch</button>
+                    </div>
+                    <div class="border-t pt-4">
+                        <label for="sketch-estimate-select" class="block text-sm font-medium text-gray-700">Option 2:
+                            Attach to Existing Estimate</label>
+                        <select id="sketch-estimate-select"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm p-2"></select>
+                    </div>
+                </div>
+                <div class="px-4 py-3 mt-4 text-right">
+                    <button id="cancel-sketch-modal-btn"
+                        class="px-4 py-2 bg-gray-200 text-gray-900 text-base font-medium rounded-md hover:bg-gray-300">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit, doc, updateDoc, arrayUnion, getDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { config } from './config.js';
+        import { activeConfig } from './firebase-config.js';
+        import { initializeAISuperintendent } from './modules/admin/ai-superintendent.js';
+
+        const app = initializeApp(activeConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.db = db;
+        window.firebaseServices = {
+            auth,
+            db,
+            storage,
+            collection,
+            addDoc,
+            getDocs,
+            query,
+            where,
+            orderBy,
+            limit,
+            doc,
+            updateDoc,
+            arrayUnion,
+            getDoc,
+            ref,
+            uploadBytes,
+            getDownloadURL
+        };
+
+        console.log("FiReBaSe SeRvIcEs ExPoSeD"); // Unique log to check
+
+        // UI Elements
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loginScreen = document.getElementById('login-screen');
+        const mainMenu = document.getElementById('main-menu');
+        const loginForm = document.getElementById('login-form');
+        const loginError = document.getElementById('login-error');
+        const userGreeting = document.getElementById('user-greeting');
+
+        // --- AI SUPERINTENDENT INIT ---
+        initializeAISuperintendent('staff');
+        // --- AUTH STATE LISTENER ---
+        onAuthStateChanged(auth, async (user) => {
+            loadingOverlay.classList.add('hidden'); // Stop loading spinner
+
+            if (user) {
+                // User is signed in
+                console.log("User logged in:", user.email);
+
+                // --- GHOST MODE CHECK ---
+                const ghostId = sessionStorage.getItem('ghostModeUserId');
+                let targetUid = user.uid;
+                let isGhosting = false;
+
+                if (ghostId) {
+                    targetUid = ghostId;
+                    isGhosting = true;
+                }
+
+                // Fetch User Role/Name from Firestore
+                try {
+                    const userDoc = await getDoc(doc(db, "users", targetUid));
+                    if (userDoc.exists()) {
+                        const userData = userDoc.data();
+                        const role = userData.role || 'crew';
+                        userGreeting.textContent = `Hello, ${userData.name || 'Staff'}. Ready to work?`;
+
+                        // --- PERMISSION FILTERING ---
+                        const cards = document.querySelectorAll('.dashboard-card');
+                        cards.forEach(card => {
+                            const roles = card.dataset.roles.split(',');
+                            if (roles.includes('all') || roles.includes(role)) {
+                                card.classList.remove('hidden');
+                            } else {
+                                card.classList.add('hidden');
+                            }
+                        });
+                        // ----------------------------
+
+                        // If Ghosting, show banner
+                        if (isGhosting) {
+                            const banner = document.createElement('div');
+                            banner.className = "fixed top-0 left-0 w-full bg-purple-600 text-white text-center py-2 z-50 font-bold shadow-lg";
+                            banner.innerHTML = `
+                                👻 You are viewing as ${userData.name} (${userData.role}). 
+                                <button id="stop-ghost-btn" class="ml-4 bg-white text-purple-600 px-3 py-1 rounded text-xs uppercase hover:bg-gray-100">Stop Impersonating</button>
+                            `;
+                            document.body.appendChild(banner);
+                            document.getElementById('stop-ghost-btn').addEventListener('click', () => {
+                                sessionStorage.removeItem('ghostModeUserId');
+                                window.location.reload();
+                            });
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error fetching user profile:", e);
+                }
+
+                loginScreen.classList.add('hidden');
+                mainMenu.classList.remove('hidden');
+            } else {
+                // User is signed out
+                console.log("No user logged in.");
+                mainMenu.classList.add('hidden');
+                loginScreen.classList.remove('hidden');
+            }
+        });
+
+        // --- LOGIN HANDLER ---
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const btn = document.getElementById('login-btn');
+
+            btn.disabled = true;
+            btn.textContent = "Signing In...";
+            loginError.classList.add('hidden');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                // onAuthStateChanged will handle the UI switch
+            } catch (error) {
+                console.error("Login Failed:", error);
+                loginError.textContent = "Invalid email or password. Please try again.";
+                loginError.classList.remove('hidden');
+                btn.disabled = false;
+                btn.textContent = "Sign In";
+            }
+        });
+
+        // --- LOGOUT HANDLER ---
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            signOut(auth).then(() => {
+                // onAuthStateChanged handles UI
+                alert("You have been logged out.");
+            });
+        });
+
+        // --- BRANDING SETUP ---
+        const header = document.querySelector('header');
+        if (header) {
+            const lightLogo = header.querySelector('.logo-light');
+            const darkLogo = header.querySelector('.logo-dark');
+            const title = header.querySelector('h1');
+            if (lightLogo) lightLogo.src = config.logo_light;
+            if (darkLogo) darkLogo.src = config.logo_dark;
+            if (title) title.textContent = `Welcome to ${config.name} Tools`;
+        }
+
+        // --- LOAD OTHER SCRIPTS ---
+        // This loads your existing logic for the modal popup
+        import('./index.js');
+
+    </script>
+    <!-- EMERGENCY MODAL -->
+    <div id="emergency-modal"
+        class="hidden fixed inset-0 bg-red-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg border-4 border-red-600 overflow-hidden">
+            <div class="bg-red-600 p-4 text-white flex justify-between items-center">
+                <h3 class="font-bold text-xl flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    EMERGENCY ESCALATION
+                </h3>
+                <button onclick="document.getElementById('emergency-modal').classList.add('hidden')"
+                    class="text-white/80 hover:text-white text-2xl">&times;</button>
+            </div>
+            <div class="p-6">
+                <p class="font-bold text-gray-800 text-lg mb-2">Are you sure you want to activate Emergency Mode?</p>
+                <p class="text-gray-600 mb-4 text-sm">This will:</p>
+                <ul class="list-disc list-inside text-sm text-gray-600 mb-6 space-y-1">
+                    <li>Notify <strong>ALL Administrators</strong> immediately.</li>
+                    <li>Unlock <strong>Emergency Contacts</strong> and <strong>Shut-off Protocols</strong>.</li>
+                    <li>Log this event permanently in the audit trail.</li>
+                </ul>
+
+                <div class="bg-red-50 p-3 rounded border border-red-100 mb-6">
+                    <label class="block text-xs font-bold text-red-800 uppercase mb-1">Reason for Escalation</label>
+                    <select id="emergency-reason" class="w-full p-2 border border-red-200 rounded text-sm bg-white">
+                        <option value="safety">Safety Incident / Injury</option>
+                        <option value="fire">Fire / Hazard</option>
+                        <option value="weather">Severe Weather / Storm</option>
+                        <option value="access">Critical Access Required</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end gap-3">
+                    <button onclick="document.getElementById('emergency-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-gray-100 text-gray-700 rounded font-bold hover:bg-gray-200">Cancel</button>
+                    <button onclick="activateEmergencyMode()"
+                        class="px-4 py-2 bg-red-600 text-white rounded font-bold hover:bg-red-700 shadow-lg animate-pulse">ACTIVATE
+                        EMERGENCY MODE</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Info Display (Hidden by default) -->
+    <div id="emergency-info-panel"
+        class="hidden fixed bottom-4 right-4 z-[90] bg-white border-l-4 border-red-600 shadow-2xl p-4 rounded-r-lg max-w-sm">
+        <div class="flex justify-between items-start mb-2">
+            <h4 class="font-bold text-red-700 uppercase text-xs tracking-wider">Emergency Protocols Active</h4>
+            <button onclick="document.getElementById('emergency-info-panel').classList.add('hidden')"
+                class="text-gray-400 hover:text-gray-600">&times;</button>
+        </div>
+        <div class="space-y-2 text-sm">
+            <div>
+                <p class="font-bold text-gray-800">🚑 Emergency Contacts</p>
+                <p class="text-gray-600">Police/Fire: 911</p>
+                <p class="text-gray-600">Site Super (Marcus): 555-0199</p>
+                <p class="text-gray-600">Safety Officer: 555-0123</p>
+            </div>
+            <div>
+                <p class="font-bold text-gray-800">⚡ Shut-off Locations</p>
+                <p class="text-gray-600">Main Gas: North Wall, Panel B</p>
+                <p class="text-gray-600">Main Power: Utility Pole #42</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        // import { communicationOverlay } from './modules/communication/overlay.js';
+
+        // Wait for auth or just init immediately?
+        // Logic says we should wait for login, but overlay handles visibility internally.
+        // For this implementation, we init it, and it stays hidden until toggled or triggered.
+        // In a full implementation, we'd hook into the auth state change in the main script.
+
+        // We'll expose it globally for the main logic to access if needed
+        // window.communicationOverlay = communicationOverlay;
+
+        // Start it up
+        // communicationOverlay.init();
+    </script>
+    <script type="module" src="index.js"></script>
+    <script type="module" src="qa-agent.js"></script>
+</body>
+
+</html>

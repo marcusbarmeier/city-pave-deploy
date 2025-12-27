@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave EOS - God Mode</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-gray-100 h-screen flex overflow-hidden font-mono">
+
+    <aside class="w-64 bg-gray-800 border-r border-gray-700 flex flex-col">
+        <div class="p-6 border-b border-gray-700">
+            <h1 class="text-xl font-bold text-blue-400">EOS COMMAND</h1>
+            <p class="text-xs text-gray-500">Super Admin Console</p>
+        </div>
+        <nav class="flex-grow p-4 space-y-2">
+            <button class="w-full text-left p-3 rounded hover:bg-gray-700 text-sm font-bold text-gray-300" onclick="showSection('tenants')">🏢 Tenants</button>
+            <button class="w-full text-left p-3 rounded hover:bg-gray-700 text-sm font-bold text-gray-300" onclick="showSection('analytics')">📈 Usage Analytics</button>
+            <button class="w-full text-left p-3 rounded hover:bg-gray-700 text-sm font-bold text-gray-300" onclick="showSection('security')">🛡️ Security Alerts</button>
+        </nav>
+    </aside>
+
+    <main class="flex-grow p-8 overflow-y-auto">
+        
+        <div id="sec-tenants" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Tenant Management</h2>
+                <button onclick="document.getElementById('create-tenant-modal').classList.remove('hidden')" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded font-bold">+ Create Tenant</button>
+            </div>
+            
+            <div class="bg-gray-800 rounded-lg border border-gray-700 overflow-hidden">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-700 text-gray-400">
+                        <tr>
+                            <th class="p-4">Company Name</th>
+                            <th class="p-4">Plan</th>
+                            <th class="p-4">Modules</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tenant-list" class="divide-y divide-gray-700">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="sec-analytics" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold">Platform Usage</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                    <h3 class="text-gray-400 text-xs uppercase font-bold">Total Estimates (30 Days)</h3>
+                    <p class="text-4xl font-bold text-white mt-2" id="stat-estimates">0</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                    <h3 class="text-gray-400 text-xs uppercase font-bold">Total Value Quoted</h3>
+                    <p class="text-4xl font-bold text-green-400 mt-2" id="stat-value">$0</p>
+                </div>
+                <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                    <h3 class="text-gray-400 text-xs uppercase font-bold">Active Users</h3>
+                    <p class="text-4xl font-bold text-blue-400 mt-2" id="stat-users">0</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700 h-96">
+                <canvas id="usageChart"></canvas>
+            </div>
+        </div>
+
+        <div id="sec-security" class="hidden space-y-6">
+            <h2 class="text-2xl font-bold text-red-400">Security & Abuse</h2>
+            <div class="bg-gray-800 p-6 rounded-lg border border-gray-700">
+                <h3 class="font-bold mb-4">Recent Alerts</h3>
+                <ul id="security-log" class="space-y-2 text-sm font-mono">
+                    <li class="text-gray-500">No active threats detected.</li>
+                </ul>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="create-tenant-modal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center">
+        <div class="bg-gray-800 w-full max-w-lg p-8 rounded-xl border border-gray-600 shadow-2xl">
+            <h3 class="text-xl font-bold mb-6">Onboard New Subscriber</h3>
+            <div class="space-y-4">
+                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Company Name</label><input type="text" id="new-tenant-name" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white"></div>
+                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Tenant ID (Slug)</label><input type="text" id="new-tenant-id" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white" placeholder="e.g. bobs-paving"></div>
+                <div><label class="block text-xs font-bold text-gray-400 uppercase mb-1">Admin Email</label><input type="email" id="new-tenant-email" class="w-full bg-gray-900 border border-gray-600 rounded p-2 text-white"></div>
+                
+                <div class="p-4 bg-gray-900 rounded border border-gray-700">
+                    <h4 class="text-xs font-bold text-gray-400 uppercase mb-3">Feature Gating</h4>
+                    <div class="grid grid-cols-2 gap-3 text-sm">
+                        <label class="flex items-center"><input type="checkbox" class="module-chk" value="snow" checked> <span class="ml-2">Snow Calculator</span></label>
+                        <label class="flex items-center"><input type="checkbox" class="module-chk" value="growth"> <span class="ml-2">Growth CRM</span></label>
+                        <label class="flex items-center"><input type="checkbox" class="module-chk" value="dispatch"> <span class="ml-2">Dispatch/Ops</span></label>
+                        <label class="flex items-center"><input type="checkbox" class="module-chk" value="employee_app"> <span class="ml-2">Employee App</span></label>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 flex justify-end gap-3">
+                <button onclick="document.getElementById('create-tenant-modal').classList.add('hidden')" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button id="confirm-create-tenant" class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded">Create Tenant</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, updateDoc, addDoc, query, where } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+        const firebaseConfig = { apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs", authDomain: "city-pave-estimator.firebaseapp.com", projectId: "city-pave-estimator", storageBucket: "city-pave-estimator.firebasestorage.app", messagingSenderId: "111714884839", appId: "1:111714884839:web:2b782a1b7be5be8edc5642" };
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        window.showSection = (id) => {
+            document.querySelectorAll('main > div').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`sec-${id}`).classList.remove('hidden');
+        }
+
+        async function loadTenants() {
+            const tbody = document.getElementById('tenant-list');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-gray-500">Loading...</td></tr>';
+            
+            const snap = await getDocs(collection(db, "tenants"));
+            tbody.innerHTML = '';
+
+            snap.forEach(docSnap => {
+                const t = docSnap.data();
+                const modules = Object.keys(t.modules || {}).filter(k => t.modules[k]).map(k => `<span class="bg-blue-900 text-blue-300 px-2 py-0.5 rounded text-xs mr-1">${k}</span>`).join('');
+                
+                const row = `
+                    <tr class="hover:bg-gray-750 border-b border-gray-700">
+                        <td class="p-4 font-bold">${t.name}<br><span class="text-xs text-gray-500 font-mono">${docSnap.id}</span></td>
+                        <td class="p-4 text-gray-300">${t.plan || 'Standard'}</td>
+                        <td class="p-4">${modules}</td>
+                        <td class="p-4"><span class="text-green-400 text-xs font-bold uppercase">Active</span></td>
+                        <td class="p-4 text-right">
+                            <button class="text-xs bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-white">Edit</button>
+                        </td>
+                    </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        document.getElementById('confirm-create-tenant').addEventListener('click', async () => {
+            const name = document.getElementById('new-tenant-name').value;
+            const id = document.getElementById('new-tenant-id').value.toLowerCase().replace(/\s+/g, '-');
+            const email = document.getElementById('new-tenant-email').value;
+            
+            const modules = {};
+            document.querySelectorAll('.module-chk').forEach(chk => modules[chk.value] = chk.checked);
+
+            if(!name || !id) return alert("Name and ID required");
+
+            await setDoc(doc(db, "tenants", id), {
+                name, email, modules,
+                plan: 'Standard',
+                status: 'active',
+                createdAt: new Date().toISOString()
+            });
+
+            // Create the initial Admin user for this tenant
+            // Note: In a real app, we'd trigger a Cloud Function to send an invite email.
+            // For V1, we just create the record so they can sign up.
+            await setDoc(doc(db, "users", email), { // Using email as ID for pre-invite lookup
+                tenantId: id,
+                role: 'admin',
+                email: email,
+                status: 'Pending Invite'
+            });
+
+            alert("Tenant Created!");
+            document.getElementById('create-tenant-modal').classList.add('hidden');
+            loadTenants();
+        });
+
+        // Load on start
+        loadTenants();
+
+    </script>
+    <script type="module" src="qa-agent.js"></script>
+</body>
+</html>

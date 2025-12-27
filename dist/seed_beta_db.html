@@ -1,0 +1,65 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Seed Beta DB</title></head><body style="font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; background: #fff7ed;"><h1>🌱 Seed Beta Database</h1><p>This tool will populate the missing configuration files (RBAC) into the Beta database.</p><button id="seed-btn"
+        style="padding: 1rem 2rem; font-size: 1.2rem; background: #ea580c; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">
+        Seed Database
+    </button><div id="status"
+        style="margin-top: 2rem; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #ddd; white-space: pre-wrap;">
+        Waiting...</div><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+        // Force Beta Config
+        const firebaseConfigBeta = {
+            apiKey: "AIzaSyBSbgNhSIpjd9-ielh1V0EivXZF90166Ow",
+            authDomain: "city-pave-estimator-beta.firebaseapp.com",
+            projectId: "city-pave-estimator-beta",
+            storageBucket: "city-pave-estimator-beta.firebasestorage.app",
+            messagingSenderId: "292246416016",
+            appId: "1:292246416016:web:1bd52862a7e0560e7c8615"
+        };
+
+        const app = initializeApp(firebaseConfigBeta);
+        const db = getFirestore(app);
+
+        const btn = document.getElementById('seed-btn');
+        const status = document.getElementById('status');
+        const log = (msg) => {
+            status.textContent += '\n' + msg;
+            console.log(msg);
+        }
+
+        btn.addEventListener('click', async () => {
+            status.textContent = "Processing...";
+            btn.disabled = true;
+
+            try {
+                log("Seeding 'settings/rbac_config'...");
+
+                // Default RBAC Configuration
+                const rbacData = {
+                    permissions: {
+                        super_admin: ['*'],
+                        admin: ['view_dashboard', 'manage_users', 'view_estimates', 'edit_estimates', 'view_schedule'],
+                        manager: ['view_dashboard', 'view_estimates', 'create_estimates', 'view_schedule', 'manage_crew'],
+                        estimator: ['view_dashboard', 'view_estimates', 'create_estimates', 'view_map'],
+                        crew: ['view_schedule', 'view_map', 'clock_in'],
+                        employee: ['view_schedule', 'clock_in']
+                    },
+                    roles: ['super_admin', 'admin', 'manager', 'estimator', 'crew', 'employee'],
+                    updatedAt: new Date().toISOString()
+                };
+
+                await setDoc(doc(db, "settings", "rbac_config"), rbacData);
+
+                log("✅ SUCCESS! RBAC Config created.");
+                status.style.border = "2px solid green";
+                status.style.color = "green";
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`);
+                status.style.border = "2px solid red";
+                status.style.color = "red";
+            }
+            btn.disabled = false;
+        });
+    </script></body></html>

@@ -1,0 +1,858 @@
+/* © 2025 City Pave. All Rights Reserved.
+// This code is the confidential and proprietary property of City Pave.
+// Unauthorized copying, distribution, or use of this code is strictly prohibited.
+
+/* --- THEME COLORS & DARK MODE --- */
+:root {
+    --bg-primary: #f4f7fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #f9fafb;
+    --bg-quaternary: #e5e7eb;
+    --bg-interactive: #ffffff;
+    --text-primary: #1f2937;
+    --text-secondary: #4b5563;
+    --text-tertiary: #6B7280;
+    --border-color: #e5e7eb;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode {
+    --bg-primary: #111827;
+    /* gray-900 */
+    --bg-secondary: #1f2937;
+    /* gray-800 */
+    --bg-tertiary: #374151;
+    /* gray-700 */
+    --bg-quaternary: #4b5563;
+    /* gray-600 */
+    --bg-interactive: #374151;
+    /* gray-700 */
+    --text-primary: #f9fafb;
+    /* gray-50 */
+    --text-secondary: #9ca3af;
+    /* gray-400 */
+    --text-tertiary: #d1d5db;
+    /* gray-300 */
+    --border-color: #4b5563;
+    /* gray-600 */
+    --input-bg: #4b5563;
+    /* gray-600 */
+    --input-border: #6b7280;
+    /* gray-500 */
+    --shadow-color: rgba(0, 0, 0, 0.5);
+}
+
+/* --- DARK MODE LOGO SWITCHING --- */
+.logo-dark {
+    display: none;
+}
+
+body.dark-mode .logo-light {
+    display: none;
+}
+
+body.dark-mode .logo-dark {
+    display: block;
+}
+
+
+/* --- DARK MODE TOGGLE SWITCH --- */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.theme-switch {
+    display: inline-block;
+    height: 24px;
+    position: relative;
+    width: 48px;
+}
+
+.theme-switch input {
+    display: none;
+}
+
+.slider {
+    background-color: #ccc;
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .4s;
+}
+
+.slider:before {
+    background-color: #fff;
+    bottom: 4px;
+    content: "";
+    height: 16px;
+    left: 4px;
+    position: absolute;
+    transition: .4s;
+    width: 16px;
+}
+
+input:checked+.slider {
+    background-color: #6366F1;
+    /* Indigo-500 */
+}
+
+input:checked+.slider:before {
+    transform: translateX(24px);
+}
+
+.slider.round {
+    border-radius: 34px;
+}
+
+.slider.round:before {
+    border-radius: 50%;
+}
+
+
+/* --- STYLES FOR ESTIMATOR APP (with CSS Variables) --- */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    padding-bottom: 200px;
+    font-size: 14px;
+}
+
+.price-option-card {
+    transition: all 0.3s ease;
+    border: 2px solid var(--border-color);
+}
+
+.price-option-card.selected {
+    border-color: #3b82f6;
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.2);
+}
+
+#change-order-card.selected {
+    border-color: #10b981;
+    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.2);
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"] {
+    -moz-appearance: textfield;
+}
+
+.table-input {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--input-border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+}
+
+.table-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 1px #3b82f6;
+}
+
+textarea {
+    resize: vertical;
+}
+
+#admin-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+}
+
+.view {
+    display: none;
+}
+
+.view.active {
+    display: block;
+}
+
+.drag-handle {
+    cursor: grab;
+}
+
+.estimate-card.dragging,
+.line-item-container.dragging {
+    opacity: 0.5;
+    background: #e0e7ff;
+}
+
+.estimate-card.drag-over {
+    border-top: 2px solid #3b82f6;
+}
+
+.dashboard-filter-button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.dashboard-filter-button.active-filter {
+    background-color: var(--bg-interactive);
+    color: var(--text-primary);
+    box-shadow: 0 1px 3px 0 var(--shadow-color);
+}
+
+#quick-add-form-container {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-in-out;
+}
+
+#quick-add-form-container.open {
+    max-height: 1000px;
+}
+
+#batch-action-bar {
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Applying variables to components styled with Tailwind */
+body.dark-mode .bg-white {
+    background-color: var(--bg-secondary);
+}
+
+body.dark-mode .bg-gray-50 {
+    background-color: var(--bg-tertiary);
+}
+
+body.dark-mode .bg-gray-100 {
+    background-color: var(--bg-tertiary);
+}
+
+body.dark-mode .bg-gray-200 {
+    background-color: var(--bg-quaternary);
+}
+
+body.dark-mode .border-gray-100 {
+    border-color: var(--border-color);
+}
+
+body.dark-mode .border-gray-300 {
+    border-color: var(--input-border);
+}
+
+body.dark-mode .shadow-md,
+body.dark-mode .shadow-lg {
+    box-shadow: 0 4px 6px -1px var(--shadow-color), 0 2px 4px -2px var(--shadow-color);
+}
+
+body.dark-mode .text-gray-500 {
+    color: var(--text-secondary);
+}
+
+body.dark-mode .text-gray-600 {
+    color: var(--text-secondary);
+}
+
+body.dark-mode .text-gray-700 {
+    color: var(--text-tertiary);
+}
+
+body.dark-mode .text-gray-800 {
+    color: var(--text-primary);
+}
+
+body.dark-mode .text-gray-900 {
+    color: var(--text-primary);
+}
+
+/* --- QUILL EDITOR STYLES --- */
+#scope-description-editor,
+#contact-description-editor,
+#appendix-editor,
+#terms-editor,
+#manual-scope-editor,
+#auto-scope-editor {
+    height: 250px;
+    display: flex;
+    flex-direction: column;
+}
+
+#scope-description-editor .ql-container,
+#contact-description-editor .ql-container,
+#appendix-editor .ql-container,
+#terms-editor .ql-container {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+#scope-description-editor .ql-editor,
+#contact-description-editor .ql-editor,
+#appendix-editor .ql-editor,
+#terms-editor .ql-editor {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.description-editor .ql-editor {
+    min-height: 40px;
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+body.dark-mode .ql-toolbar,
+body.dark-mode .ql-container {
+    border-color: var(--border-color) !important;
+}
+
+body.dark-mode .ql-editor {
+    background-color: var(--input-bg);
+    color: var(--text-primary);
+}
+
+body.dark-mode .ql-snow .ql-stroke {
+    stroke: var(--text-tertiary);
+}
+
+body.dark-mode .ql-snow .ql-picker-label {
+    color: var(--text-tertiary);
+}
+
+body.dark-mode .ql-snow .ql-fill {
+    fill: var(--text-tertiary);
+}
+
+
+#static-terms-content h3 {
+    font-weight: bold;
+    margin-top: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+#static-terms-content ul {
+    list-style-position: inside;
+    margin-left: 0.5rem;
+}
+
+.rating-group {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.rating-group input {
+    display: none;
+}
+
+.rating-group label {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--input-border);
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.rating-group input:checked+label {
+    color: white;
+}
+
+.rating-group input[value="1"]:checked+label {
+    background-color: #60a5fa;
+    border-color: #3b82f6;
+}
+
+.rating-group input[value="2"]:checked+label {
+    background-color: #a78bfa;
+    border-color: #8b5cf6;
+}
+
+.rating-group input[value="3"]:checked+label {
+    background-color: #fbbf24;
+    border-color: #f59e0b;
+}
+
+.rating-group input[value="4"]:checked+label {
+    background-color: #fb923c;
+    border-color: #f97316;
+}
+
+.rating-group input[value="5"]:checked+label {
+    background-color: #f87171;
+    border-color: #ef4444;
+}
+
+/* --- STYLES FOR SKETCH APP --- */
+/* --- FIX IS HERE --- */
+/* This ensures the map wrapper takes up all available vertical space in its flex container. */
+#map-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transition: height 0.3s ease-in-out;
+}
+
+#map {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+}
+
+#drawing-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.tool-btn.active {
+    background-color: #4f46e5;
+    color: white;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px #4f46e5;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border: 2px solid #4f46e5;
+    border-radius: 50%;
+    cursor: pointer;
+    margin-top: -8px;
+}
+
+.pac-container {
+    z-index: 1000 !important;
+}
+
+body.dark-mode .pac-container {
+    background-color: var(--bg-secondary);
+}
+
+body.dark-mode .pac-item,
+body.dark-mode .pac-item-query {
+    color: var(--text-primary);
+}
+
+body.dark-mode .pac-item:hover {
+    background-color: var(--bg-tertiary);
+}
+
+body.dark-mode .pac-matched {
+    color: #a5b4fc;
+}
+
+/* Indigo-300 */
+
+
+/* --- NEW DASHBOARD CARD STYLES --- */
+.dashboard-card {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: start;
+    padding: 0.75rem;
+}
+
+.notes-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+}
+
+.notes-content.open {
+    max-height: 200px;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    body>*:not(#print-share-container):not(#dashboard-print-container) {
+        display: none !important;
+    }
+
+    #print-share-container,
+    #dashboard-print-container {
+        display: block !important;
+        padding: 0 !important;
+    }
+
+    #print-share-container section,
+    #dashboard-print-container section {
+        page-break-inside: avoid;
+    }
+
+    body {
+        padding-bottom: 0;
+        background-color: #ffffff;
+        color: #1F2937;
+        font-size: 9pt;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+
+    h2,
+    .text-2xl,
+    .text-xl {
+        font-size: 13pt;
+    }
+
+    h3,
+    .text-lg {
+        font-size: 11pt;
+    }
+}
+
+/* --- NEW DASHBOARD TWO-COLUMN LAYOUT --- */
+#estimate-list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 1rem;
+}
+
+.dashboard-date-header {
+    grid-column: 1 / -1;
+    font-size: 1.125rem;
+    font-weight: 600;
+    padding-bottom: 0.5rem;
+    margin-top: 1rem;
+    border-bottom: 2px solid var(--border-color);
+}
+
+/* --- DRAG AND DROP STYLES --- */
+.price-option-card.dragging {
+    opacity: 0.5;
+    background: #e0e7ff;
+    /* light-blue */
+    border-color: #a5b4fc;
+}
+
+.price-option-card.drag-over {
+    border-top: 3px solid #3b82f6;
+    /* blue-500 */
+}
+
+#pricing-options-container.drag-over {
+    border-bottom: 3px dashed #3b82f6;
+    /* blue-500 */
+}
+
+/* --- COLOR PICKER STYLES (FIXED) --- */
+.item-color-picker {
+    /* We REMOVED 'appearance: none' which was breaking the click */
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    /* Remove default padding */
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    border-radius: 0.25rem;
+    /* rounded-sm */
+    cursor: pointer;
+    box-sizing: border-box;
+    /* Ensures padding/border are in the size */
+    background-color: transparent;
+    /* The swatch will show through */
+}
+
+/* Hide the browser's default color picker UI */
+.item-color-picker::-webkit-color-swatch-wrapper {
+    padding: 2px;
+    /* A little padding so the color doesn't touch the border */
+    border-radius: 0.25rem;
+}
+
+.item-color-picker::-webkit-color-swatch {
+    border: none;
+    border-radius: 0.125rem;
+    /* Slightly smaller radius */
+}
+
+.item-color-picker::-moz-color-swatch {
+    border: none;
+    border-radius: 0.125rem;
+}
+
+/* Make the picker respect dark mode */
+body.dark-mode .item-color-picker {
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Sidebar Floating Logic */
+#side-panel {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    z-index: 30;
+    background: rgba(255, 255, 255, 0.95);
+    /* Slight transparency for slick look */
+    backdrop-filter: blur(5px);
+    border-right: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease-in-out;
+}
+
+/* Ensure map takes full space behind it */
+#map-wrapper {
+    width: 100%;
+    height: 100%;
+    margin-left: 0;
+    /* No margin needed since sidebar floats */
+}
+
+/* Hide specific property controls inside the tool list to reduce clutter */
+#default-tools-panel .grid.pt-3 {
+    display: none !important;
+    /* Hides the static color picker in the tools panel */
+}
+
+/* --- DARK MODE OVERRIDES --- */
+body.dark-mode {
+    background-color: #111827 !important;
+    /* Very Dark Gray */
+}
+
+body.dark-mode .bg-white,
+body.dark-mode .bg-gray-50,
+body.dark-mode .bg-gray-100 {
+    background-color: #1F2937 !important;
+    /* Dark Gray Card */
+    color: #F3F4F6 !important;
+    border-color: #374151 !important;
+}
+
+body.dark-mode .text-gray-800,
+body.dark-mode .text-gray-700,
+body.dark-mode .text-gray-600,
+body.dark-mode .text-gray-500 {
+    color: #D1D5DB !important;
+    /* Light Gray Text */
+}
+
+body.dark-mode input,
+body.dark-mode select,
+body.dark-mode textarea {
+    background-color: #374151 !important;
+    color: white !important;
+    border-color: #4B5563 !important;
+}
+
+/* Fix the top filters bar in dark mode */
+body.dark-mode #dashboard-filters {
+    background-color: #374151 !important;
+}
+
+body.dark-mode .dashboard-filter-button:not(.active-filter) {
+    color: #9CA3AF !important;
+}
+
+/* --- LIGHTWEIGHT DESIGN SYSTEM (Standardized Components) --- */
+
+:root {
+    /* Semantic Colors */
+    --color-primary: #2563EB;
+    /* Blue-600 */
+    --color-primary-hover: #1D4ED8;
+    /* Blue-700 */
+    --color-success: #16A34A;
+    /* Green-600 */
+    --color-warning: #D97706;
+    /* Amber-600 */
+    --color-danger: #DC2626;
+    /* Red-600 */
+
+    /* Spacing & sizing */
+    --radius-sm: 0.25rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* CARDS */
+.card {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-header {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    background-color: var(--bg-tertiary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.card-body {
+    padding: 1rem;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.card-title {
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+/* BUTTONS */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-primary-hover);
+    box-shadow: 0 2px 4px rgba(37, 99, 235, 0.3);
+}
+
+.btn-secondary {
+    background-color: var(--bg-interactive);
+    color: var(--text-primary);
+    border-color: var(--border-color);
+}
+
+.btn-secondary:hover {
+    background-color: var(--bg-quaternary);
+}
+
+.btn-danger {
+    background-color: #FEE2E2;
+    color: var(--color-danger);
+}
+
+.btn-danger:hover {
+    background-color: #FECACA;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.75rem;
+}
+
+/* TABLES */
+.table-standard {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-standard th {
+    text-align: left;
+    padding: 0.75rem 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-tertiary);
+    background-color: var(--bg-tertiary);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table-standard td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+}
+
+.table-standard tr:hover td {
+    background-color: var(--bg-tertiary);
+}
+
+/* BADGES */
+.badge {
+    display: inline-flex;
+    padding: 0.125rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.badge-success {
+    background-color: #DCFCE7;
+    color: #166534;
+}
+
+/* green-100/800 */
+.badge-warning {
+    background-color: #FEF3C7;
+    color: #92400E;
+}
+
+/* amber-100/800 */
+.badge-danger {
+    background-color: #FEE2E2;
+    color: #991B1B;
+}
+
+/* red-100/800 */
+.badge-neutral {
+    background-color: #F3F4F6;
+    color: #374151;
+}
+
+/* gray-100/700 */
+
+/* Dark Mode Overrides for new components */
+body.dark-mode .btn-secondary {
+    background-color: var(--bg-tertiary);
+    border-color: var(--input-border);
+}
+
+body.dark-mode .badge-success {
+    background-color: #064E3B;
+    color: #D1FAE5;
+}
+
+body.dark-mode .badge-warning {
+    background-color: #78350F;
+    color: #FEF3C7;
+}
+
+body.dark-mode .badge-danger {
+    background-color: #7F1D1D;
+    color: #FEE2E2;
+}
+
+body.dark-mode .badge-neutral {
+    background-color: #374151;
+    color: #D1D5DB;
+}

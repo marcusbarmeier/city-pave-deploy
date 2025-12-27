@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave - Employee Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+</head>
+
+<body class="bg-gray-100 flex flex-col h-screen">
+    <div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script type="module" src="../../navigation.js"></script>
+    <div class="h-16 flex-shrink-0"></div> <!-- Spacer for fixed nav -->
+
+
+
+    <main class="flex-grow overflow-y-auto p-4 space-y-6 pb-24">
+
+        <div class="flex items-center justify-between bg-white p-3 rounded-lg shadow border border-gray-200">
+            <span class="text-sm font-bold text-gray-700 flex items-center gap-2">
+                <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Auto-Track Location
+            </span>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="gps-toggle" class="sr-only peer">
+                <div
+                    class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                </div>
+            </label>
+        </div>
+        <p id="gps-status" class="text-xs text-gray-400 text-center -mt-4 hidden">GPS Active: Locating...</p>
+
+        <div id="status-card" class="bg-white rounded-xl shadow p-6 text-center border-l-4 border-gray-300">
+            <p class="text-gray-500 text-sm uppercase font-bold tracking-wide mb-2">Payroll Status</p>
+            <h2 id="clock-status-text" class="text-3xl font-bold text-gray-800 mb-4">Clocked Out</h2>
+
+            <div class="mb-4 text-left">
+                <label for="clock-asset-select" class="block text-sm font-medium text-gray-700 mb-1">Select Equipment /
+                    Vehicle</label>
+                <select id="clock-asset-select"
+                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">None (Labor Only)</option>
+                    <!-- Populated by JS -->
+                </select>
+            </div>
+
+            <!-- SITE INFO VIEW -->
+            <div id="view-info" class="view-section hidden p-4 pb-24 space-y-4">
+                <div class="bg-white rounded-xl shadow-sm p-4 border border-slate-200">
+                    <h2 class="font-bold text-slate-800 text-lg mb-2">Site Instructions</h2>
+                    <div id="site-info-loader" class="text-center py-8 text-gray-400 italic">No active site selected.
+                    </div>
+
+                    <div id="site-info-content" class="hidden space-y-4">
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                            <h3 class="text-xs font-bold text-yellow-800 uppercase mb-1">⚠️ Special Instructions</h3>
+                            <p id="site-instructions-text" class="text-sm text-yellow-900 leading-relaxed">--</p>
+                        </div>
+
+                        <div>
+                            <h3 class="text-xs font-bold text-slate-500 uppercase mb-2">Site Plan</h3>
+                            <div class="relative rounded-lg overflow-hidden border border-slate-200 bg-slate-100 group">
+                                <img id="site-plan-img" src="" class="w-full h-auto object-contain max-h-[500px]"
+                                    alt="Site Plan">
+                                <div
+                                    class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <a id="site-plan-link" href="#" target="_blank"
+                                        class="bg-white text-slate-800 px-4 py-2 rounded-full font-bold text-sm hover:scale-105 transition-transform">🔍
+                                        Zoom / Download</a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-slate-50 p-3 rounded border border-slate-100">
+                                <div class="text-xs text-slate-400 uppercase font-bold">Priority</div>
+                                <div id="site-priority" class="text-sm font-bold text-slate-700">--</div>
+                            </div>
+                            <div class="bg-slate-50 p-3 rounded border border-slate-100">
+                                <div class="text-xs text-slate-400 uppercase font-bold">Triggers</div>
+                                <div id="site-triggers" class="text-sm font-bold text-slate-700">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW: History -->
+            <div id="view-history" class="view-section hidden p-4 pb-24 space-y-4">
+                <!-- Today's Live Summary -->
+                <div class="bg-gradient-to-br from-blue-600 to-blue-800 rounded-xl p-4 text-white shadow-lg mb-6">
+                    <h3 class="font-bold text-sm opacity-80 mb-2">TODAY'S SUMMARY</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <span class="block text-3xl font-black" id="hist-today-hours">0.0</span>
+                            <span class="text-xs opacity-75">Hours Logged</span>
+                        </div>
+                        <div>
+                            <span class="block text-3xl font-black" id="hist-today-loads">0</span>
+                            <span class="text-xs opacity-75">Loads Hauled</span>
+                        </div>
+                    </div>
+                    <div class="border-t border-white/20 mt-4 pt-3 flex justify-between text-xs">
+                        <div>
+                            <span class="opacity-75 block">First Clock In</span>
+                            <span class="font-bold" id="hist-clock-in">--:--</span>
+                        </div>
+                        <div class="text-right">
+                            <span class="opacity-75 block">Active Job</span>
+                            <span class="font-bold" id="hist-active-job">Off Duty</span>
+                        </div>
+                    </div>
+                </div>
+
+                <h2 class="font-bold text-slate-800 text-lg mb-2">My History</h2>
+                <div id="history-list" class="space-y-3">
+                    <p class="text-center text-gray-400 py-8">Loading history...</p>
+                </div>
+            </div>
+
+            <!-- PROFILE VIEW -->
+
+            <div class="mb-4 text-left">
+                <label for="active-job-select" class="block text-sm font-medium text-gray-700 mb-1">Current
+                    Activity</label>
+                <select id="active-job-select"
+                    class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-800 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">General / Shop Time</option>
+                    <option value="loading" disabled>Loading jobs...</option>
+                </select>
+            </div>
+            <button id="clock-action-btn"
+                class="w-full py-4 rounded-lg text-xl font-bold text-white bg-green-600 hover:bg-green-700 shadow-lg transition-all active:scale-95">
+                Clock In
+            </button>
+            <button id="finish-site-btn"
+                class="hidden w-full py-4 rounded-lg text-xl font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-lg transition-all active:scale-95 mt-2">
+                ❄️ Finish Site & Next
+            </button>
+            <p id="shift-timer" class="mt-3 text-gray-400 font-mono text-sm hidden">00:00:00</p>
+        </div>
+
+        <!-- Dashcam Removed (Moved to modules/safety/dashcam) -->
+        <div
+            class="col-span-2 bg-gray-900 rounded-xl shadow-lg p-6 flex flex-col items-center justify-center text-center">
+            <div class="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mb-3">
+                <div class="w-8 h-8 bg-red-500 rounded-full animate-pulse"></div>
+            </div>
+            <h3 class="text-white font-bold text-lg mb-1">Dash Cam Mode</h3>
+            <p class="text-gray-400 text-sm mb-4">Record trips & incidents.</p>
+            <button onclick="window.location.href='../navigation/index.html?mode=dashcam'"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform active:scale-95">
+                Launch Camera
+            </button>
+        </div>
+
+        <div id="active-load-tracker" class="hidden bg-blue-50 rounded-xl shadow p-4 border border-blue-200">
+            <h3 class="font-bold text-blue-900 mb-2 flex justify-between">
+                <span>Billable Job Tracking</span>
+                <span id="job-timer" class="font-mono text-blue-600">00:00</span>
+            </h3>
+            <p id="active-job-name" class="text-sm text-blue-800 mb-3 truncate font-semibold"></p>
+
+            <div class="bg-white p-3 rounded border border-blue-100 flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-gray-500 uppercase font-bold">Trips / Loads</p>
+                    <p id="load-count-display" class="text-3xl font-bold text-gray-800">0</p>
+                </div>
+                <div class="flex gap-2">
+                    <button id="minus-load-btn"
+                        class="w-10 h-10 bg-gray-200 rounded-full font-bold text-gray-600">-</button>
+                    <button id="plus-load-btn"
+                        class="w-10 h-10 bg-blue-600 rounded-full font-bold text-white shadow">+</button>
+                </div>
+            </div>
+            <p class="text-xs text-blue-400 mt-2 text-center italic">Auto-increments when entering Dump Zone</p>
+        </div>
+
+        <div id="active-shift-panel" class="hidden bg-white rounded-xl shadow p-4 border-t-4 border-blue-500 mb-4">
+            <h3 class="font-bold text-gray-800 mb-3">Shift Updates</h3>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Add Note</label>
+                    <textarea id="shift-note-input" rows="2" class="w-full p-2 border rounded-md text-sm"
+                        placeholder="Material dropped, delay, etc."></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-500 mb-1">Add Photo</label>
+                    <input type="file" id="shift-photo-input" accept="image/*"
+                        class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                </div>
+                <button id="save-update-btn"
+                    class="w-full py-2 bg-blue-600 text-white font-semibold rounded-md hover:bg-blue-700 text-sm">Save
+                    Note / Photo</button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+            <button id="my-schedule-btn"
+                class="p-4 bg-white rounded-xl shadow hover:bg-blue-50 border border-transparent hover:border-blue-200 transition-all text-left group">
+                <div
+                    class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-gray-800">My Jobs</h3>
+                <p class="text-xs text-gray-500 mt-1">View dispatch & schedule</p>
+            </button>
+            <button id="forms-btn"
+                class="p-4 bg-white rounded-xl shadow hover:bg-purple-50 border border-transparent hover:border-purple-200 transition-all text-left group">
+                <div
+                    class="bg-purple-100 text-purple-600 w-10 h-10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-gray-800">Forms</h3>
+                <p class="text-xs text-gray-500 mt-1">Inspections & Safety</p>
+            </button>
+            <button id="time-ticket-btn"
+                class="p-4 bg-white rounded-xl shadow hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-all text-left group">
+                <div
+                    class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-gray-800">Time Ticket</h3>
+                <p class="text-xs text-gray-500 mt-1">Client Sign-off</p>
+            </button>
+            <button id="safety-manual-btn"
+                class="p-4 bg-white rounded-xl shadow hover:bg-orange-50 border border-transparent hover:border-orange-200 transition-all text-left group">
+                <div
+                    class="bg-orange-100 text-orange-600 w-10 h-10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-gray-800">Safety Manual</h3>
+                <p class="text-xs text-gray-500 mt-1">Procedures & Ref</p>
+            </button>
+            <button id="repairs-btn"
+                class="p-4 bg-white rounded-xl shadow hover:bg-red-50 border border-transparent hover:border-red-200 transition-all text-left group">
+                <div
+                    class="bg-red-100 text-red-600 w-10 h-10 rounded-full flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                </div>
+                <h3 class="font-bold text-gray-800">Repairs</h3>
+                <p class="text-xs text-gray-500 mt-1">Report defects</p>
+            </button>
+            <button id="expenses-btn"
+                class="p-4 bg-white rounded-xl shadow hover:bg-green-50 border border-transparent hover:border-green-200 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="bg-green-100 text-green-600 w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Expenses</h3>
+                        <p class="text-xs text-gray-500">Log receipts</p>
+                    </div>
+                </div>
+            </button>
+
+            <button onclick="window.location.href='../inventory_manager/index.html'"
+                class="p-4 bg-white rounded-xl shadow hover:bg-gray-50 border border-transparent hover:border-gray-200 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="bg-gray-100 text-gray-600 w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Inventory Mgr</h3>
+                        <p class="text-xs text-gray-500">Parts & Stock</p>
+                    </div>
+                </div>
+            </button>
+
+            <button onclick="window.location.href='../navigation/index.html'"
+                class="p-4 bg-white rounded-xl shadow hover:bg-indigo-50 border border-transparent hover:border-indigo-200 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div
+                        class="bg-indigo-100 text-indigo-600 w-10 h-10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Navigation</h3>
+                        <p class="text-xs text-gray-500">Routing & Logistics</p>
+                    </div>
+                </div>
+            </button>
+        </div>
+    </main>
+
+    <div id="schedule-modal"
+        class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-xl w-full max-w-md flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b flex justify-between items-center bg-blue-50 rounded-t-xl">
+                <h3 class="font-bold text-lg text-blue-900">Job Management</h3>
+                <button id="close-schedule-btn"
+                    class="text-gray-500 hover:text-red-500 font-bold text-2xl">&times;</button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div id="schedule-list" class="space-y-2 max-h-60 overflow-y-auto"></div>
+
+                <button onclick="window.location.href='../schedule/index.html'"
+                    class="w-full py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+                        </path>
+                    </svg>
+                    Today's Dispatch & Schedule
+                </button>
+                <button onclick="window.location.href='history/index.html'"
+                    class="w-full py-4 bg-white hover:bg-gray-50 text-gray-800 font-bold rounded-lg border-2 border-gray-200 shadow-sm flex items-center justify-center gap-3">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    View Work History (Past 12 Mos)
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- Expense & Mileage Modal -->
+    <div id="expense-modal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-md flex flex-col max-h-[90vh]">
+            <div
+                class="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-green-50 dark:bg-slate-800 rounded-t-xl">
+                <h3 class="font-bold text-lg text-green-900 dark:text-green-400">Log Expense / Mileage</h3>
+                <button id="close-expense-btn"
+                    class="text-gray-500 hover:text-red-500 font-bold text-2xl">&times;</button>
+            </div>
+            <div id="expense-form-container" class="p-6 overflow-y-auto flex-grow">
+                <!-- Content injected by expense-manager.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Repair Requests Modal -->
+    <div id="repair-modal"
+        class="hidden fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-2xl flex flex-col max-h-[90vh]">
+            <div
+                class="p-4 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center bg-gray-50 dark:bg-slate-800 rounded-t-xl">
+                <h3 class="font-bold text-lg text-slate-900 dark:text-white">Repair Requests</h3>
+                <button id="close-repair-btn"
+                    class="text-gray-500 hover:text-red-500 font-bold text-2xl">&times;</button>
+            </div>
+            <div id="repair-requests-container" class="p-6 overflow-y-auto flex-grow">
+                <!-- Content injected by repair-requests.js -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Invoice Scanner Modal Removed (Failed: Extracted to external app) -->
+    <div id="gate-pre-trip"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md text-center p-8">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 mb-6">
+                <svg class="h-10 w-10 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Start Your Shift</h2>
+            <p class="text-gray-500 mb-6">You must complete a Pre-Trip Inspection before you can view your dispatch.</p>
+            <button onclick="window.location.href='forms.html?auto=pre-trip'"
+                class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700">
+                Start Pre-Trip Inspection
+            </button>
+        </div>
+    </div>
+
+    <div id="gate-hazard"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md text-center p-8">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-orange-100 mb-6">
+                <svg class="h-10 w-10 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                    </path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Site Safety Check</h2>
+            <p class="text-gray-500 mb-6">You have arrived at the job site. Complete a Hazard Assessment before starting
+                work.</p>
+            <button onclick="window.location.href='forms.html?auto=hazard'"
+                class="w-full py-3 bg-orange-600 text-white font-bold rounded-lg shadow hover:bg-orange-700">
+                Start Hazard Assessment
+            </button>
+        </div>
+    </div>
+
+    <div id="mid-trip-banner"
+        class="hidden fixed bottom-20 left-4 right-4 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 shadow-lg rounded z-50">
+        <div class="flex justify-between items-center">
+            <div>
+                <p class="font-bold">Mid-Trip Inspection Due</p>
+                <p class="text-xs">Shift time > 5 hours.</p>
+            </div>
+            <button onclick="window.location.href='forms.html?auto=mid-trip'"
+                class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded text-xs">
+                Start Now
+            </button>
+        </div>
+    </div>
+
+    <div id="gate-early-start"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md text-center p-8">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-yellow-100 mb-6">
+                <svg class="h-10 w-10 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">You Are Early</h2>
+            <p class="text-gray-500 mb-6">
+                Your scheduled start time is <span id="scheduled-start-time"
+                    class="font-bold text-gray-800">--:--</span>.<br>
+                You can clock in starting at <span id="allowed-start-time" class="font-bold text-blue-600">--:--</span>
+                (15 min buffer).
+            </p>
+            <button onclick="document.getElementById('gate-early-start').classList.add('hidden')"
+                class="w-full py-3 bg-gray-200 text-gray-800 font-bold rounded-lg hover:bg-gray-300">
+                OK, I'll Wait
+            </button>
+            <button id="override-early-start-btn" class="mt-4 text-sm text-gray-400 underline">Manager Override</button>
+        </div>
+    </div>
+
+    <div id="gate-toolbox"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-[60] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md text-center p-8">
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-6">
+                <svg class="h-10 w-10 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                    </path>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">Tool Box Meeting</h2>
+            <p class="text-gray-500 mb-6">A safety meeting is scheduled at <span id="toolbox-time-display"
+                    class="font-bold text-gray-800"></span>.</p>
+            <div id="toolbox-location-display"
+                class="bg-gray-100 p-3 rounded-lg mb-6 text-sm text-gray-700 font-medium"></div>
+
+            <button id="attend-toolbox-btn"
+                class="w-full py-3 bg-red-600 text-white font-bold rounded-lg shadow hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                Confirm Attendance
+            </button>
+            <p id="toolbox-dist-msg" class="text-xs text-red-500 mt-2 hidden">You are too far from the meeting location.
+            </p>
+        </div>
+    </div>
+
+    <div id="snow-finish-modal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-[80] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-sm p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">Finish Snow Site</h2>
+
+            <div class="space-y-4 mb-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Service Performed</label>
+                    <div class="flex gap-2">
+                        <button type="button"
+                            class="flex-1 py-2 px-3 border rounded-md text-sm font-bold bg-blue-50 text-blue-700 border-blue-200 ring-2 ring-blue-500"
+                            data-service="Clearing" onclick="selectService(this)">Clear</button>
+                        <button type="button"
+                            class="flex-1 py-2 px-3 border rounded-md text-sm font-bold bg-gray-50 text-gray-600"
+                            data-service="Salting" onclick="selectService(this)">Salt</button>
+                        <button type="button"
+                            class="flex-1 py-2 px-3 border rounded-md text-sm font-bold bg-gray-50 text-gray-600"
+                            data-service="Hauling" onclick="selectService(this)">Haul</button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Material Used</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="snow-salt-amount" class="w-2/3 p-2 border rounded-md"
+                            placeholder="Amount">
+                        <select id="snow-material-type" class="w-1/3 p-2 border rounded-md text-sm">
+                            <option value="Salt">Salt</option>
+                            <option value="Sand">Sand</option>
+                            <option value="Brine">Brine</option>
+                        </select>
+                    </div>
+                </div>
+
+                <label
+                    class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer bg-red-50 border-red-100">
+                    <input type="checkbox" id="snow-damage-check" class="h-5 w-5 text-red-600 rounded">
+                    <span class="ml-3 text-sm font-medium text-red-800">Report Damage / Incident?</span>
+                </label>
+
+                <div id="damage-upload-area" class="hidden">
+                    <p class="text-xs text-red-600 mb-1">Photo required for damage.</p>
+                    <input type="file" id="snow-damage-photo" accept="image/*"
+                        class="block w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-red-50 file:text-red-700 hover:file:bg-red-100" />
+                </div>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('snow-finish-modal').classList.add('hidden')"
+                    class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg">Cancel</button>
+                <button id="confirm-snow-finish-btn"
+                    class="flex-1 py-3 bg-purple-600 text-white font-bold rounded-lg shadow hover:bg-purple-700">
+                    Finish & Next
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function selectService(btn) {
+            document.querySelectorAll('[data-service]').forEach(b => {
+                b.classList.remove('bg-blue-50', 'text-blue-700', 'border-blue-200', 'ring-2', 'ring-blue-500');
+                b.classList.add('bg-gray-50', 'text-gray-600');
+            });
+            btn.classList.add('bg-blue-50', 'text-blue-700', 'border-blue-200', 'ring-2', 'ring-blue-500');
+            btn.classList.remove('bg-gray-50', 'text-gray-600');
+            window.selectedSnowService = btn.dataset.service;
+        }
+        window.selectedSnowService = 'Clearing'; // Default
+
+        document.getElementById('snow-damage-check').addEventListener('change', (e) => {
+            document.getElementById('damage-upload-area').classList.toggle('hidden', !e.target.checked);
+        });
+    </script>
+
+    <div id="gate-clock-out"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-90 z-[70] flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h2 class="text-xl font-bold text-gray-900 mb-4 border-b pb-2">End of Shift Verification</h2>
+            <p class="text-sm text-gray-500 mb-4">Complete these tasks before clocking out.</p>
+
+            <div class="mb-4">
+                <button onclick="window.location.href='forms.html?auto=post-trip'"
+                    class="w-full py-3 bg-blue-50 text-blue-700 font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center justify-center gap-2 mb-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4">
+                        </path>
+                    </svg>
+                    Start Post-Trip Inspection
+                </button>
+            </div>
+
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer bg-gray-50">
+                    <input type="checkbox" class="eod-check h-5 w-5 text-blue-600 rounded" id="check-inspections"
+                        disabled>
+                    <span class="ml-3 text-sm font-medium text-gray-700">Post-Trip Inspection Completed</span>
+                </label>
+                <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" class="eod-check h-5 w-5 text-blue-600 rounded" id="check-tickets">
+                    <span class="ml-3 text-sm font-medium text-gray-700">All Time Tickets Submitted</span>
+                </label>
+                <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" class="eod-check h-5 w-5 text-blue-600 rounded" id="check-scale">
+                    <span class="ml-3 text-sm font-medium text-gray-700">Scale Tickets / Receipts Uploaded</span>
+                </label>
+                <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" class="eod-check h-5 w-5 text-blue-600 rounded" id="check-clean">
+                    <span class="ml-3 text-sm font-medium text-gray-700">Cab Cleaned & Garbage Removed</span>
+                </label>
+                <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" class="eod-check h-5 w-5 text-blue-600 rounded" id="check-park">
+                    <span class="ml-3 text-sm font-medium text-gray-700">Equipment Parked & Secured</span>
+                </label>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="document.getElementById('gate-clock-out').classList.add('hidden')"
+                    class="flex-1 py-3 bg-gray-200 text-gray-800 font-bold rounded-lg">Cancel</button>
+                <button id="confirm-clock-out-btn" disabled
+                    class="flex-1 py-3 bg-red-600 text-white font-bold rounded-lg shadow opacity-50 cursor-not-allowed">Clock
+                    Out</button>
+            </div>
+        </div>
+    </div>
+
+    <script>function initMap() { window.googleMapsLoaded = true; }</script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs&libraries=geometry,places&callback=initMap"></script>
+
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, query, where, getDocs, onSnapshot, arrayUnion, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+
+        import { config } from '../../config.js';
+        import { initializeEmployeeApp } from './employee.js?v=beta2';
+
+        document.title = `${config.name} - Employee Portal`;
+        const lightLogo = document.querySelector('.logo-light');
+        if (lightLogo) lightLogo.src = config.logo_light;
+
+        import { activeConfig } from '../../firebase-config.js';
+
+        const app = initializeApp(activeConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.firebaseServices = { auth, db, storage, signOut, collection, doc, getDoc, setDoc, updateDoc, addDoc, query, where, getDocs, onSnapshot, arrayUnion, ref, uploadBytes, getDownloadURL, orderBy, limit };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // document.getElementById('current-user-name').textContent = user.displayName || user.email; // Handled by navigation.js
+                initializeEmployeeApp();
+            } else {
+                window.location.href = '../../index.html';
+            }
+        });
+    </script>
+    <script type="module" src="../../qa-agent.js"></script>
+    <!-- Navigation Bar -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-3 z-50 safe-area-pb shadow-2xl"
+        id="app-navigation-bar">
+        <button id="nav-home" class="flex flex-col items-center text-blue-600 focus:outline-none">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                </path>
+            </svg>
+            <span class="text-[10px] font-bold">Home</span>
+        </button>
+        <button id="nav-info" class="flex flex-col items-center text-gray-400 focus:outline-none">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-[10px] font-bold">Info</span>
+        </button>
+        <button id="nav-history" class="flex flex-col items-center text-gray-400 focus:outline-none">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="text-[10px] font-bold">History</span>
+        </button>
+        <button id="nav-profile" class="flex flex-col items-center text-gray-400 focus:outline-none">
+            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+            </svg>
+            <span class="text-[10px] font-bold">Me</span>
+        </button>
+    </nav>
+
+    <!-- Padding for Cockpit -->
+    <div class="h-24"></div>
+</body>
+
+</html>

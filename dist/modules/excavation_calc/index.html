@@ -1,0 +1,22 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>City Pave - Excavation Calculator</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../style.css"></head><body class="bg-gray-100 h-screen flex flex-col"><header class="bg-white shadow p-4 flex justify-between items-center z-20"><h1 class="text-xl font-bold text-gray-800">Excavation Calculator</h1></header><main id="excavation-app-container" class="flex-grow relative border-t border-gray-200"></main><script type="module">
+        import { initializeExcavationModule } from './excavation-app.js';
+
+        // Wait for Maps
+        const waitForMaps = () => {
+            if (window.google && window.google.maps) {
+                initializeExcavationModule('excavation-app-container');
+            } else {
+                setTimeout(waitForMaps, 100);
+            }
+        };
+
+        // Load Maps Script
+        const script = document.createElement('script');
+        const API_KEY = "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs";
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${API_KEY}&libraries=drawing,geometry,places`;
+        script.async = true;
+        script.defer = true;
+        script.onload = waitForMaps;
+        document.head.appendChild(script);
+    </script></body></html>

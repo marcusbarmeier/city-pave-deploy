@@ -1,0 +1,520 @@
+// © 2025 City Pave. All Rights Reserved.
+// This code is the confidential and proprietary property of City Pave.
+// Unauthorized copying, distribution, or use of this code is strictly prohibited.
+// Filename: measure.js
+import { pricingOptions } from './pricing.js';
+
+// --- APPLICATION STATE & CONSTANTS ---
+const appState = {
+    map: null,
+    drawingManager: null,
+    drawnShapes: [],
+    redoStack: [],
+    allEstimates: [],
+    userLocationMarker: null,
+    locationWatchId: null,
+    mapsApiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs" // Your Google Maps API Key
+};
+
+// --- INITIALIZATION ---
+function initializeMeasureApp() {
+    const script = document.createElement('script');
+    script.src = `https://maps.googleapis.com/maps/api/js?key=${appState.mapsApiKey}&libraries=places,drawing,geometry&callback=initMap`;
+    script.async = true;
+    script.defer = true;
+    document.head.appendChild(script);
+}
+
+window.initMap = function() {
+    appState.map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 49.8951, lng: -97.1384 },
+        zoom: 12,
+        mapTypeId: 'satellite',
+        disableDefaultUI: true,
+        zoomControl: true,
+        streetViewControl: false,
+        mapTypeControl: false,
+        tilt: 0
+    });
+
+    appState.drawingManager = new google.maps.drawing.DrawingManager({
+        drawingMode: google.maps.drawing.OverlayType.POLYGON,
+        drawingControl: true,
+        drawingControlOptions: {
+            position: google.maps.ControlPosition.TOP_LEFT,
+            drawingModes: ['polygon', 'polyline', 'marker'],
+        },
+        polygonOptions: { fillColor: "#FF0000", fillOpacity: 0.3, strokeWeight: 3, strokeColor: "#FF0000", editable: true, zIndex: 1 },
+        polylineOptions: { strokeWeight: 3, strokeColor: "#0000FF", editable: true, zIndex: 1 },
+    });
+    appState.drawingManager.setMap(appState.map);
+
+    setupAutocomplete();
+    setupEventListeners();
+    loadAllEstimates();
+};
+
+function setupAutocomplete() {
+    const input = document.getElementById("pac-input");
+    const autocomplete = new google.maps.places.Autocomplete(input);
+    autocomplete.bindTo("bounds", appState.map);
+    autocomplete.setFields(["formatted_address", "geometry"]);
+    autocomplete.addListener("place_changed", () => {
+        const place = autocomplete.getPlace();
+        if (place.geometry && place.geometry.location) {
+            appState.map.setCenter(place.geometry.location);
+            appState.map.setZoom(20);
+            document.getElementById('client-address').value = place.formatted_address || '';
+        }
+    });
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const addressFromUrl = urlParams.get('address');
+    if (addressFromUrl) {
+        input.value = addressFromUrl;
+        const placesService = new google.maps.places.PlacesService(appState.map);
+        placesService.findPlaceFromQuery({
+            query: addressFromUrl,
+            fields: ['formatted_address', 'geometry']
+        }, (results, status) => {
+            if (status === google.maps.places.PlacesServiceStatus.OK && results && results[0]?.geometry) {
+                appState.map.setCenter(results[0].geometry.location);
+                appState.map.setZoom(20);
+                if (results[0].formatted_address) {
+                   document.getElementById('client-address').value = results[0].formatted_address;
+                }
+            }
+        });
+    }
+}
+
+function setupEventListeners() {
+    google.maps.event.addListener(appState.drawingManager, 'overlaycomplete', handleOverlayComplete);
+    document.getElementById('save-btn').addEventListener('click', saveSketch);
+    document.getElementById('undo-btn').addEventListener('click', undoLastShape);
+    document.getElementById('redo-btn').addEventListener('click', redoLastShape);
+    document.getElementById('toggle-location-btn').addEventListener('click', toggleLiveLocation);
+}
+
+
+// --- CORE LOGIC ---
+
+function handleOverlayComplete(event) {
+    const defaultColor = event.type === 'polygon' ? "#FF0000" : (event.type === 'polyline' ? "#0000FF" : "#FFFF00");
+    let shapeInfo = {
+        id: `shape_${Date.now()}`,
+        overlay: event.overlay,
+        type: event.type,
+        note: '',
+        service: 'none',
+        price: 0,
+        segmentLabels: [],
+        color: defaultColor
+    };
+
+    event.overlay.setOptions({ fillColor: defaultColor, strokeColor: defaultColor });
+
+    if (event.type === 'marker') {
+        const depth = prompt("Enter depth in inches:", "4");
+        if (depth === null || isNaN(parseFloat(depth))) {
+            event.overlay.setMap(null);
+            return;
+        }
+        shapeInfo.depth = parseFloat(depth);
+        shapeInfo.measurementType = 'depth';
+        event.overlay.setLabel({ text: `${depth}"`, color: "black", fontWeight: "bold" });
+    } else {
+        const path = event.overlay.getPath();
+        const updateAll = () => {
+            updateMeasurements();
+            updateDimensionLabels(shapeInfo);
+        };
+        google.maps.event.addListener(path, 'set_at', updateAll);
+        google.maps.event.addListener(path, 'insert_at', updateAll);
+        appState.map.addListener('idle', updateAll);
+        updateDimensionLabels(shapeInfo);
+    }
+
+    appState.drawnShapes.push(shapeInfo);
+    appState.redoStack = [];
+    updateMeasurements();
+}
+
+function updateDimensionLabels(shapeInfo) {
+    shapeInfo.segmentLabels.forEach(label => label.setMap(null));
+    shapeInfo.segmentLabels = [];
+    const path = shapeInfo.overlay.getPath().getArray();
+    if (path.length < 2) return;
+
+    for (let i = 0; i < path.length; i++) {
+        const p1 = path[i];
+        const p2 = (shapeInfo.type === 'polygon' && i === path.length - 1) ? path[0] : path[i + 1];
+        if (!p2) continue;
+
+        const distance = google.maps.geometry.spherical.computeDistanceBetween(p1, p2) * 3.28084; // meters to feet
+        const midPoint = google.maps.geometry.spherical.interpolate(p1, p2, 0.5);
+
+        const label = new google.maps.Marker({
+            position: midPoint,
+            map: appState.map,
+            icon: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=',
+            label: { text: `${distance.toFixed(1)}'`, className: 'dimension-label' },
+            zIndex: 10
+        });
+        shapeInfo.segmentLabels.push(label);
+    }
+}
+
+async function saveSketch() {
+    if (appState.drawnShapes.length === 0) return alert("Please draw at least one shape before saving.");
+    const saveBtn = document.getElementById('save-btn');
+    saveBtn.disabled = true;
+    saveBtn.textContent = 'Saving...';
+
+    const { db, storage, doc, getDoc, setDoc, updateDoc, arrayUnion, ref, uploadString, getDownloadURL } = window.firebaseServices;
+    
+    appState.drawingManager.setOptions({ drawingControl: false });
+    appState.drawnShapes.forEach(shape => shape.segmentLabels.forEach(label => label.setMap(null)));
+    
+    try {
+        await new Promise(resolve => setTimeout(resolve, 250)); // Allow map to settle
+
+        const mapCanvas = await html2canvas(document.getElementById('map'), { useCORS: true });
+        const screenshotDataUrl = mapCanvas.toDataURL('image/jpeg', 0.9);
+        const sketchId = `sketch_${Date.now()}`;
+        
+        let estimateId = document.getElementById('estimate-select').value;
+        if (estimateId === 'new-lead') {
+            estimateId = sketchId;
+        }
+        const storageRef = ref(storage, `estimates/${estimateId}/simpleScreenshot_${sketchId}.jpg`);
+        
+        await uploadString(storageRef, screenshotDataUrl, 'data_url');
+        const downloadURL = await getDownloadURL(storageRef);
+
+        let subtotal = 0;
+        const measurementsData = appState.drawnShapes.map(shape => {
+            const path = shape.overlay.getPath ? shape.overlay.getPath().getArray() : [shape.overlay.getPosition()];
+            const measurementType = shape.type === 'polygon' ? 'area' : (shape.type === 'polyline' ? 'length' : 'depth');
+            const sanitizedPath = path.map(latLng => ({ lat: latLng.lat(), lng: latLng.lng() }));
+            
+            subtotal += (shape.measurement || 0) * (shape.price || 0);
+
+            return {
+                id: shape.id,
+                type: shape.type === 'marker' ? 'depthPoint' : shape.type,
+                measurement: shape.measurement || null,
+                measurementType: measurementType,
+                service: shape.service || 'none',
+                price: shape.price || 0,
+                lineItemDescription: shape.note || '',
+                depth: shape.depth || null,
+                pathLats: sanitizedPath.map(p => p.lat),
+                pathLngs: sanitizedPath.map(p => p.lng),
+                color: shape.color,
+                width: shape.overlay.get('strokeWeight') || 3,
+                opacity: shape.overlay.get('fillOpacity') || 1,
+            };
+        });
+        
+        const gst = subtotal * 0.05;
+        const total = subtotal + gst;
+
+        const sketchData = {
+            id: sketchId,
+            screenshotUrl: downloadURL,
+            formattedEstimateUrl: null, // Mobile tool does not generate this
+            clientName: document.getElementById('client-name').value,
+            clientAddress: document.getElementById('client-address').value,
+            siteNotes: `Mobile measurement added on ${new Date().toLocaleDateString()}`,
+            measurements: measurementsData,
+            subtotal,
+            gst,
+            totalEstimate: total,
+            createdAt: new Date().toISOString()
+        };
+
+        const clientInfoForUpdate = {
+            name: sketchData.clientName,
+            phone: document.getElementById('client-phone').value,
+            email: document.getElementById('client-email').value,
+            address: sketchData.clientAddress
+        };
+        
+        const currentEstimateId = document.getElementById('estimate-select').value;
+        let estimateRef;
+
+        if (currentEstimateId === 'new-lead') {
+            estimateRef = doc(db, "estimates", estimateId);
+            await setDoc(estimateRef, {
+                customerInfo: clientInfoForUpdate,
+                status: 'Draft',
+                createdAt: new Date().toISOString(),
+                tags: ['New Leads'],
+                sketches: [sketchData]
+            });
+        } else {
+            estimateRef = doc(db, "estimates", currentEstimateId);
+            await updateDoc(estimateRef, {
+                customerInfo: clientInfoForUpdate,
+                sketches: arrayUnion(sketchData)
+            });
+        }
+
+        alert('Measurement saved successfully!');
+        window.location.href = 'estimator.html';
+
+    } catch (error) {
+        console.error("Error saving sketch:", error);
+        alert(`Error saving sketch: ${error.message}`);
+    } finally {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Save to Estimate';
+        appState.drawingManager.setOptions({ drawingControl: true });
+        appState.drawnShapes.forEach(shape => { if(shape.segmentLabels) shape.segmentLabels.forEach(label => label.setMap(appState.map)) });
+    }
+}
+
+
+// --- UI & DOM MANIPULATION ---
+
+async function loadAllEstimates() {
+    const { db, collection, getDocs } = window.firebaseServices;
+    const querySnapshot = await getDocs(collection(db, "estimates"));
+    appState.allEstimates = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    populateEstimateDropdown();
+}
+
+function populateEstimateDropdown() {
+    const select = document.getElementById('estimate-select');
+    select.innerHTML = '<option value="new-lead">Create New Lead</option>';
+    appState.allEstimates.filter(e => e.status !== 'Template' && !e.isDeleted)
+        .sort((a,b) => (a.customerInfo.name || '').localeCompare(b.customerInfo.name || ''))
+        .forEach(est => {
+            const option = document.createElement('option');
+            option.value = est.id;
+            option.textContent = est.customerInfo.name || 'Unnamed Estimate';
+            select.appendChild(option);
+        });
+    select.addEventListener('change', handleEstimateSelection);
+    
+    const urlParams = new URLSearchParams(window.location.search);
+    const estimateIdFromUrl = urlParams.get('estimateId');
+    if (estimateIdFromUrl) {
+        select.value = estimateIdFromUrl;
+        handleEstimateSelection({ target: { value: estimateIdFromUrl } });
+    }
+}
+
+function handleEstimateSelection(event) {
+    const selectedId = event.target.value;
+    const infoFields = { name: '', phone: '', email: '', address: document.getElementById('client-address').value };
+    if (selectedId !== 'new-lead') {
+        const est = appState.allEstimates.find(e => e.id === selectedId);
+        if (est) Object.assign(infoFields, est.customerInfo);
+    }
+    document.getElementById('client-name').value = infoFields.name;
+    document.getElementById('client-phone').value = infoFields.phone;
+    document.getElementById('client-email').value = infoFields.email;
+    document.getElementById('client-address').value = infoFields.address;
+}
+
+function updateMeasurements() {
+    const listContainer = document.getElementById('measurement-list');
+    listContainer.innerHTML = '';
+    if (appState.drawnShapes.length === 0) {
+        listContainer.innerHTML = `<p class="text-gray-500">Use the tools on the map to draw a shape.</p>`;
+    } else {
+        appState.drawnShapes.forEach((shapeInfo, index) => {
+            const item = document.createElement('div');
+            item.className = 'p-3 border rounded-md space-y-3 bg-gray-50';
+            item.style.borderLeft = `5px solid ${shapeInfo.color || '#ccc'}`;
+            item.dataset.shapeId = shapeInfo.id;
+
+            if (shapeInfo.type === 'marker') {
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-sm">Depth Point #${index + 1}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-sm text-blue-600">Depth: ${shapeInfo.depth}"</span>
+                            <button class="delete-btn text-xl font-bold text-red-500 hover:text-red-700 leading-none">×</button>
+                        </div>
+                    </div>
+                    <textarea class="w-full p-1 border rounded-md text-xs note-input" rows="2" placeholder="Add a note...">${shapeInfo.note || ''}</textarea>
+                `;
+            } else {
+                let measurement = 0, measurementText = '', typeText = '';
+                const path = shapeInfo.overlay.getPath();
+                if (shapeInfo.type === 'polygon') {
+                    typeText = 'Area';
+                    measurement = google.maps.geometry.spherical.computeArea(path) * 10.7639; // sq meters to sq feet
+                    measurementText = `${measurement.toFixed(2)} sq ft`;
+                } else {
+                    typeText = 'Length';
+                    measurement = google.maps.geometry.spherical.computeLength(path) * 3.28084; // meters to feet
+                    measurementText = `${measurement.toFixed(2)} ft`;
+                }
+                shapeInfo.measurement = measurement;
+                
+                item.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <span class="font-semibold text-sm">${typeText} #${index + 1}</span>
+                        <div class="flex items-center gap-2">
+                            <input type="color" class="item-color-picker h-6 w-8 p-0 border-none rounded" value="${shapeInfo.color || '#FF0000'}">
+                            <span class="font-bold text-sm text-blue-600">${measurementText}</span>
+                            <button class="delete-btn text-xl font-bold text-red-500 hover:text-red-700 leading-none">×</button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-5 gap-2">
+                        <select class="service-select col-span-3 w-full p-1 border rounded-md text-xs"></select>
+                        <input type="number" class="price-input col-span-2 w-full p-1 border rounded-md text-xs" value="0.00" step="0.01">
+                    </div>
+                    <textarea class="w-full p-1 border rounded-md text-xs note-input" rows="2" placeholder="Add a note...">${shapeInfo.note || ''}</textarea>
+                `;
+                
+                const select = item.querySelector('.service-select');
+                // --- FIX: Filter out archived items ---
+                pricingOptions.filter(opt => !opt.isArchived).forEach(opt => {
+                    const option = document.createElement('option');
+                    option.value = opt.id;
+                    option.textContent = opt.name;
+                    const measurementType = shapeInfo.type === 'polygon' ? 'area' : 'length';
+                    if (opt.type !== 'none' && opt.type !== measurementType) {
+                        option.disabled = true;
+                    }
+                    select.appendChild(option);
+                });
+                select.value = shapeInfo.service || 'none';
+                item.querySelector('.price-input').value = (shapeInfo.price || 0).toFixed(2);
+            }
+            listContainer.appendChild(item);
+        });
+    }
+    
+    listContainer.addEventListener('input', handleItemInteraction);
+    listContainer.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) handleItemInteraction(e);
+    });
+    updateUndoRedoButtons();
+}
+
+function handleItemInteraction(e) {
+    const itemEl = e.target.closest('[data-shape-id]');
+    if (!itemEl) return;
+    const shapeId = itemEl.dataset.shapeId;
+    const shape = appState.drawnShapes.find(s => s.id === shapeId);
+    if (!shape) return;
+
+    if (e.target.classList.contains('delete-btn')) {
+        const shapeIndex = appState.drawnShapes.findIndex(s => s.id === shapeId);
+        if (shapeIndex > -1) {
+            const shapeToRemove = appState.drawnShapes[shapeIndex];
+            shapeToRemove.overlay.setMap(null);
+            if(shapeToRemove.segmentLabels) shapeToRemove.segmentLabels.forEach(label => label.setMap(null));
+            appState.drawnShapes.splice(shapeIndex, 1);
+            appState.redoStack = [];
+            updateMeasurements();
+        }
+    } else if (e.target.classList.contains('item-color-picker')) {
+        shape.color = e.target.value;
+        shape.overlay.setOptions({ fillColor: shape.color, strokeColor: shape.color });
+        itemEl.style.borderLeftColor = shape.color;
+    } else if (e.target.classList.contains('note-input')) {
+        shape.note = e.target.value;
+    } else if (e.target.classList.contains('service-select')) {
+        shape.service = e.target.value;
+        const priceInput = itemEl.querySelector('.price-input');
+        const noteInput = itemEl.querySelector('.note-input');
+        const selectedOption = pricingOptions.find(opt => opt.id === shape.service);
+        if (selectedOption) {
+            if (priceInput) {
+                priceInput.value = selectedOption.defaultPrice.toFixed(2);
+                shape.price = selectedOption.defaultPrice;
+            }
+            // --- FIX: Auto-populate description ---
+            if (noteInput) {
+                noteInput.value = selectedOption.description || '';
+                shape.note = noteInput.value;
+            }
+        }
+    } else if (e.target.classList.contains('price-input')) {
+        shape.price = parseFloat(e.target.value) || 0;
+    }
+}
+
+
+// --- UTILITY & HELPER FUNCTIONS ---
+
+function updateUndoRedoButtons() {
+    document.getElementById('undo-btn').disabled = appState.drawnShapes.length === 0;
+    document.getElementById('redo-btn').disabled = appState.redoStack.length === 0;
+}
+
+function undoLastShape() {
+    if (appState.drawnShapes.length > 0) {
+        const lastShape = appState.drawnShapes.pop();
+        lastShape.overlay.setMap(null);
+        if(lastShape.segmentLabels) lastShape.segmentLabels.forEach(label => label.setMap(null));
+        appState.redoStack.push(lastShape);
+        updateMeasurements();
+    }
+}
+
+function redoLastShape() {
+    if (appState.redoStack.length > 0) {
+        const shapeToRedo = appState.redoStack.pop();
+        shapeToRedo.overlay.setMap(appState.map);
+        if(shapeToRedo.segmentLabels) shapeToRedo.segmentLabels.forEach(label => label.setMap(appState.map));
+        appState.drawnShapes.push(shapeToRedo);
+        updateMeasurements();
+    }
+}
+
+function toggleLiveLocation() {
+    const locationBtn = document.getElementById('toggle-location-btn');
+    if (appState.locationWatchId !== null) {
+        navigator.geolocation.clearWatch(appState.locationWatchId);
+        appState.locationWatchId = null;
+        if (appState.userLocationMarker) {
+            appState.userLocationMarker.setMap(null);
+            appState.userLocationMarker = null;
+        }
+        locationBtn.classList.remove('bg-blue-500', 'text-white');
+        alert('Live location tracking stopped.');
+    } else {
+        if (!navigator.geolocation) {
+            alert('Geolocation is not supported by your browser.');
+            return;
+        }
+        const options = { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 };
+        appState.locationWatchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const pos = { lat: position.coords.latitude, lng: position.coords.longitude };
+                if (!appState.userLocationMarker) {
+                    appState.userLocationMarker = new google.maps.Marker({
+                        position: pos,
+                        map: appState.map,
+                        title: 'Your Location',
+                        icon: { path: google.maps.SymbolPath.CIRCLE, scale: 8, fillColor: '#4285F4', fillOpacity: 1, strokeColor: 'white', strokeWeight: 2 }
+                    });
+                    locationBtn.classList.add('bg-blue-500', 'text-white');
+                    alert('Live location tracking started.');
+                } else {
+                    appState.userLocationMarker.setPosition(pos);
+                }
+                appState.map.panTo(pos);
+                appState.map.setZoom(20);
+            },
+            () => {
+                alert('Unable to retrieve your location. Please ensure location services are enabled.');
+                if (appState.locationWatchId) navigator.geolocation.clearWatch(appState.locationWatchId);
+                appState.locationWatchId = null;
+                locationBtn.classList.remove('bg-blue-500', 'text-white');
+            },
+            options
+        );
+    }
+}
+
+// Kick off the application
+document.addEventListener('DOMContentLoaded', initializeMeasureApp);

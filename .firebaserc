@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "city-pave-estimator",
+    ".": "city-pave-estimator",
+    "beta": "city-pave-estimator-beta"
+  },
+  "targets": {},
+  "etags": {}
+}

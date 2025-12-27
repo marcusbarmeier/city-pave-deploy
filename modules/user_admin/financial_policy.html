@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Policy | User Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { config } from '../../config.js';
+
+        const app = initializeApp(config.firebase);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        // -- Logic --
+        async function loadSettings() {
+            const settingsStatus = document.getElementById('settings-status');
+            settingsStatus.textContent = "Loading settings...";
+
+            try {
+                const docRef = doc(db, "settings", "finance");
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    const methods = data.allowedRepaymentMethods || ['Payroll']; // Default
+
+                    document.querySelectorAll('input[name="repayment-method"]').forEach(cb => {
+                        cb.checked = methods.includes(cb.value);
+                    });
+                } else {
+                    // Defaults if no doc
+                    document.getElementById('method-payroll').checked = true;
+                }
+                settingsStatus.textContent = "Settings loaded.";
+            } catch (e) {
+                console.error(e);
+                settingsStatus.textContent = "Error loading settings.";
+            }
+        }
+
+        async function saveSettings() {
+            const btn = document.getElementById('save-btn');
+            const settingsStatus = document.getElementById('settings-status');
+            btn.disabled = true;
+            btn.textContent = "Saving...";
+
+            try {
+                const selected = [];
+                document.querySelectorAll('input[name="repayment-method"]:checked').forEach(cb => {
+                    selected.push(cb.value);
+                });
+
+                if (selected.length === 0) {
+                    alert("Please select at least one repayment method.");
+                    btn.disabled = false;
+                    btn.textContent = "Save Changes";
+                    return;
+                }
+
+                await setDoc(doc(db, "settings", "finance"), {
+                    allowedRepaymentMethods: selected,
+                    updatedAt: new Date().toISOString(),
+                    updatedBy: auth.currentUser?.email || 'admin'
+                }, { merge: true });
+
+                settingsStatus.textContent = "Policy saved successfully!";
+                setTimeout(() => settingsStatus.textContent = "", 3000);
+            } catch (e) {
+                console.error(e);
+                alert("Failed to save: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = "Save Changes";
+            }
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', () => {
+            onAuthStateChanged(auth, user => {
+                if (user) {
+                    loadSettings();
+                    document.getElementById('save-btn').addEventListener('click', saveSettings);
+                } else {
+                    document.body.innerHTML = '<div class="p-8 text-center">Please log in to access Admin Settings.</div>';
+                }
+            });
+        });
+    </script>
+</head>
+
+<body class="bg-slate-50 font-inter text-slate-900 min-h-screen py-8 px-4">
+    <div class="max-w-3xl mx-auto">
+
+        <div class="mb-8 flex items-center justify-between">
+            <div>
+                <a href="index.html" class="text-slate-500 hover:text-slate-900 font-bold text-sm mb-2 block">&larr;
+                    Back to Dashboard</a>
+                <h1 class="text-3xl font-extrabold text-slate-900">Financial Policy</h1>
+                <p class="text-slate-500 mt-1">Configure expense reimbursement options for your organization.</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+            <div class="p-8">
+                <h2 class="font-bold text-slate-900 text-lg mb-6 flex items-center gap-2">
+                    <span class="bg-green-100 text-green-600 p-2 rounded-lg">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
+                            </path>
+                        </svg>
+                    </span>
+                    Allowed Repayment Methods
+                </h2>
+
+                <div class="space-y-4 mb-8">
+                    <label
+                        class="flex items-center p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <input type="checkbox" name="repayment-method" value="Payroll" id="method-payroll"
+                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div class="ml-4">
+                            <span class="font-bold text-slate-900 block group-hover:text-blue-700">Payroll
+                                Addition</span>
+                            <span class="text-sm text-slate-500">Expenses are added to the employee's next
+                                paycheck.</span>
+                        </div>
+                    </label>
+
+                    <label
+                        class="flex items-center p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <input type="checkbox" name="repayment-method" value="Direct Deposit" id="method-dd"
+                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div class="ml-4">
+                            <span class="font-bold text-slate-900 block group-hover:text-blue-700">Direct Deposit</span>
+                            <span class="text-sm text-slate-500">Separate transfer to employee's bank account.</span>
+                        </div>
+                    </label>
+
+                    <label
+                        class="flex items-center p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <input type="checkbox" name="repayment-method" value="e-Transfer" id="method-etransfer"
+                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div class="ml-4">
+                            <span class="font-bold text-slate-900 block group-hover:text-blue-700">Interac
+                                e-Transfer</span>
+                            <span class="text-sm text-slate-500">Immediate payment via email.</span>
+                        </div>
+                    </label>
+
+                    <label
+                        class="flex items-center p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <input type="checkbox" name="repayment-method" value="Cheque" id="method-cheque"
+                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div class="ml-4">
+                            <span class="font-bold text-slate-900 block group-hover:text-blue-700">Physical
+                                Cheque</span>
+                            <span class="text-sm text-slate-500">Standard printed cheque.</span>
+                        </div>
+                    </label>
+
+                    <label
+                        class="flex items-center p-4 border border-slate-200 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors group">
+                        <input type="checkbox" name="repayment-method" value="Cash" id="method-cash"
+                            class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500">
+                        <div class="ml-4">
+                            <span class="font-bold text-slate-900 block group-hover:text-blue-700">Petty Cash</span>
+                            <span class="text-sm text-slate-500">Cash payout from office funds.</span>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-end gap-4 border-t border-slate-100 pt-6">
+                    <span id="settings-status" class="text-sm font-bold text-green-600"></span>
+                    <button id="save-btn"
+                        class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-8 rounded-lg shadow-lg hover:shadow-xl transition-all active:scale-95">
+                        Save Policy
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

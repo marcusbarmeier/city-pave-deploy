@@ -1,0 +1,34 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>City Pave - Custom Calculator</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../style.css"></head><body class="bg-gray-100 min-h-screen flex flex-col items-center justify-center p-4"><div class="bg-white w-full max-w-lg rounded-lg shadow-xl overflow-hidden"><header class="bg-gray-800 text-white p-4 flex justify-between items-center"><h1 class="text-lg font-bold">Custom Calculator</h1><button id="btn-load-json"
+                class="text-xs bg-gray-700 hover:bg-gray-600 px-2 py-1 rounded border border-gray-600">Load
+                JSON</button><input type="file" id="inp-file" accept=".json" class="hidden"></header><div id="calculator-container" class="bg-gray-50 min-h-[300px]"><div class="p-8 text-center text-gray-500"><p class="mb-2">No calculator loaded.</p><p class="text-xs">Upload a JSON configuration file from the Pricing Wizard.</p></div></div></div><script type="module">
+        import { CalculatorRunner } from './calc-runner.js';
+
+        const container = document.getElementById('calculator-container');
+        const fileInput = document.getElementById('inp-file');
+        const loadBtn = document.getElementById('btn-load-json');
+
+        loadBtn.addEventListener('click', () => fileInput.click());
+
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                try {
+                    const config = JSON.parse(event.target.result);
+                    const runner = new CalculatorRunner(container, config);
+                    runner.init();
+
+                    // console.log("Loaded:", config.name);
+                } catch (err) {
+                    alert("Invalid JSON file");
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+        });
+
+        // Optional: Check URL params for auto-load (future feature)
+    </script></body></html>

@@ -1,0 +1,28 @@
+// estimator-utils.js
+// Pure utility functions for the City Pave Estimator.
+
+export function formatCurrency(amount) {
+    return new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD' }).format(amount || 0);
+}
+
+export function convertRgbToHex(rgb) {
+    if (!rgb || typeof rgb !== 'string') return '#cccccc'; // Default
+    if (rgb.startsWith('#')) return rgb; // Already hex
+
+    const result = rgb.match(/\d+/g);
+    if (!result || result.length < 3) return '#cccccc'; // Default
+
+    const r = parseInt(result[0]).toString(16).padStart(2, '0');
+    const g = parseInt(result[1]).toString(16).padStart(2, '0');
+    const b = parseInt(result[2]).toString(16).padStart(2, '0');
+
+    return `#${r}${g}${b}`;
+}
+
+export const debounce = (func, delay) => {
+    let timeout;
+    return (...args) => {
+        clearTimeout(timeout);
+        timeout = setTimeout(() => func(...args), delay);
+    };
+};

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Function Tester</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        #output {
+            background: #f4f4f4;
+            padding: 15px;
+            border: 1px solid #ddd;
+            min-height: 200px;
+            white-space: pre-wrap;
+            font-family: monospace;
+        }
+
+        .section {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Cloud Functions Tester</h1>
+    <div class="section">
+        <button id="btnLogin" onclick="login()">1. Login (Anon)</button>
+        <span id="userStatus">Not Logged In</span>
+    </div>
+
+    <div class="section">
+        <button onclick="testGenerate()">2. Generate Synthetic Jobs (5)</button>
+        <button onclick="testAnalyze()">3. Analyze Data</button>
+    </div>
+
+    <h3>Output:</h3>
+    <div id="output">Waiting for action...</div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-functions.js";
+        import { activeConfig } from "./firebase-config.js";
+
+        // Initialize
+        console.log("Initializing with config:", activeConfig);
+        const app = initializeApp(activeConfig);
+        const auth = getAuth(app);
+        const functions = getFunctions(app, 'us-central1'); // Region important if specified
+
+        // Expose to window for buttons
+        window.login = async () => {
+            log("Logging in...");
+            try {
+                const userCred = await signInAnonymously(auth);
+                document.getElementById('userStatus').innerText = `Logged in: ${userCred.user.uid}`;
+                log("Login Success: " + userCred.user.uid);
+            } catch (e) {
+                log("Login Failed: " + e.message);
+            }
+        };
+
+        window.testGenerate = async () => {
+            log("Calling generateSyntheticData({ type: 'jobs', count: 5 })...");
+            const generateFn = httpsCallable(functions, 'generateSyntheticData');
+            try {
+                const result = await generateFn({ type: 'jobs', count: 5 });
+                log("Result: " + JSON.stringify(result.data, null, 2));
+            } catch (e) {
+                log("Error: " + e.message);
+                console.error(e);
+            }
+        };
+
+        window.testAnalyze = async () => {
+            log("Calling analyzeDataRelationships()...");
+            const analyzeFn = httpsCallable(functions, 'analyzeDataRelationships');
+            try {
+                const result = await analyzeFn({});
+                log("Result: " + JSON.stringify(result.data, null, 2));
+            } catch (e) {
+                log("Error: " + e.message);
+                console.error(e);
+            }
+        };
+
+        function log(msg) {
+            const out = document.getElementById('output');
+            out.innerText += "\n" + msg;
+            console.log(msg);
+        }
+    </script>
+</body>
+
+</html>

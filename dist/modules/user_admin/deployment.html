@@ -1,0 +1,47 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Deployment Dashboard | City Pave</title><script src="https://cdn.tailwindcss.com"></script><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="stylesheet" href="../../style.css"><style>
+        /* Professional Polish Overrides */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .deployment-card {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .deployment-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+        }
+    </style></head><body class="bg-slate-50 font-inter text-slate-900"><div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div><script type="module" src="../../navigation.js"></script><div class="pt-24 pb-12 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"><div class="mb-10 flex flex-col md:flex-row md:items-start md:justify-between"><div class="flex items-center gap-4"><a href="index.html" class="text-slate-400 hover:text-slate-600 transition"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg></a><div><h1 class="text-3xl font-extrabold text-slate-900 tracking-tight">Deployment Dashboard</h1><p class="mt-2 text-sm text-slate-500 max-w-2xl">
+                        Control the blast radius of your software. Configure Role-Based Access Control (RBAC) to
+                        explicitly deploy modules to specific employee roles.
+                    </p></div></div><div class="mt-4 md:mt-0"><div class="inline-flex rounded-md shadow-sm"><button type="button"
+                        class="relative inline-flex items-center px-4 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500">
+                        View Audit Log
+                    </button><button type="button"
+                        class="-ml-px relative inline-flex items-center px-4 py-2 rounded-r-md border border-transparent bg-blue-600 text-sm font-medium text-white hover:bg-blue-700 focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 shadow-md">
+                        Deploy Changes
+                    </button></div></div></div><div id="deployment-message"></div><div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8"><div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><div class="flex items-center gap-2"><span class="text-xl">🤖</span><h3 class="text-lg font-bold text-slate-800">AI Overlay Configuration</h3></div><div class="flex items-center gap-3"><span class="text-sm text-slate-500">Master Level:</span><select id="ai-master-tier"
+                        class="text-sm font-bold rounded-lg border-slate-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"><option value="LEVEL_1">Level 1 (Basic)</option><option value="LEVEL_2">Level 2 (Mid)</option><option value="LEVEL_3">Level 3 (Top)</option></select></div></div><div class="p-6 grid grid-cols-1 md:grid-cols-3 gap-6" id="ai-config-panel"><div class="text-sm text-slate-400">Loading AI Settings...</div></div></div><div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden mb-8"><div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center"><h3 class="text-lg font-bold text-slate-800">RBAC Configuration Matrix</h3><span
+                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Live System Active
+                </span></div><div class="overflow-x-auto"><table class="min-w-full divide-y divide-slate-200"><thead class="bg-slate-50"><tr><th scope="col"
+                                class="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider w-1/4">
+                                Module / Capability</th><th scope="col"
+                                class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Admin</th><th scope="col"
+                                class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Manager</th><th scope="col"
+                                class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Estimator</th><th scope="col"
+                                class="px-6 py-4 text-center text-xs font-bold text-slate-500 uppercase tracking-wider">
+                                Crew</th></tr></thead><tbody class="bg-white divide-y divide-slate-200" id="rbac-matrix-body"><tr><td colspan="5" class="px-6 py-4 text-center text-sm text-slate-500">
+                                Loading available modules...
+                            </td></tr></tbody></table></div><div class="bg-gray-50 px-6 py-4 border-t border-gray-200"><p class="text-xs text-gray-500"><strong>Note:</strong> Changes to "Crew" permissions will update the mobile app interface for all
+                    field users immediately.
+                    <a href="#" class="text-blue-600 hover:underline">Learn more about Role Hierarchy</a>.
+                </p></div></div></div><script type="module" src="app.js"></script></body></html>

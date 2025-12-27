@@ -1,0 +1,379 @@
+
+// modules/snow_calc/snow-ui.js
+
+/**
+ * Snow Calculator UI Module
+ * Handles DOM manipulation, card rendering, and input reading for the Snow Calculator.
+ */
+
+// Helper: Format currency
+const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+};
+
+// Helper: Debounce (simple version if not imported)
+const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+};
+
+/**
+ * Initializes Google Places Autocomplete for a snow location card.
+ * @param {HTMLElement} card 
+ */
+export function initializeSnowAddressAutocomplete(card) {
+    const addressInput = card.querySelector('.snow-location-address');
+    if (addressInput && window.google?.maps?.places) {
+        // Prevent initializing multiple times on the same input
+        if (addressInput.getAttribute('data-autocomplete-initialized')) {
+            return;
+        }
+        const autocomplete = new google.maps.places.Autocomplete(addressInput, {
+            types: ['address'],
+            componentRestrictions: { country: 'ca' } // Restrict to Canada - TODO: Make configurable
+        });
+        addressInput.setAttribute('data-autocomplete-initialized', 'true');
+    } else if (addressInput && !window.google?.maps?.places) {
+        // If Google Maps isn't ready yet, try again shortly
+        setTimeout(() => initializeSnowAddressAutocomplete(card), 500);
+    }
+}
+
+/**
+ * Adds a new Snow Location Card to the UI.
+ * @param {Object} locationData - Existing data to populate (optional)
+ * @param {Function} saveState - Callback to save application state
+ * @param {Function} onCalculate - Callback when "Calculate Price" is clicked
+ * @param {Function} onDelete - Callback when "Delete" is clicked
+ * @param {Object} uiHelpers - Object containing showSuccessBanner, showErrorBanner, etc.
+ */
+export function addSnowLocationCard(locationData = null, saveState, onCalculate, onDelete, uiHelpers) {
+    const container = document.getElementById('snow-locations-container');
+    const placeholder = document.getElementById('snow-location-placeholder');
+    if (placeholder) placeholder.style.display = 'none';
+
+    const locationId = locationData?.id || `snow-loc-${Date.now()}`;
+    const card = document.createElement('div');
+    card.id = locationId;
+    card.dataset.locationId = locationId;
+    card.className = 'snow-location-card border rounded-lg p-4 bg-gray-50';
+
+    if (locationData?.sourceSketchId) {
+        card.dataset.sourceSketchId = locationData.sourceSketchId;
+    }
+
+    card.innerHTML = `
+        <div class="flex justify-between items-start mb-3">
+            <input type="text" class="snow-location-title table-input font-semibold" placeholder="Location Title (e.g., Plaza Name)" value="${locationData?.title || ''}">
+            <button type="button" class="delete-snow-location-btn text-red-500 hover:text-red-700 ml-4 no-print flex-shrink-0">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="block text-xs font-medium">Site Address</label>
+                <input type="text" class="snow-location-address table-input" placeholder="Enter job site address" value="${locationData?.address || ''}">
+            </div>
+            <div class="flex items-end">
+                <button type="button" class="load-from-sketch-btn-single w-full bg-blue-100 text-blue-800 font-semibold py-2 px-4 rounded-md hover:bg-blue-200 text-sm">Load from Sketch</button>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+            <div>
+                <label class="block text-xs font-medium">Loader Area (sq ft)</label>
+                <input type="number" class="snow-loader-area table-input" value="${locationData?.loaderArea || ''}">
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Skid Steer Area (sq ft)</label>
+                <input type="number" class="snow-skidsteer-area table-input" value="${locationData?.skidSteerArea || ''}">
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Shovel Area (sq ft)</label>
+                <input type="number" class="snow-shovel-area table-input" value="${locationData?.shovelArea || ''}">
+            </div>
+             <div>
+                <label class="block text-xs font-medium">Target Time (hours)</label>
+                <input type="number" class="snow-target-hours table-input" placeholder="e.g., 8" value="${locationData?.targetHours || ''}">
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4 border-t pt-4">
+            <div>
+                <label class="block text-xs font-medium text-gray-700 font-bold">Hauling Trucks</label>
+                <input type="number" class="snow-num-trucks table-input" placeholder="Manual Entry" value="${locationData?.haulingCrew?.trucks || ''}">
+            </div>
+            <div class="relative">
+                <label class="block text-xs font-medium text-gray-700 font-bold">Hauling Loaders</label>
+                <input type="number" class="snow-num-loaders table-input" placeholder="Manual Entry" value="${locationData?.haulingCrew?.loaders || ''}">
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Load Time (min/truck)</label>
+                <input type="number" class="snow-load-time table-input" placeholder="e.g., 10" value="${locationData?.haulingCrew?.loadTime || ''}">
+            </div>
+            <div>
+                <label class="block text-xs font-medium">Unload Time (min/truck)</label>
+                <input type="number" class="snow-unload-time table-input" placeholder="e.g., 8" value="${locationData?.haulingCrew?.unloadTime || ''}">
+            </div>
+        </div>
+        <div class="mt-4 border-t pt-4">
+            <h4 class="text-sm font-semibold mb-2">Services & Triggers</h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-x-6 gap-y-4">
+                <label class="flex items-center"><input type="checkbox" class="snow-service-clearing h-4 w-4" ${locationData?.services?.clearing ? 'checked' : ''}> <span class="ml-2 text-sm">Clearing</span></label>
+                <label class="flex items-center"><input type="checkbox" class="snow-service-hauling h-4 w-4" ${locationData?.services?.hauling ? 'checked' : ''}> <span class="ml-2 text-sm">Hauling</span></label>
+                <label class="flex items-center"><input type="checkbox" class="snow-service-salting h-4 w-4" ${locationData?.services?.salting ? 'checked' : ''}> <span class="ml-2 text-sm">Salting</span></label>
+                <div>
+                    <label class="block text-xs font-medium">Clearing Trigger</label>
+                    <select class="snow-clearing-trigger table-input">
+                        <option value="5cm" ${locationData?.clearingTrigger === '5cm' ? 'selected' : ''}>5 cm</option>
+                        <option value="3cm" ${locationData?.clearingTrigger === '3cm' ? 'selected' : ''}>3 cm</option>
+                        <option value="2cm" ${locationData?.clearingTrigger === '2cm' ? 'selected' : ''}>2 cm</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium"># of Hauls Per Season</label>
+                    <input type="number" class="snow-hauling-interval table-input" placeholder="e.g., 4" value="${locationData?.haulingInterval || ''}">
+                </div>
+            </div>
+        </div>
+        <div class="mt-4 border-t pt-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6">
+                <div>
+                    <h4 class="text-sm font-semibold mb-2">Pricing for this Location</h4>
+                    <button type="button" class="calculate-snow-price-btn text-xs bg-gray-200 px-2 py-1 rounded hover:bg-gray-300 mb-2">Auto-Calculate Price</button>
+                    <div class="space-y-2">
+                        <div class="grid grid-cols-2 items-center"><label class="text-xs font-medium">Price Per Push</label><input type="number" class="snow-price-per-push table-input text-right" placeholder="0.00" value="${locationData?.pricePerPush?.toFixed(2) || ''}"></div>
+                        <div class="grid grid-cols-2 items-center"><label class="text-xs font-medium">Monthly Price</label><input type="number" class="snow-price-monthly table-input text-right" placeholder="0.00" value="${locationData?.priceMonthly?.toFixed(2) || ''}"></div>
+                        <div class="grid grid-cols-2 items-center"><label class="text-xs font-medium">Seasonal Price</label><input type="number" class="snow-price-seasonal table-input text-right" placeholder="0.00" value="${locationData?.priceSeasonal?.toFixed(2) || ''}"></div>
+                    </div>
+                </div>
+                <div class="snow-calculation-details text-xs text-gray-700 bg-white p-3 rounded-md border mt-4 md:mt-0">
+                    ${locationData?.breakdownHtml || '<h4 class="font-bold mb-2">Calculation Breakdown</h4><p class="text-gray-500">Click "Auto-Calculate Price" to see details.</p>'}
+                </div>
+            </div>
+        </div>
+    `;
+
+    container.appendChild(card);
+    initializeSnowAddressAutocomplete(card);
+
+    // Event Listeners
+    card.querySelector('.delete-snow-location-btn')?.addEventListener('click', () => {
+        if (confirm('Are you sure you want to remove this snow location?')) {
+            card.remove();
+            if (onDelete) onDelete();
+            saveState();
+        }
+    });
+
+    card.querySelector('.calculate-snow-price-btn')?.addEventListener('click', () => {
+        if (onCalculate) onCalculate(card);
+    });
+
+    card.querySelectorAll('input, select').forEach(input => {
+        input.addEventListener('input', debounce(saveState, 500));
+        input.addEventListener('change', debounce(saveState, 500));
+    });
+
+    // Load from Sketch
+    const loadBtn = card.querySelector('.load-from-sketch-btn-single');
+    // Note: This relies on window.ui for modal access as specifically requested to extract UI but maintain integration
+    // Ideally this would be passed in, but for now we look for the global function
+    if (loadBtn && window.ui && typeof window.ui.openSketchSelectionModal === 'function') {
+        loadBtn.addEventListener('click', () => {
+            const estimateId = document.getElementById('editing-estimate-id').value;
+            // Ensure State is available or error out gracefully
+            // Assuming State is global or we access it differently. 
+            // In original code: State.getState().estimates.find...
+            // We can defer this logic to a passed callback or assume State is available globally as it likely is in this app's architecture.
+            if (typeof State !== 'undefined') {
+                const estimate = State.getState().estimates.find(e => e.id === estimateId);
+                if (estimate && estimate.sketches && estimate.sketches.length > 0) {
+                    window.ui.openSketchSelectionModal(estimate.sketches, (selectedSketch) => {
+                        if (selectedSketch && card) {
+                            let totalLoaderArea = 0, totalSkidSteerArea = 0, totalShovelArea = 0;
+                            (selectedSketch.measurements || []).forEach(m => {
+                                if (m.measurementType === 'area') {
+                                    if (m.service === 'snow-area-loader') totalLoaderArea += (m.measurement || 0);
+                                    else if (m.service === 'snow-area-skidsteer') totalSkidSteerArea += (m.measurement || 0);
+                                    else if (m.service === 'snow-area-shovel') totalShovelArea += (m.measurement || 0);
+                                }
+                            });
+                            const loaderInput = card.querySelector('.snow-loader-area'); if (loaderInput) loaderInput.value = totalLoaderArea > 0 ? totalLoaderArea.toFixed(2) : '';
+                            const skidSteerInput = card.querySelector('.snow-skidsteer-area'); if (skidSteerInput) skidSteerInput.value = totalSkidSteerArea > 0 ? totalSkidSteerArea.toFixed(2) : '';
+                            const shovelInput = card.querySelector('.snow-shovel-area'); if (shovelInput) shovelInput.value = totalShovelArea > 0 ? totalShovelArea.toFixed(2) : '';
+                            const addressInput = card.querySelector('.snow-location-address'); if (addressInput && selectedSketch.clientAddress) addressInput.value = selectedSketch.clientAddress;
+                            card.dataset.sourceSketchId = selectedSketch.id;
+
+                            if (uiHelpers && uiHelpers.showSuccessBanner) uiHelpers.showSuccessBanner('Snow areas loaded from sketch.');
+                            else if (window.ui) window.ui.showSuccessBanner('Snow areas loaded from sketch.');
+
+                            // Trigger calculation
+                            if (onCalculate) onCalculate(card);
+                        }
+                    });
+                } else {
+                    const msg = 'No sketches found for this estimate to load from.';
+                    if (uiHelpers && uiHelpers.showErrorBanner) uiHelpers.showErrorBanner(msg);
+                    else if (window.ui) window.ui.showErrorBanner(msg);
+                }
+            }
+        });
+    }
+}
+
+/**
+ * Updates a Snow Location Card with calculation results.
+ * @param {HTMLElement} card 
+ * @param {Object} result 
+ */
+export function updateCardWithResults(card, result) {
+    const safeFormat = (num) => {
+        const value = parseFloat(num);
+        return (isNaN(value) ? 0 : value).toFixed(2);
+    };
+
+    const ppInput = card.querySelector('.snow-price-per-push');
+    const mpInput = card.querySelector('.snow-price-monthly');
+    const spInput = card.querySelector('.snow-price-seasonal');
+
+    if (ppInput) ppInput.value = safeFormat(result.totals.perPushPrice);
+    if (mpInput) mpInput.value = safeFormat(result.totals.monthlyPrice);
+    if (spInput) spInput.value = safeFormat(result.totals.seasonalPrice);
+
+    // Update breakdown
+    const detailsContainer = card.querySelector('.snow-calculation-details');
+    if (detailsContainer) {
+        let summaryHtml = '<h4 class="font-bold mb-2">Calculation Breakdown</h4>';
+        const serviceResults = {
+            Clearing: result.clearingResult,
+            Hauling: result.haulingResult,
+            Salting: result.saltingResult
+        };
+        let breakdownFound = false;
+
+        for (const [serviceName, serviceResult] of Object.entries(serviceResults)) {
+            if (serviceResult && typeof serviceResult.cost === 'number' && serviceResult.cost > 0) {
+                breakdownFound = true;
+                let equipmentParts = [];
+                const eq = serviceResult.equipment || {};
+                if (eq.numLoaders > 0) equipmentParts.push(`${eq.numLoaders} Loader(s)`);
+                if (eq.numSkidSteers > 0) equipmentParts.push(`${eq.numSkidSteers} Skid(s)`);
+                if (eq.numShovelers > 0) equipmentParts.push(`${eq.numShovelers} Shoveler(s)`);
+                if (eq.numTrucks > 0) equipmentParts.push(`${eq.numTrucks} Truck(s)`);
+                if (eq.numSaltingTrucks > 0) equipmentParts.push(`${eq.numSaltingTrucks} Salter(s)`);
+
+                const onSiteTime = (serviceResult.onSiteHours || 0);
+                const billableTime = onSiteTime > 0 ? onSiteTime + 1 : 0;
+
+                summaryHtml += `
+                    <div class="border-t first:border-t-0 py-1">
+                        <h5 class="font-bold capitalize text-sm">${serviceName}</h5>
+                        <p><strong>Cost / Push:</strong> ${formatCurrency(serviceResult.cost)}</p>
+                        <p><strong>Billable Time:</strong> ${billableTime.toFixed(1)} hrs</p>
+                        <p><strong>Calculated Fleet:</strong> ${equipmentParts.join(', ') || 'N/A'}</p>`;
+
+                const log = serviceResult.logistics || {};
+                if (serviceName === 'Hauling' && log.truckLoads > 0) {
+                    const volumeFormatted = typeof log.snowVolumePerEventM3 === 'number' ? log.snowVolumePerEventM3.toFixed(0) : '0';
+                    const roundTripFormatted = typeof log.calculatedRoundTrip === 'number' ? log.calculatedRoundTrip.toFixed(2) : 'N/A';
+                    summaryHtml += `
+                        <p><strong>Volume/Event:</strong> ${volumeFormatted} m³</p>
+                        <p><strong>Loads Required:</strong> ${log.truckLoads}</p>
+                        <p><strong>Est. Round Trip:</strong> ${roundTripFormatted} hrs</p>
+                    `;
+                }
+                summaryHtml += '</div>';
+            }
+        }
+        if (!breakdownFound) {
+            summaryHtml += '<p class="text-gray-500">No services enabled or calculated cost is zero.</p>';
+        }
+        detailsContainer.innerHTML = summaryHtml;
+    }
+
+    updateSnowContractSummary();
+}
+
+/**
+ * Updates the overall Snow Contract Summary (Total Per Push, Monthly, Seasonal).
+ */
+export function updateSnowContractSummary() {
+    let totalPerPush = 0;
+    let totalMonthly = 0;
+    let totalSeasonal = 0;
+
+    document.querySelectorAll('.snow-location-card').forEach(card => {
+        totalPerPush += parseFloat(card.querySelector('.snow-price-per-push')?.value) || 0;
+        totalMonthly += parseFloat(card.querySelector('.snow-price-monthly')?.value) || 0;
+        totalSeasonal += parseFloat(card.querySelector('.snow-price-seasonal')?.value) || 0;
+    });
+
+    const setContent = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = formatCurrency(val);
+    };
+
+    setContent('snow-total-per-push', totalPerPush);
+    setContent('snow-total-monthly', totalMonthly);
+    setContent('snow-total-seasonal', totalSeasonal);
+
+    const discountInput = document.getElementById('snow-route-discount');
+    const discountPercent = parseFloat(discountInput?.value) || 0;
+    const grandTotal = totalSeasonal * (1 - (discountPercent / 100));
+
+    setContent('snow-grand-total', grandTotal);
+}
+
+/**
+ * Extracts input data from a Snow Location Card for calculation.
+ * @param {HTMLElement} card 
+ */
+export async function getInputsFromCard(card) {
+    const getVal = (selector) => card.querySelector(selector)?.value || '';
+    const getChecked = (selector) => card.querySelector(selector)?.checked || false;
+    const address = getVal('.snow-location-address');
+
+    const getNum = (selector, fieldName) => {
+        const inputElement = card.querySelector(selector);
+        const valueString = inputElement?.value;
+        if (valueString === null || valueString === undefined || valueString.trim() === '') {
+            return 0;
+        }
+        const value = parseFloat(valueString);
+        if (isNaN(value)) {
+            throw new Error(`Invalid number in "${fieldName}" for location "${getVal('.snow-location-title') || card.id}". Please check all numeric fields.`);
+        }
+        return value;
+    };
+
+    return {
+        id: card.id,
+        address,
+        clearing: {
+            enabled: getChecked('.snow-service-clearing'),
+            loaderArea: getNum('.snow-loader-area', 'Loader Area'),
+            skidSteerArea: getNum('.snow-skidsteer-area', 'Skid Steer Area'),
+            shovelArea: getNum('.snow-shovel-area', 'Shovel Area')
+        },
+        hauling: { enabled: getChecked('.snow-service-hauling') },
+        salting: { enabled: getChecked('.snow-service-salting') },
+        targetHours: getNum('.snow-target-hours', 'Target Hours'),
+        clearingTrigger: getVal('.snow-clearing-trigger'),
+        haulingInterval: getNum('.snow-hauling-interval', '# Hauls Per Season'),
+        haulingCrew: {
+            loaders: getNum('.snow-num-loaders', 'Hauling Loaders'),
+            trucks: getNum('.snow-num-trucks', 'Hauling Trucks'),
+            loadTime: getNum('.snow-load-time', 'Load Time')
+        },
+        // Helpers like contractDuration should be passed in ideally, but we'll grab them from DOM here
+        // or let the caller inject them. For now, grabbing from DOM to match existing logic.
+        contractDuration: parseFloat(document.getElementById('snow-contract-duration')?.value) || 5,
+        includedEventsPerMonth: parseFloat(document.getElementById('snow-events-per-month')?.value) || 0
+    };
+}

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Overlay Simulator</title>
+    <!-- Tailwind for style -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Mock Firebase Services -->
+    <script>
+        window.firebaseServices = {
+            auth: { currentUser: { email: 'simulated@user.com' } },
+            db: {},
+            collection: () => { },
+            doc: () => { },
+            getDoc: async () => ({ exists: () => true, data: () => ({ role: 'admin' }) }),
+            getDocs: async () => [],
+        };
+        // Mock Tiers
+        window.currentUser = { tier: 'LEVEL_3' }; 
+    </script>
+</head>
+
+<body class="bg-gray-100 p-10">
+    <div class="max-w-2xl mx-auto bg-white p-6 rounded shadow">
+        <h1 class="text-2xl font-bold mb-4">AI Overlay "Co-Pilot" Simulator</h1>
+        <p class="mb-4 text-gray-600">Phase 2 Verification: Triggering Geofence & Voice Events.</p>
+
+        <div id="sim-status" class="mb-4 text-blue-600 font-mono">Ready to run...</div>
+
+        <div class="mb-4 space-x-2">
+            <button onclick="window.setTier('LEVEL_2')"
+                class="bg-gray-500 text-white px-3 py-1 rounded text-sm hover:bg-gray-600">Set Level 2 (Mid)</button>
+            <button onclick="window.setTier('LEVEL_3')"
+                class="bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700">Set Level 3
+                (Pro)</button>
+        </div>
+
+        <button onclick="window.runOverlaySim()" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+            ▶ Run Simulation
+        </button>
+
+        <script>
+            window.setTier = (tier) => {
+                window.currentUser.tier = tier;
+                // Reload page to reset modules with new tier? Or just rely on sim?
+                // Ideally reload, but for now we'll update the object and let the Sim init read it.
+                // We need to reload to re-init AI Overlay with new permissions though.
+                localStorage.setItem('city_pave_tier_test', tier);
+                location.reload();
+            }
+            // Init from storage
+            const saved = localStorage.getItem('city_pave_tier_test');
+            if (saved) window.currentUser.tier = saved;
+
+            // Display current
+            document.write(`<div class="text-xs text-gray-500 mt-1">Current Tier: <b>${window.currentUser.tier}</b></div>`);
+        </script>
+
+        <hr class="my-6">
+
+        <div id="ai-bridge-container">
+            <!-- AI UI will inject here -->
+        </div>
+
+        <!-- Required for Navigation.js -->
+        <div id="app-navigation" style="display:none;"></div>
+    </div>
+
+    <!-- Load Simulator Module -->
+    <script type="module" src="./test-overlay-sim.js"></script>
+
+    <!-- Load Main Navigation (Init AI Overlay) -->
+    <script type="module" src="../../navigation.js"></script>
+
+    <!-- Load AI Overlay UI dependencies manually if needed (likely handled by imports in test-overlay-sim) -->
+</body>
+
+</html>

@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave - Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        .tab-btn {
+            position: relative;
+            color: #64748b;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: #1e293b;
+            background-color: #f1f5f9;
+        }
+
+        .tab-btn.active {
+            background-color: white;
+            color: #2563EB;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+        }
+
+        th {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #64748b;
+            font-weight: 600;
+            background-color: #f8fafc;
+        }
+
+        td {
+            font-size: 0.875rem;
+            color: #334155;
+        }
+
+        tr:hover td {
+            background-color: #f8fafc;
+        }
+
+        /* Toggle Switch */
+        .toggle-checkbox:checked {
+            right: 0;
+            border-color: #68D391;
+        }
+
+        .toggle-checkbox:checked+.toggle-label {
+            background-color: #68D391;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 flex flex-col h-screen font-inter text-slate-800">
+    <div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script type="module" src="../../navigation.js"></script>
+    <div class="h-16 flex-shrink-0"></div> <!-- Spacer for fixed nav -->
+
+
+
+    <main class="flex-grow flex flex-col min-h-0 p-4 md:p-6 max-w-[1600px] mx-auto w-full space-y-6">
+
+        <div
+            class="bg-slate-200/60 p-1 rounded-xl flex overflow-x-auto flex-shrink-0 space-x-1 border border-slate-200/50 backdrop-blur-sm">
+            <button id="tab-time" class="tab-btn active flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap">Time
+                Logs</button>
+            <button id="tab-dispatch"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap">Dispatch</button>
+            <button id="tab-forms"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap">Inspections</button>
+            <button id="tab-maintenance"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap">Maintenance</button>
+            <button id="tab-tickets"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap">Tickets</button>
+            <button id="tab-costing" class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap">Job
+                Costing</button>
+            <button id="tab-workforce"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap text-purple-600 font-bold">Workforce</button>
+            <button id="tab-media"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap text-indigo-600 font-bold">Job
+                Media</button>
+            <button id="tab-reports"
+                class="tab-btn flex-1 py-2 px-4 rounded-lg text-sm whitespace-nowrap text-blue-600 font-bold">Daily
+                Reports</button>
+        </div>
+
+        <div id="view-workforce" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+                <!-- Sidebar: Employee List & Filters -->
+                <div
+                    class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50">
+                        <h2 class="font-bold text-slate-700 mb-2">Workforce</h2>
+                        <input type="text" id="wf-search" placeholder="Search employees..."
+                            class="w-full text-sm border border-slate-300 rounded px-2 py-1.5 focus:ring-2 focus:ring-purple-200 outline-none">
+                        <div class="flex gap-2 mt-2">
+                            <select id="wf-filter-role"
+                                class="flex-1 text-xs border border-slate-300 rounded px-1 py-1">
+                                <option value="all">All Roles</option>
+                                <option value="crew">Crew</option>
+                                <option value="office">Office</option>
+                            </select>
+                            <select id="wf-filter-status"
+                                class="flex-1 text-xs border border-slate-300 rounded px-1 py-1">
+                                <option value="Active">Active</option>
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div id="wf-employee-list" class="flex-1 overflow-y-auto divide-y divide-slate-100">
+                        <p class="text-center text-slate-400 py-4 text-xs">Loading...</p>
+                    </div>
+                </div>
+
+                <!-- Main Content: Shift History / Detail -->
+                <div
+                    class="lg:col-span-3 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden relative">
+                    <div id="wf-detail-empty"
+                        class="absolute inset-0 flex items-center justify-center text-slate-400 pointer-events-none">
+                        <div class="text-center">
+                            <svg class="w-16 h-16 mx-auto mb-2 text-slate-200" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            <p>Select an employee to view history</p>
+                        </div>
+                    </div>
+
+                    <div id="wf-detail-content" class="hidden flex flex-col h-full">
+                        <div
+                            class="p-4 border-b border-slate-100 bg-white flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h2 class="font-bold text-slate-800 text-lg" id="wf-selected-name">Employee Name</h2>
+                                <p class="text-xs text-slate-500" id="wf-selected-role">Role</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button id="wf-prev-week" class="p-1 hover:bg-slate-200 rounded">&lt;</button>
+                                <span class="font-mono text-sm font-bold bg-white px-2 py-1 rounded border"
+                                    id="wf-date-range">...</span>
+                                <button id="wf-next-week" class="p-1 hover:bg-slate-200 rounded">&gt;</button>
+                            </div>
+                        </div>
+                        <div id="wf-shift-list" class="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50">
+                            <!-- Shift Cards Go Here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-time" class="flex-grow overflow-hidden flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-grow">
+                <div class="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                    <h2 class="font-bold text-slate-700">Live Crew Activity</h2>
+                    <div class="flex gap-2">
+                        <button onclick="exportPayrollCSV()"
+                            class="bg-white border border-slate-300 text-slate-600 px-3 py-1.5 rounded text-xs font-bold hover:bg-slate-50">Export
+                            CSV</button>
+                        <button onclick="bulkApprove()"
+                            class="bg-green-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-green-700 shadow-sm">Approve
+                            Selected</button>
+                    </div>
+                </div>
+                <div class="overflow-y-auto flex-grow">
+                    <table class="w-full text-left">
+                        <thead class="sticky top-0 z-10 bg-slate-50">
+                            <tr>
+                                <th class="px-6 py-3 w-10"><input type="checkbox" id="select-all-logs"
+                                        onchange="toggleAllLogs(this)"></th>
+                                <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Employee</th>
+                                <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Job Site</th>
+                                <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Start Time</th>
+                                <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Duration</th>
+                                <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Status</th>
+                                <th class="px-6 py-3 text-xs font-bold text-slate-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="time-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="6" class="p-8 text-center text-slate-400 italic">Loading data...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="view-dispatch" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                        <h2 class="font-bold text-slate-700">Ready to Schedule</h2><button
+                            id="create-manual-dispatch-btn"
+                            class="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-md hover:bg-blue-700 shadow-sm transition-all hover:shadow">+
+                            New Outside Job</button>
+                    </div>
+                    <div id="unscheduled-list" class="overflow-y-auto flex-grow p-4 space-y-3 bg-slate-50/50"></div>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                        <h2 class="font-bold text-slate-700">Daily Schedule</h2><input type="date"
+                            id="dispatch-date-picker"
+                            class="border-slate-300 rounded-md p-1 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div id="daily-schedule-list" class="overflow-y-auto flex-grow p-4 space-y-3 bg-slate-50/50"></div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div id="view-forms" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-grow">
+                <div class="p-4 border-b border-slate-100 bg-white">
+                    <h2 class="font-bold text-slate-700">Submitted Forms</h2>
+                </div>
+                <div class="overflow-y-auto flex-grow">
+                    <table class="w-full text-left">
+                        <thead class="sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-3">Date</th>
+                                <th class="px-6 py-3">Employee</th>
+                                <th class="px-6 py-3">Type</th>
+                                <th class="px-6 py-3">Issues/Defects</th>
+                                <th class="px-6 py-3">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forms-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="5" class="p-6 text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="view-maintenance" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-grow">
+                <div class="p-4 border-b border-slate-100 bg-white">
+                    <h2 class="font-bold text-slate-700">Repair Tickets</h2>
+                </div>
+                <div class="overflow-y-auto flex-grow">
+                    <table class="w-full text-left">
+                        <thead class="sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-3">Reported Date</th>
+                                <th class="px-6 py-3">Vehicle / Unit</th>
+                                <th class="px-6 py-3">Issue</th>
+                                <th class="px-6 py-3">Reported By</th>
+                                <th class="px-6 py-3">Status</th>
+                                <th class="px-6 py-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="maintenance-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="6" class="p-6 text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="view-tickets" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col flex-grow">
+                <div class="p-4 border-b border-slate-100 bg-white">
+                    <h2 class="font-bold text-slate-700">Time Tickets</h2>
+                </div>
+                <div class="overflow-y-auto flex-grow">
+                    <table class="w-full text-left">
+                        <thead class="sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-3">Date</th>
+                                <th class="px-6 py-3">Job Name</th>
+                                <th class="px-6 py-3">Unit #</th>
+                                <th class="px-6 py-3">Description</th>
+                                <th class="px-6 py-3">Qty / Travel</th>
+                                <th class="px-6 py-3">Auth</th>
+                                <th class="px-6 py-3">Proof</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tickets-table-body" class="divide-y divide-slate-100">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div id="view-costing" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="card flex-grow">
+                <div class="card-header">
+                    <h2 class="card-title">Financial Performance</h2>
+                    <div class="text-xs text-slate-500 font-medium">Labor Rate: $<input type="number" id="labor-rate"
+                            value="25" class="w-12 border rounded text-center mx-1 font-bold text-slate-800">/hr</div>
+                </div>
+                <div class="card-body p-0">
+                    <table class="table-standard">
+                        <thead>
+                            <tr>
+                                <th>Job Name</th>
+                                <th class="text-right">Est. Revenue</th>
+                                <th class="text-right">Labor Cost</th>
+                                <th class="text-right">Expenses</th>
+                                <th class="text-right">Total Cost</th>
+                                <th class="text-right">Profit</th>
+                                <th class="text-center">Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody id="costing-table-body">
+                            <tr>
+                                <td colspan="7" class="p-6 text-center">Calculating...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div id="view-reports" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                <!-- Active Jobs List -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-white flex justify-between items-center">
+                        <h2 class="font-bold text-slate-700">Active Jobs (Today)</h2>
+                        <button onclick="loadDailyJobSummaries()"
+                            class="text-xs text-blue-600 hover:underline">Refresh</button>
+                    </div>
+                    <div id="daily-reports-list" class="overflow-y-auto flex-grow p-4 space-y-3 bg-slate-50/50">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Preview & Send Panel -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-white">
+                        <h2 class="font-bold text-slate-700">Report Preview</h2>
+                    </div>
+                    <div id="report-preview-container" class="flex-grow p-6 overflow-y-auto">
+                        <p class="text-center text-gray-400 mt-10">Select a job to preview the daily report.</p>
+                    </div>
+                    <div class="p-4 border-t border-slate-100 bg-gray-50 flex justify-end">
+                        <button id="send-report-btn" disabled
+                            class="bg-blue-600 text-white px-6 py-2 rounded font-bold hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Approve & Send to Client
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-media" class="hidden flex-grow overflow-hidden flex flex-col">
+            <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 h-full">
+                <!-- Sidebar: Job List -->
+                <div
+                    class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-slate-200 flex flex-col overflow-hidden">
+                    <div class="p-4 border-b border-slate-100 bg-slate-50">
+                        <h2 class="font-bold text-slate-700 mb-2">Job Gallery</h2>
+                        <input type="text" id="media-job-search" placeholder="Search active jobs..."
+                            class="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+                    <div class="flex-grow overflow-y-auto p-2 space-y-1" id="media-job-list">
+                        <!-- Job List Populated Here -->
+                        <p class="text-center text-slate-400 py-4 text-xs">Loading jobs...</p>
+                    </div>
+                </div>
+
+                <!-- Main Content: Media Grid -->
+                <div
+                    class="lg:col-span-3 flex flex-col h-full bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div id="media-detail-empty"
+                        class="flex-grow flex flex-col items-center justify-center text-slate-400">
+                        <svg class="w-16 h-16 mb-4 text-slate-200" fill="none" stroke="currentColor"
+                            viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                            </path>
+                        </svg>
+                        <p class="text-sm font-medium">Select a job to view media assets</p>
+                    </div>
+
+                    <div id="media-detail-content" class="hidden flex flex-col h-full">
+                        <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-800" id="media-selected-job-name">Job Name</h3>
+                                <p class="text-xs text-slate-500" id="media-selected-job-addr">Address</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <select id="media-filter-type" class="text-xs border rounded p-1">
+                                    <option value="all">All Media</option>
+                                    <option value="image">Photos</option>
+                                    <option value="video">Videos</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex-grow overflow-y-auto p-6" id="media-gallery-grid">
+                            <!-- Gallery Grid -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="pricing-editor-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800" id="pricing-modal-title">Edit Item</h3>
+                <button onclick="document.getElementById('pricing-editor-modal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-4">
+                <input type="hidden" id="edit-item-id">
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="col-span-2">
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Item Name</label>
+                        <input type="text" id="edit-item-name" class="table-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+                        <input type="text" id="edit-item-category" class="table-input">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pricing Mode</label>
+                        <select id="edit-item-mode" class="table-input bg-white">
+                            <option value="simple">Simple (Flat Price)</option>
+                            <option value="variant">Variants (Dropdown)</option>
+                            <option value="dynamic">Dynamic (Calculated)</option>
+                            <option value="engine">Engine (Advanced)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 py-2 border-t border-b border-slate-100">
+                    <input type="checkbox" id="edit-item-fuel" class="h-4 w-4 text-blue-600 rounded">
+                    <label for="edit-item-fuel" class="text-sm font-medium text-slate-700">Apply Fuel Surcharge to this
+                        item?</label>
+                </div>
+
+                <div id="mode-simple" class="mode-panel space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Default Price</label>
+                        <input type="number" id="edit-item-price" class="table-input" step="0.01">
+                    </div>
+                </div>
+
+                <div id="mode-variant" class="mode-panel hidden space-y-4">
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Variants (e.g. Depths)</label>
+                    <div id="variant-list" class="space-y-2"></div>
+                    <button id="add-variant-btn" class="text-xs text-blue-600 font-bold hover:underline">+ Add Variant
+                        Row</button>
+                </div>
+
+                <div id="mode-engine" class="mode-panel hidden space-y-4">
+                    <div class="bg-orange-50 p-4 rounded border border-orange-200">
+                        <h4 class="font-bold text-orange-800 text-sm mb-2">Engine Variables</h4>
+                        <div id="engine-vars-container" class="grid grid-cols-2 gap-3"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description</label>
+                    <textarea id="edit-item-desc" rows="3" class="table-input"></textarea>
+                </div>
+            </div>
+
+            <div class="p-4 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="document.getElementById('pricing-editor-modal').classList.add('hidden')"
+                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded font-bold hover:bg-gray-200">Cancel</button>
+                <button id="save-pricing-item-btn"
+                    class="px-6 py-2 bg-blue-600 text-white rounded font-bold hover:bg-blue-700 shadow-sm">Save
+                    Item</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHANGE ORDER MODAL -->
+    <div id="co-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-purple-50 rounded-t-xl">
+                <div>
+                    <h3 class="font-bold text-lg text-purple-900">Change Orders</h3>
+                    <p class="text-xs text-purple-600" id="co-job-name">Job Name</p>
+                </div>
+                <button onclick="document.getElementById('co-modal').classList.add('hidden')"
+                    class="text-purple-400 hover:text-purple-700 text-2xl">&times;</button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto p-6 space-y-6">
+                <!-- List of Existing COs -->
+                <div>
+                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">History</h4>
+                    <div id="co-list" class="space-y-3">
+                        <!-- Injected via JS -->
+                        <div class="text-center text-gray-400 text-sm py-4">No Change Orders found.</div>
+                    </div>
+                </div>
+
+                <!-- Create New CO -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h4 class="text-sm font-bold text-slate-800 mb-3">Create New Change Order</h4>
+                    <input type="hidden" id="co-job-id">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Title / Reason</label>
+                            <input type="text" id="co-title" class="table-input"
+                                placeholder="e.g. Extra Rock for Driveway Base">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Amount ($)</label>
+                            <input type="number" id="co-amount" class="table-input" step="0.01" placeholder="0.00">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Date</label>
+                            <input type="date" id="co-date" class="table-input">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Description /
+                                Notes</label>
+                            <textarea id="co-desc" rows="2" class="table-input"
+                                placeholder="Details about the change..."></textarea>
+                        </div>
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="save-co-btn"
+                            class="bg-purple-600 text-white px-4 py-2 rounded font-bold hover:bg-purple-700 shadow-sm">Create
+                            Change Order</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="dispatch-modal"
+        class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div class="p-5 border-b border-slate-100 bg-white flex justify-between items-center">
+                <h3 class="font-bold text-xl text-slate-800">Create Dispatch Order</h3>
+                <button onclick="document.getElementById('dispatch-modal').classList.add('hidden')"
+                    class="text-slate-400 hover:text-red-500 transition-colors"><svg class="w-6 h-6" fill="none"
+                        stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg></button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow space-y-6 bg-slate-50/30">
+                <input type="hidden" id="dispatch-job-id">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Client</label>
+                        <div class="flex gap-2"><input type="text" id="dispatch-client-name" class="table-input"
+                                placeholder="Select or Type"><button id="dispatch-select-client-btn"
+                                class="bg-white border border-slate-300 text-slate-700 px-3 py-2 rounded-md text-xs font-bold hover:bg-slate-50 shadow-sm">Select</button>
+                        </div>
+                    </div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Job Type</label><select
+                            id="dispatch-job-type" class="table-input">
+                            <option>Trucking & Hauling</option>
+                            <option>Excavation</option>
+                            <option>Paving</option>
+                            <option>Landscaping</option>
+                            <option>Snow Removal</option>
+                            <option>Other</option>
+                        </select></div>
+                </div>
+                <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                    <h4 class="text-xs font-bold text-blue-600 uppercase mb-3 tracking-wide">Timing</h4>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div><label class="block text-xs font-medium text-slate-600 mb-1">Date</label><input type="date"
+                                id="dispatch-date" class="table-input"></div>
+                        <div><label class="block text-xs font-medium text-slate-600 mb-1">Shop Start</label><input
+                                type="time" id="dispatch-shop-time" class="table-input"></div>
+                        <div><label class="block text-xs font-medium text-slate-600 mb-1">Site Arrival</label><input
+                                type="time" id="dispatch-site-time" class="table-input"></div>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Job Site</label><input
+                            type="text" id="dispatch-site-loc" class="table-input">
+                        <div id="dispatch-drive-time" class="text-xs text-blue-600 font-bold mt-1 hidden"></div>
+                    </div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Dump Site</label><input
+                            type="text" id="dispatch-dump-loc" class="table-input"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Site Contact</label><input
+                            type="text" id="dispatch-contact" class="table-input"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Material</label><input
+                            type="text" id="dispatch-material" class="table-input"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Equipment
+                            Needed</label><input type="text" id="dispatch-equipment" class="table-input"
+                            placeholder="e.g. Roller, Paver"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tools Needed</label><input
+                            type="text" id="dispatch-tools" class="table-input" placeholder="e.g. Rakes, Shovels"></div>
+                </div>
+                <div class="border border-slate-200 bg-white rounded-xl p-4">
+                    <label class="block text-xs font-bold text-slate-700 uppercase mb-2">Assignments</label>
+                    <table class="w-full text-sm mb-3">
+                        <thead>
+                            <tr class="text-left text-xs text-slate-400">
+                                <th>Employee</th>
+                                <th>Vehicle</th>
+                                <th>Notes</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="dispatch-crew-list"></tbody>
+                    </table>
+                    <button id="add-crew-row-btn" class="text-blue-600 text-xs font-bold hover:underline">+ Add
+                        Crew</button>
+                </div>
+                <div class="bg-red-50 p-4 rounded-xl border border-red-100">
+                    <h4 class="text-xs font-bold text-red-700 uppercase mb-3">Safety & Compliance</h4>
+
+                    <!-- Tool Box Meeting -->
+                    <div class="grid grid-cols-2 gap-4 mb-3">
+                        <div>
+                            <label class="block text-xs font-medium text-red-900/70">Toolbox Meeting Loc</label>
+                            <input type="text" id="dispatch-toolbox-loc"
+                                class="table-input border-red-200 focus:ring-red-200" placeholder="Search Location...">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-red-900/70">Meeting Time</label>
+                            <input type="time" id="dispatch-toolbox-time"
+                                class="table-input border-red-200 focus:ring-red-200">
+                        </div>
+                    </div>
+
+                    <!-- LMHA Configuration -->
+                    <div class="mb-3 border-t border-red-200 pt-2">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="dispatch-lmha-required"
+                                    class="h-4 w-4 text-red-600 rounded border-red-300 focus:ring-red-500">
+                                <span class="text-xs font-bold text-red-800">LMHA Required?</span>
+                            </label>
+                        </div>
+                        <div id="lmha-config" class="hidden grid grid-cols-2 gap-2 pl-6">
+                            <div>
+                                <label class="block text-[10px] font-bold text-red-700 uppercase">When</label>
+                                <select id="dispatch-lmha-when" class="table-input text-xs py-1">
+                                    <option value="arrival">On Site Arrival</option>
+                                    <option value="start">Start of Shift</option>
+                                    <option value="mid">Mid-Day</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-red-700 uppercase">Where</label>
+                                <select id="dispatch-lmha-where" class="table-input text-xs py-1">
+                                    <option value="site">Job Site</option>
+                                    <option value="shop">Shop / Yard</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- SWP & Documents -->
+                        <div class="mb-3 border-t border-red-200 pt-2">
+                            <label class="block text-xs font-bold text-red-800 mb-2">Required SWPs / Docs</label>
+
+                            <!-- Dynamic SWP List -->
+                            <div id="dispatch-swp-container"
+                                class="max-h-32 overflow-y-auto border border-red-100 rounded p-2 bg-white mb-2 grid grid-cols-1 gap-1">
+                                <p class="text-xs text-gray-400 italic">Loading safety documents...</p>
+                            </div>
+
+                            <div class="flex gap-2">
+                                <input type="text" id="dispatch-custom-hazard" class="flex-1 table-input text-xs py-1"
+                                    placeholder="Add Custom Hazard...">
+                                <button id="add-custom-hazard-btn"
+                                    class="bg-red-100 text-red-700 border border-red-200 px-2 rounded text-xs hover:bg-red-200">+</button>
+                            </div>
+                            <div id="custom-hazards-list" class="flex flex-wrap gap-1 mt-2"></div>
+                        </div>
+
+                        <!-- Notes & Notification -->
+                        <div class="border-t border-red-200 pt-2">
+                            <label class="block text-xs font-medium text-red-900/70">Dispatch Notes</label>
+                            <textarea id="dispatch-notes" rows="2"
+                                class="table-input border-red-200 focus:ring-red-200 mb-2"></textarea>
+
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input type="checkbox" id="dispatch-notify-crew"
+                                    class="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+                                <span class="text-xs font-bold text-blue-700">Notify Crew (Email)</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 border-t border-slate-100 bg-white flex justify-end gap-3">
+                    <button onclick="document.getElementById('dispatch-modal').classList.add('hidden')"
+                        class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-lg font-semibold hover:bg-slate-200 transition-colors">Cancel</button>
+                    <button id="save-dispatch-btn"
+                        class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95">Send
+                        Dispatch</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="client-select-modal"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[60] flex items-center justify-center">
+            <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-5">
+                <h3 class="font-bold text-lg mb-4 text-slate-800">Select Client</h3>
+                <div id="client-list-container"
+                    class="max-h-64 overflow-y-auto border border-slate-200 rounded-lg p-2 space-y-1 mb-4"></div><button
+                    onclick="document.getElementById('client-select-modal').classList.add('hidden')"
+                    class="w-full py-2.5 bg-slate-100 text-slate-700 rounded-lg font-bold hover:bg-slate-200">Close</button>
+            </div>
+        </div>
+
+        <!-- ROI REPORT MODAL -->
+        <div id="roi-modal"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-indigo-50 rounded-t-xl">
+                    <div>
+                        <h3 class="font-bold text-lg text-indigo-900">Asset ROI Report</h3>
+                        <p class="text-xs text-indigo-600">Financial Performance Analysis</p>
+                    </div>
+                    <button onclick="document.getElementById('roi-modal').classList.add('hidden')"
+                        class="text-indigo-400 hover:text-indigo-700 text-2xl">&times;</button>
+                </div>
+
+                <div class="flex-grow overflow-y-auto p-0">
+                    <table class="w-full text-left">
+                        <thead class="bg-indigo-50 sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-3 text-xs font-bold text-indigo-800 uppercase">Asset</th>
+                                <th class="px-6 py-3 text-xs font-bold text-indigo-800 uppercase text-right">Revenue
+                                    (Est)
+                                </th>
+                                <th class="px-6 py-3 text-xs font-bold text-indigo-800 uppercase text-right">Maint. Cost
+                                </th>
+                                <th class="px-6 py-3 text-xs font-bold text-indigo-800 uppercase text-right">Net Profit
+                                </th>
+                                <th class="px-6 py-3 text-xs font-bold text-indigo-800 uppercase text-center">ROI %</th>
+                            </tr>
+                        </thead>
+                        <tbody id="roi-table-body" class="divide-y divide-indigo-50">
+                            <tr>
+                                <td colspan="5" class="p-6 text-center text-gray-500">Loading analysis...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="p-4 border-t border-slate-100 bg-slate-50 rounded-b-xl flex justify-between items-center">
+                    <p class="text-xs text-gray-500 italic">* Revenue based on Dispatch Hours x Hourly Rate. Cost based
+                        on
+                        Repair Tickets ($200 avg) + Parts.</p>
+                    <button onclick="window.print()" class="text-indigo-600 font-bold text-xs hover:underline">Print
+                        Report</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- DETAIL MODAL (FORMS & LOGS) -->
+        <div id="detail-modal"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col">
+                <div class="p-4 border-b border-slate-100 flex justify-between items-center bg-slate-50 rounded-t-xl">
+                    <h3 class="font-bold text-lg text-slate-800" id="modal-title">Details</h3>
+                    <button onclick="document.getElementById('detail-modal').classList.add('hidden')"
+                        class="text-slate-400 hover:text-red-500 text-2xl">&times;</button>
+                </div>
+                <div id="modal-content" class="p-6 overflow-y-auto space-y-4">
+                    <!-- Content injected by JS -->
+                </div>
+                <div class="p-4 border-t border-slate-100 flex justify-end">
+                    <button onclick="document.getElementById('detail-modal').classList.add('hidden')"
+                        class="px-4 py-2 bg-slate-100 text-slate-700 rounded font-bold hover:bg-slate-200">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="edit-user-modal"
+            class="hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl h-[90vh] flex flex-col overflow-hidden">
+                <div class="p-5 border-b border-slate-100 bg-white flex justify-between items-center">
+                    <h3 class="font-bold text-xl text-slate-800">Employee Profile</h3>
+                    <button id="cancel-edit-user-btn"
+                        class="text-slate-400 hover:text-red-500 text-2xl transition-colors">&times;</button>
+                </div>
+                <div class="flex border-b border-slate-200 bg-slate-50/50 px-2">
+                    <button
+                        class="profile-tab-btn active flex-1 py-3 text-sm font-bold text-blue-600 border-b-2 border-blue-600"
+                        data-target="tab-profile-info">Info</button>
+                    <button
+                        class="profile-tab-btn flex-1 py-3 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700"
+                        data-target="tab-profile-training">Training</button>
+                    <button
+                        class="profile-tab-btn flex-1 py-3 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700"
+                        data-target="tab-profile-history">History</button>
+                    <button
+                        class="profile-tab-btn flex-1 py-3 text-sm font-bold text-slate-500 border-b-2 border-transparent hover:text-slate-700"
+                        data-target="tab-profile-work">Work Log</button>
+                </div>
+                <div class="p-6 overflow-y-auto flex-grow bg-white">
+                    <input type="hidden" id="edit-user-id">
+                    <div id="tab-profile-info" class="profile-tab-content space-y-6">
+                        <div class="flex flex-col md:flex-row gap-8">
+                            <div class="md:w-1/3 flex flex-col items-center space-y-4">
+                                <div class="w-32 h-32 rounded-full bg-slate-100 border-4 border-white shadow-lg overflow-hidden relative group cursor-pointer"
+                                    onclick="document.getElementById('edit-user-photo-input').click()">
+                                    <img id="edit-user-photo-preview" src="" class="w-full h-full object-cover hidden">
+                                    <div id="edit-user-photo-placeholder"
+                                        class="w-full h-full flex items-center justify-center text-slate-300"><svg
+                                            class="w-12 h-12" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd"
+                                                d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"
+                                                clip-rule="evenodd">
+                                            </path>
+                                        </svg></div>
+                                    <div
+                                        class="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <span class="text-white text-xs font-bold">Change</span>
+                                    </div>
+                                </div>
+                                <input type="file" id="edit-user-photo-input" class="hidden" accept="image/*">
+                                <div class="w-full bg-slate-50 p-3 rounded-xl border border-slate-200">
+                                    <h4 class="text-xs font-bold text-slate-500 uppercase mb-2">Home Location</h4>
+                                    <div id="employee-home-map" class="w-full h-32 bg-slate-200 rounded-lg mb-2"></div>
+                                    <div id="employee-street-view" class="w-full h-32 bg-slate-200 rounded-lg"></div>
+                                </div>
+                            </div>
+                            <div class="md:w-2/3 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div class="col-span-2"><label
+                                            class="block text-xs font-bold text-slate-500 uppercase mb-1">Full
+                                            Name</label><input type="text" id="edit-user-name" class="table-input">
+                                    </div>
+                                    <div><label
+                                            class="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label><input
+                                            type="email" id="edit-user-email" class="table-input bg-slate-50" readonly>
+                                    </div>
+                                    <div><label
+                                            class="block text-xs font-bold text-slate-500 uppercase mb-1">Phone</label><input
+                                            type="text" id="edit-user-phone" class="table-input"></div>
+                                    <div class="col-span-2"><label
+                                            class="block text-xs font-bold text-slate-500 uppercase mb-1">Address</label><input
+                                            type="text" id="edit-user-address" class="table-input"></div>
+                                </div>
+                                <div class="pt-4 border-t border-slate-100">
+                                    <h4 class="text-sm font-bold text-slate-800 mb-3">Employment Details</h4>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Job
+                                                Title</label><input type="text" id="edit-user-job" class="table-input">
+                                        </div>
+                                        <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Wage
+                                                ($/hr)</label><input type="number" id="edit-user-wage"
+                                                class="table-input">
+                                        </div>
+                                        <div><label
+                                                class="block text-xs font-bold text-slate-500 uppercase mb-1">Type</label><select
+                                                id="edit-user-emp-type" class="table-input">
+                                                <option value="Full Time">Full Time</option>
+                                                <option value="Part Time">Part Time</option>
+                                                <option value="Casual">Casual</option>
+                                            </select></div>
+                                        <div><label
+                                                class="block text-xs font-bold text-slate-500 uppercase mb-1">Status</label><select
+                                                id="edit-user-status" class="table-input">
+                                                <option value="Active">Active</option>
+                                                <option value="Laid Off">Laid Off</option>
+                                                <option value="Terminated">Terminated</option>
+                                            </select></div>
+                                    </div>
+                                </div>
+                                <div class="pt-4 border-t border-slate-100">
+                                    <div class="flex gap-3 items-end">
+                                        <div class="w-32"><label
+                                                class="block text-xs font-bold text-slate-500 uppercase mb-1">Role</label><select
+                                                id="edit-user-role" class="table-input">
+                                                <option value="crew">Crew</option>
+                                                <option value="office">Office</option>
+                                                <option value="admin">Admin</option>
+                                            </select></div>
+                                        <button id="reset-password-btn"
+                                            class="flex-grow py-2.5 border border-yellow-300 bg-yellow-50 text-yellow-700 rounded-lg text-sm font-bold hover:bg-yellow-100">Send
+                                            Password Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div id="tab-profile-training" class="profile-tab-content hidden space-y-4">
+                        <div><label
+                                class="block text-xs font-bold text-slate-500 uppercase mb-1">Qualifications</label><textarea
+                                id="edit-user-training" class="table-input" rows="12"></textarea></div>
+                    </div>
+                    <div id="tab-profile-history" class="profile-tab-content hidden space-y-4">
+                        <div><label
+                                class="block text-xs font-bold text-red-500 uppercase mb-1">Infractions</label><textarea
+                                id="edit-user-infractions"
+                                class="table-input border-red-200 bg-red-50 focus:ring-red-200" rows="6"></textarea>
+                        </div>
+                        <div><label class="block text-xs font-bold text-slate-500 uppercase mb-1">Notes</label><textarea
+                                id="edit-user-notes" class="table-input" rows="6"></textarea></div>
+                    </div>
+                    <div id="tab-profile-work" class="profile-tab-content hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h4 class="font-bold text-slate-700">Payroll Logs</h4>
+                            <div class="text-xs text-slate-500 text-right">Based on clock-in times</div>
+                        </div>
+                        <div class="overflow-y-auto max-h-96 border border-slate-200 rounded-lg">
+                            <table class="w-full text-left">
+                                <thead class="bg-slate-50 text-xs font-bold text-slate-500 uppercase sticky top-0">
+                                    <tr>
+                                        <th class="px-4 py-3">Week Of</th>
+                                        <th class="px-4 py-3 text-center">Shifts</th>
+                                        <th class="px-4 py-3 text-right">Hours</th>
+                                        <th class="px-4 py-3 text-right">Gross Pay</th>
+                                        <th class="px-4 py-3"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="user-work-history-body" class="divide-y divide-slate-100">
+                                    <tr>
+                                        <td colspan="5" class="p-6 text-center text-slate-400">Loading...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-5 border-t border-slate-100 bg-white flex justify-between items-center">
+                    <button onclick="deleteUser(document.getElementById('edit-user-id').value)"
+                        class="text-red-500 hover:text-red-700 text-sm font-bold px-4 py-2 hover:bg-red-50 rounded-lg transition-colors">Delete
+                        Profile</button>
+                    <button id="save-edit-user-btn"
+                        class="px-6 py-2.5 bg-blue-600 text-white rounded-lg font-bold shadow-lg shadow-blue-200 hover:bg-blue-700 transition-all active:scale-95">Save
+                        Changes</button>
+                </div>
+            </div>
+        </div>
+        <script>function initMap() { window.googleMapsLoaded = true; }</script>
+        <script async defer
+            src="https://maps.googleapis.com/maps/api/js?key=AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs&libraries=places&callback=initMap"></script>
+
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+            import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+            import { getFirestore, collection, query, where, getDocs, orderBy, limit, addDoc, updateDoc, doc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+            import { initializeOperationsApp } from './operations.js';
+            import { initializeUserManager } from '../employee/user-manager.js';
+            import { initializeAssetManager } from '../fleet/asset-manager.js';
+            import { initializeInventoryManager } from '../inventory_manager/inventory-app.js';
+            import { initializeMaintenanceModule } from '../fleet/maintenance.js';
+            import { initializeAdminSettings } from '../admin/admin-settings.js';
+            import { initializePermissionsWizard } from '../admin/permissions-wizard.js';
+
+            const firebaseConfig = { apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs", authDomain: "city-pave-estimator.firebaseapp.com", projectId: "city-pave-estimator", storageBucket: "city-pave-estimator.firebasestorage.app", messagingSenderId: "111714884839", appId: "1:111714884839:web:2b782a1b7be5be8edc5642" };
+            const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
+            const db = getFirestore(app);
+            window.firebaseServices = { auth, db, collection, query, where, getDocs, orderBy, limit, addDoc, updateDoc, doc, deleteDoc, onSnapshot };
+
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    window.currentUser = user; // Expose for maintenance.js
+                    initializeOperationsApp();
+                    initializeUserManager();
+                    initializeAssetManager();
+                    initializeInventoryManager();
+                    initializeMaintenanceModule();
+                    initializeAdminSettings(); // <--- NEW INIT CALL
+                    initializePermissionsWizard();
+                } else {
+                    window.location.href = '../../index.html';
+                }
+            });
+        </script>
+
+        <script type="module" src="../../qa-agent.js"></script>
+</body>
+
+</html>

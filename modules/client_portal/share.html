@@ -1,0 +1,183 @@
+// © 2025 City Pave. All Rights Reserved.
+// This code is the confidential and proprietary property of City Pave.
+// Unauthorized copying, distribution, or use of this code is strictly prohibited.
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave Estimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../style.css">
+    <style>
+        /* SECURITY: Prevent Printing and Copying */
+        @media print {
+            body {
+                display: none !important;
+            }
+        }
+
+        .secure-content {
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 secure-content">
+
+    <div id="estimate-container" class="container mx-auto p-4 md:p-8 max-w-4xl bg-white shadow-lg my-10">
+        <p class="text-center text-gray-500 py-20">Loading estimate...</p>
+    </div>
+
+    <div id="acceptance-section-container"
+        class="hidden container mx-auto p-4 md:p-8 max-w-4xl bg-white shadow-lg mb-10">
+
+        <div id="print-link-container" class="mb-6 flex flex-wrap gap-4 justify-center"></div>
+
+        <div id="acceptance-form">
+            <h2 class="text-2xl font-bold mb-4">Acceptance of Proposal</h2>
+            <p class="text-sm text-gray-600 mb-6">By signing below, you accept the prices, specifications, and
+                conditions outlined in this proposal. You authorize City Pave to perform the work as specified. A
+                witness signature is required for this acceptance to be valid.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-8 mb-6 border-b pb-8">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Your Signature</label>
+                    <div class="mt-1 bg-gray-50 border border-gray-300 rounded-md">
+                        <canvas id="signature-pad" class="w-full h-32"></canvas>
+                    </div>
+                    <button id="clear-signature-btn" type="button"
+                        class="text-sm text-blue-600 hover:underline mt-1">Clear Signature</button>
+                </div>
+                <div>
+                    <label for="print-name" class="block text-sm font-medium text-gray-700">Print Your Name</label>
+                    <input type="text" id="print-name" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                        placeholder="John Doe">
+
+                    <label for="acceptance-date" class="block text-sm font-medium text-gray-700 mt-4">Date of
+                        Acceptance</label>
+                    <input type="date" id="acceptance-date"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">Witness Signature</label>
+                    <div class="mt-1 bg-gray-50 border border-gray-300 rounded-md">
+                        <canvas id="witness-signature-pad" class="w-full h-32"></canvas>
+                    </div>
+                    <button id="clear-witness-signature-btn" type="button"
+                        class="text-sm text-blue-600 hover:underline mt-1">Clear Witness Signature</button>
+                </div>
+                <div>
+                    <label for="witness-print-name" class="block text-sm font-medium text-gray-700">Print Witness
+                        Name</label>
+                    <input type="text" id="witness-print-name"
+                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" placeholder="Jane Smith">
+                </div>
+            </div>
+
+            <div class="mb-6">
+                <label for="additional-information" class="block text-sm font-medium text-gray-700">Additional
+                    Information (Optional)</label>
+                <textarea id="additional-information" rows="4"
+                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+                    placeholder="Please include any notes, conditions, or counter-proposals here..."></textarea>
+            </div>
+
+            <button id="accept-proposal-btn"
+                class="w-full p-3 bg-green-600 text-white font-bold rounded-md hover:bg-green-700">Accept & Sign
+                Proposal</button>
+        </div>
+        <div id="acceptance-success" class="hidden text-center py-10">
+            <h2 class="text-2xl font-bold text-green-600">Thank You!</h2>
+            <p class="mt-2 text-gray-700">Your acceptance has been submitted. We will be in touch with you shortly to
+                confirm the next steps.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        // Import necessary functions from Firebase SDK
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, collection, doc, getDoc, query, where, getDocs, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+        // Import config for branding
+        import { config } from '../../config.js';
+
+        // Your Firebase configuration object
+        const firebaseConfig = {
+            apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+            authDomain: "city-pave-estimator.firebaseapp.com",
+            projectId: "city-pave-estimator",
+            storageBucket: "city-pave-estimator.firebasestorage.app",
+            messagingSenderId: "111714884839",
+            appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+        };
+
+        try {
+            // Initialize Firebase
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+
+            // --- ADD BRANDING ---
+            document.title = `${config.name} - Estimate`;
+            // If logos are inside #estimate-container, update after HTML is generated
+            // Apply dark mode if needed
+            if (localStorage.getItem('theme') === 'dark') {
+                document.body.classList.add('dark-mode');
+            }
+            // --- END BRANDING ---
+
+            // Make Firebase services available globally for share.js
+            window.firebaseServices = {
+                db,
+                collection,
+                doc,
+                getDoc,
+                query,
+                where,
+                getDocs,
+                updateDoc,
+                addDoc
+            };
+
+            // Indicate that services are ready
+            window.firebaseServicesReady = true;
+            console.log("Firebase services ready.");
+
+
+        } catch (error) {
+            console.error("Error initializing Firebase or setting up services:", error);
+            // Display error directly if setup fails
+            const container = document.getElementById('estimate-container');
+            if (container) container.innerHTML = `<p class="text-center text-red-600 font-semibold py-20">Critical Error: Could not initialize required services.</p>`;
+        }
+    </script>
+
+    <script type="module" src="./share.js"></script>
+
+    <script>
+        function attemptDisplay() {
+            if (window.firebaseServicesReady && typeof window.displayEstimate === 'function') {
+                console.log("Calling displayEstimate...");
+                window.displayEstimate();
+            } else {
+                console.log("Waiting for services or displayEstimate...");
+                setTimeout(attemptDisplay, 100);
+            }
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(attemptDisplay, 0);
+        });
+    </script>
+    <script type="module" src="../../qa-agent.js"></script>
+</body>
+
+</html>

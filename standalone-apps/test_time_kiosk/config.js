@@ -1,0 +1,7 @@
+export default {
+    id: "time_kiosk",
+    name: "Time Kiosk",
+    description: "Digital time clock and payroll tracking.",
+    version: "1.0.0",
+    permissions: ["admin", "foreman", "laborer"]
+};

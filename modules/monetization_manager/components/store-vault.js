@@ -1,0 +1,104 @@
+/**
+ * Component: StoreVault
+ * Handles secure key storage UI.
+ */
+export class StoreVault {
+    constructor(containerId, db, functions) {
+        this.containerId = containerId;
+        this.db = db;
+        this.functions = functions;
+        this.config = null;
+    }
+
+    render(config) {
+        this.config = config;
+        const container = document.getElementById(this.containerId);
+        if (!container) return;
+
+        container.innerHTML = `
+            <div class="vault-section bg-gray-800/50 border border-gray-700 rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-bold text-blue-400 mb-4 flex items-center gap-2">
+                    <span>🔐</span> Store Connection Vault
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Public Config -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Stripe Publishable Key (Public)</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="stripe-pub-key" 
+                                    value="${this.config?.stripe_publishable_key || ''}" 
+                                    class="flex-1 bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-blue-500 outline-none" 
+                                    placeholder="pk_test_..." />
+                                <button id="save-public-config" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded text-sm font-bold">Save</button>
+                            </div>
+                        </div>
+                         <div>
+                            <label class="block text-xs uppercase text-gray-500 font-bold mb-1">Google Play Service Account Email</label>
+                            <input type="text" id="google-sa-email" 
+                                value="${this.config?.google_service_account_email || ''}"
+                                placeholder="google-play-developer@api.iam.gserviceaccount.com"
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-green-500 outline-none" />
+                        </div>
+                    </div>
+
+                    <!-- Secret Zone -->
+                    <div class="bg-red-900/10 border border-red-900/30 rounded p-4 space-y-4">
+                        <h4 class="text-xs uppercase text-red-400 font-bold flex items-center gap-2">
+                            <span>🔒</span> Secure Write-Only Zone
+                        </h4>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Stripe Secret Key</label>
+                            <input type="password" id="stripe-secret" placeholder="sk_live_..." 
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-red-500 outline-none" />
+                        </div>
+                         <div>
+                            <label class="block text-xs text-gray-400 mb-1">Stripe Webhook Secret</label>
+                            <input type="password" id="stripe-webhook-secret" placeholder="whsec_..." 
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-red-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">iOS Shared Secret</label>
+                            <input type="password" id="ios-secret" placeholder="App Store Connect Secret" 
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-red-500 outline-none" />
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-400 mb-1">Google Play Service Account Key (JSON)</label>
+                            <textarea id="google-sa-key" rows="2" placeholder="{ 'type': 'service_account' ... }" 
+                                class="w-full bg-gray-900 border border-gray-600 rounded px-3 py-2 text-white text-sm focus:border-green-500 outline-none font-mono text-xs"></textarea>
+                        </div>
+                        <button id="save-secrets-btn" class="w-full bg-red-800 hover:bg-red-700 text-white py-2 rounded text-xs font-bold uppercase tracking-wide">
+                            Update Secure Secrets
+                        </button>
+                        <p class="text-[10px] text-gray-500 text-center">Keys are sent to Cloud Secret Manager/Environment Variables.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        document.getElementById('save-public-config')?.addEventListener('click', () => {
+            this.onSavePublic({
+                stripe_publishable_key: document.getElementById('stripe-pub-key').value,
+                google_service_account_email: document.getElementById('google-sa-email').value
+            });
+        });
+
+        document.getElementById('save-secrets-btn')?.addEventListener('click', () => {
+            this.onSaveSecrets({
+                stripe_secret_key: document.getElementById('stripe-secret').value,
+                stripe_webhook_secret: document.getElementById('stripe-webhook-secret').value,
+                ios_shared_secret: document.getElementById('ios-secret').value,
+                google_service_account_json: document.getElementById('google-sa-key').value
+            });
+        });
+    }
+
+    // Callbacks to be assigned by parent
+    onSavePublic(data) { console.log("Save Public", data); }
+    onSaveSecrets(data) { console.log("Save Secrets", data); }
+}

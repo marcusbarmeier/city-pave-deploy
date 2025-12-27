@@ -1,0 +1,117 @@
+/**
+ * Global Time Sheet Feed (Dev Center)
+ * Allows Admins to monitor real-time Employee Clock-Ins/Outs.
+ * Demonstrates Data Bridge: Employee App (Write) -> Firestore -> Dev Admin (Read)
+ */
+
+import { db } from './firebase-client.js';
+import { collection, query, orderBy, limit, onSnapshot, where } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+
+export class TimeSheetFeed {
+    constructor(app) {
+        this.app = app;
+        this.unsub = null;
+    }
+
+    init() {
+        console.log("[TimeSheet Feed] Initializing...");
+        this.render();
+        this.listen();
+    }
+
+    listen() {
+        // Stream the last 20 time logs (Active or Completed)
+        const q = query(
+            collection(db, 'time_logs'),
+            orderBy('startTime', 'desc'),
+            limit(20)
+        );
+
+        this.unsub = onSnapshot(q, (snapshot) => {
+            const logs = [];
+            snapshot.forEach(doc => logs.push({ id: doc.id, ...doc.data() }));
+            this.updateTable(logs);
+        });
+    }
+
+    render() {
+        const platformView = document.getElementById('ws-platform');
+        if (!platformView) return;
+
+        let section = document.getElementById('global-timesheet-section');
+        if (!section) {
+            section = document.createElement('div');
+            section.id = 'global-timesheet-section';
+            section.style.marginTop = '2rem';
+            section.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3>Live Crew Feed</h3>
+                    <div style="display:flex; gap:10px;">
+                        <span class="badge" style="background:#10b981; color:white;">● Live</span>
+                    </div>
+                </div>
+                <div class="glass-panel" style="background:var(--bg-panel); border:1px solid var(--border-color); border-radius:8px; overflow:hidden;">
+                    <table style="width:100%; text-align:left; border-collapse:collapse; font-size:0.85rem;">
+                        <thead>
+                            <tr style="border-bottom:1px solid var(--border-color); color:var(--text-secondary);">
+                                <th style="padding:10px;">Crew Member</th>
+                                <th style="padding:10px;">Current Job</th>
+                                <th style="padding:10px;">Status</th>
+                                <th style="padding:10px;">Duration / Time</th>
+                            </tr>
+                        </thead>
+                        <tbody id="global-timesheet-body">
+                            <tr><td colspan="4" style="padding:20px; text-align:center;">Listening for signals...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
+            platformView.appendChild(section);
+        }
+    }
+
+    updateTable(logs) {
+        const tbody = document.getElementById('global-timesheet-body');
+        if (!tbody) return;
+
+        if (logs.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" style="padding:2rem; text-align:center; opacity:0.5;">No active shifts found.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = logs.map(log => {
+            const isLive = log.status === 'active';
+            const statusColor = isLive ? '#10b981' : '#6b7280'; // Green or Gray
+            const statusText = isLive ? 'CLOCKED IN' : 'COMPLETED';
+
+            // Calculate Duration
+            const start = new Date(log.startTime);
+            const end = log.endTime ? new Date(log.endTime) : new Date();
+            const diffMs = end - start;
+            const hours = Math.floor(diffMs / 3600000);
+            const mins = Math.floor((diffMs % 3600000) / 60000);
+            const durationStr = `${hours}h ${mins}m`;
+
+            return `
+                <tr style="border-bottom:1px solid rgba(255,255,255,0.05);">
+                    <td style="padding:10px;">
+                        <div style="font-weight:600;">${log.userName || 'Unknown'}</div>
+                        <div style="font-size:0.7rem; opacity:0.6;">${log.userId ? log.userId.substring(0, 8) : 'N/A'}</div>
+                    </td>
+                    <td style="padding:10px;">
+                        ${log.jobName || 'General Shop Time'}
+                        ${log.updates && log.updates.length > 0 ? `<span title="${log.updates.length} updates" style="margin-left:5px; font-size:0.7rem;">💬</span>` : ''}
+                    </td>
+                    <td style="padding:10px;">
+                        <span style="background:${statusColor}20; color:${statusColor}; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:bold;">
+                            ${statusText}
+                        </span>
+                    </td>
+                    <td style="padding:10px;">
+                        ${isLive ? `<span style="color:#10b981;">⏱ ${durationStr}</span>` : `<span style="opacity:0.7;">Ended: ${end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>`}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+}

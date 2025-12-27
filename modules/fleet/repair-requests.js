@@ -1,0 +1,433 @@
+
+import { Modal, Button, Input, StatusBadge } from '../../ui-components.js';
+import './test-simulator.js'; // Make simulator available
+
+// --- Constants ---
+const PRIORITY_LEVELS = [
+    { value: 'Low', label: 'Low - Can wait until next service', color: 'bg-green-100 text-green-800' },
+    { value: 'Medium', label: 'Medium - Needs attention soon', color: 'bg-yellow-100 text-yellow-800' },
+    { value: 'High', label: 'High - Affects daily operations', color: 'bg-orange-100 text-orange-800' },
+    { value: 'Critical', label: 'Critical - Equipment unusable / Safety hazard', color: 'bg-red-100 text-red-800' }
+];
+
+// --- Main Render Function ---
+export async function renderRepairRequestForm(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.innerHTML = '<div class="flex justify-center p-10"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div></div>';
+
+    // Fetch Assets for Dropdown
+    let assets = [];
+    try {
+        const { db, collection, getDocs, query, orderBy } = window.firebaseServices;
+        // Query all assets, sorted by unitId
+        const q = query(
+            collection(db, 'assets'),
+            orderBy('unitId', 'asc')
+        );
+        const snapshot = await getDocs(q);
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            // Client-side filter to avoid complex index requirements
+            if (data.status !== 'Sold' && data.status !== 'Inactive') {
+                assets.push({ id: doc.id, ...data });
+            }
+        });
+
+        // Secondary sort just in case (client side)
+        assets.sort((a, b) => (a.unitId || '').localeCompare(b.unitId || ''));
+
+    } catch (e) {
+        console.warn("Failed to load assets, falling back to manual input", e);
+    }
+
+    container.innerHTML = ''; // Clear existing content
+
+    const formCard = document.createElement('div');
+    formCard.className = 'max-w-2xl mx-auto bg-white dark:bg-slate-800 rounded-xl shadow-lg p-6 border border-slate-200 dark:border-slate-700';
+
+    // Add Title
+    const titleObj = document.createElement('h2');
+    titleObj.className = 'text-2xl font-bold text-slate-900 dark:text-white mb-2';
+    titleObj.textContent = 'Submit Repair Request';
+    formCard.appendChild(titleObj);
+
+    const subTitle = document.createElement('p');
+    subTitle.className = 'text-sm text-slate-500 mb-6';
+    subTitle.textContent = 'Report issues directly to the maintenance team.';
+    formCard.appendChild(subTitle);
+
+    // AI Overlay Trigger
+    const aiContainer = document.createElement('div');
+    aiContainer.className = 'mb-6 p-4 bg-purple-50 dark:bg-purple-900/20 border border-purple-100 dark:border-purple-800 rounded-lg flex items-center justify-between';
+    aiContainer.innerHTML = `
+        <div class="flex items-center gap-3">
+             <div class="h-10 w-10 rounded-full bg-purple-600 flex items-center justify-center text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+             </div>
+             <div>
+                <h4 class="font-bold text-purple-900 dark:text-purple-100">AI Assistant</h4>
+                <p class="text-xs text-purple-700 dark:text-purple-300">Describe the problem verbally or show a video.</p>
+             </div>
+        </div>
+        <button type="button" onclick="alert('AI Overlay coming in v1.1 Implementation Phase!')" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+            Start Analysis
+        </button>
+    `;
+    formCard.appendChild(aiContainer);
+
+
+    // Add Form Content (children)
+    formCard.appendChild(createFormContent(assets));
+
+    container.appendChild(formCard);
+
+    // Render Recent Requests List below the form
+    const listContainer = document.createElement('div');
+    listContainer.id = 'recent-repair-requests';
+    listContainer.className = 'mt-8 max-w-2xl mx-auto';
+    container.appendChild(listContainer);
+
+    loadRecentRequests();
+}
+
+function createFormContent(assets) {
+    const form = document.createElement('form');
+    form.className = 'space-y-6';
+    form.onsubmit = handleRepairSubmit;
+
+    // 1. Equipment Selection (Dropdown)
+    const equipContainer = document.createElement('div');
+    const equipLabel = document.createElement('label');
+    equipLabel.className = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1';
+    equipLabel.textContent = 'Equipment / Asset';
+
+    if (assets.length > 0) {
+        const select = document.createElement('select');
+        select.id = 'repair-equipment-id';
+        select.className = 'block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-2.5';
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = "";
+        defaultOption.textContent = "Select Equipment...";
+        select.appendChild(defaultOption);
+
+        assets.forEach(asset => {
+            const opt = document.createElement('option');
+            opt.value = asset.unitId || asset.id; // Prefer friendly ID
+            opt.textContent = `${asset.unitId || ''} - ${asset.name || 'Unnamed Asset'} (${asset.licensePlate || ''})`;
+            select.appendChild(opt);
+        });
+        equipContainer.appendChild(select);
+    } else {
+        // Fallback to text input
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'repair-equipment-id';
+        input.className = 'block w-full rounded-lg border-slate-300';
+        input.placeholder = 'e.g., Truck 05';
+        input.required = true;
+        equipContainer.appendChild(input);
+    }
+    equipContainer.appendChild(equipLabel); // Oops, append label first usually, but swapping for structure logic
+    // Re-ordering logic:
+    equipContainer.innerHTML = '';
+    equipContainer.appendChild(equipLabel);
+    if (assets.length > 0) {
+        const select = document.createElement('select');
+        select.id = 'repair-equipment-id';
+        select.required = true;
+        select.className = 'block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3';
+
+        select.innerHTML = `<option value="">Select Equipment...</option>` +
+            assets.map(a => `<option value="${a.unitId || a.id}">${a.unitId || '?'} - ${a.name || 'Unknown'}</option>`).join('');
+
+        equipContainer.appendChild(select);
+    } else {
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'repair-equipment-id';
+        input.className = 'block w-full rounded-lg border-slate-300 p-3';
+        input.placeholder = 'e.g., Truck 05';
+        input.required = true;
+        equipContainer.appendChild(input);
+    }
+
+
+    // 2. Description
+    const descContainer = document.createElement('div');
+    const descLabel = document.createElement('label');
+    descLabel.className = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1';
+    descLabel.textContent = 'Issue Description';
+    const descTextarea = document.createElement('textarea');
+    descTextarea.id = 'repair-description';
+    descTextarea.required = true;
+    descTextarea.rows = 4;
+    descTextarea.className = 'block w-full rounded-lg border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-white shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm p-3';
+    descTextarea.placeholder = 'Describe the issue in detail...';
+    descContainer.appendChild(descLabel);
+    descContainer.appendChild(descTextarea);
+
+    // 3. Priority Selection
+    const priorityContainer = document.createElement('div');
+    const priorityLabel = document.createElement('label');
+    priorityLabel.className = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2';
+    priorityLabel.textContent = 'Priority Level';
+    priorityContainer.appendChild(priorityLabel);
+
+    const priorityGrid = document.createElement('div');
+    priorityGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-3';
+
+    PRIORITY_LEVELS.forEach(level => {
+        const label = document.createElement('label');
+        const baseClass = "relative flex cursor-pointer rounded-lg border p-4 shadow-sm focus:outline-none transition-all";
+        const inactiveClass = "bg-white dark:bg-slate-700 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-600";
+        label.className = `${baseClass} ${inactiveClass}`;
+
+        const input = document.createElement('input');
+        input.type = 'radio';
+        input.name = 'repair-priority';
+        input.value = level.value;
+        input.className = 'sr-only';
+        if (level.value === 'Medium') input.checked = true;
+
+        const content = document.createElement('span');
+        content.className = 'flex flex-1';
+        content.innerHTML = `
+            <span class="flex flex-col">
+                <span class="block text-sm font-bold text-slate-900 dark:text-white">${level.value}</span>
+                <span class="mt-1 flex items-center text-xs text-slate-500 dark:text-slate-300">${level.label}</span>
+            </span>
+        `;
+
+        const updateVisuals = () => {
+            priorityGrid.querySelectorAll('label').forEach(l => {
+                l.className = `${baseClass} ${inactiveClass}`;
+            });
+            if (input.checked) {
+                label.className = `${baseClass} ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-900/20 border-blue-500 dark:border-blue-400`;
+            }
+        };
+
+        input.addEventListener('change', updateVisuals);
+        if (input.checked) setTimeout(updateVisuals, 0);
+
+        label.appendChild(input);
+        label.appendChild(content);
+        priorityGrid.appendChild(label);
+    });
+    priorityContainer.appendChild(priorityGrid);
+
+    // 4. Photo Upload
+    const photoContainer = document.createElement('div');
+    const photoLabel = document.createElement('label');
+    photoLabel.className = 'block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1';
+    photoLabel.textContent = 'Attach Photos / Videos';
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.id = 'repair-photo';
+    fileInput.multiple = true; // Allow multiple
+    fileInput.accept = 'image/*,video/*';
+    fileInput.className = 'block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-slate-700 dark:file:text-slate-200';
+
+    photoContainer.appendChild(photoLabel);
+    photoContainer.appendChild(fileInput);
+
+    // 5. Replacement Unit
+    const replaceContainer = document.createElement('div');
+    replaceContainer.className = 'flex items-center gap-3 p-3 bg-slate-50 rounded-lg border border-slate-200';
+    replaceContainer.innerHTML = `
+        <input type="checkbox" id="repair-replacement" class="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500">
+        <label for="repair-replacement" class="text-sm font-medium text-gray-700">Request Replacement Unit (Ongoing Job)</label>
+    `;
+
+    // 6. Submit Button
+    const submitBtn = Button({
+        text: 'Submit Request',
+        type: 'submit',
+        variant: 'primary',
+        className: 'w-full justify-center mt-6'
+    });
+
+    form.appendChild(equipContainer);
+    form.appendChild(descContainer);
+    form.appendChild(priorityContainer);
+    form.appendChild(photoContainer);
+    form.appendChild(replaceContainer);
+    form.appendChild(submitBtn);
+
+    return form;
+}
+
+async function handleRepairSubmit(e) {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const originalText = btn.textContent;
+    btn.textContent = 'Submitting...';
+    btn.disabled = true;
+
+    try {
+        const { db, collection, addDoc, storage, ref, uploadBytes, getDownloadURL } = window.firebaseServices;
+        const currentUser = window.currentUser || { uid: 'anonymous', displayName: 'Anonymous' };
+
+        const equipmentId = document.getElementById('repair-equipment-id').value;
+        const description = document.getElementById('repair-description').value;
+        const priorityInput = document.querySelector('input[name="repair-priority"]:checked');
+        const priority = priorityInput ? priorityInput.value : 'Medium';
+        const fileInput = document.getElementById('repair-photo');
+        const needsReplacement = document.getElementById('repair-replacement').checked;
+
+        // --- File Upload Logic (Multiple) ---
+        const attachments = [];
+        if (fileInput.files.length > 0) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                const file = fileInput.files[i];
+                try {
+                    const sanitizedName = file.name.replace(/[^a-zA-Z0-9.]/g, '_');
+                    // Upload to 'maintenance_uploads' instead of repair_photos
+                    const storageRef = ref(storage, `maintenance_uploads/${Date.now()}_${sanitizedName}`);
+                    const snapshot = await uploadBytes(storageRef, file);
+                    const url = await getDownloadURL(snapshot.ref);
+                    attachments.push({
+                        name: file.name,
+                        url: url,
+                        type: file.type.startsWith('image') ? 'image' : 'video'
+                    });
+                } catch (err) {
+                    console.error("Upload failed for file:", file.name, err);
+                }
+            }
+        }
+
+        // --- UNIFIED DATA PAYLOAD ---
+        // Writing to 'maintenance_tickets' instead of 'repair_tickets'
+        const ticketData = {
+            assetId: equipmentId, // Mapping equipmentId to assetId for consistency with maintenance.js
+            description: description,
+            issue: description, // Dup for maintenance.js compatibility
+            priority: priority,
+            // Meta
+            submittedBy: currentUser.uid,
+            submittedByName: currentUser.displayName || 'Unknown User',
+            createdAt: new Date().toISOString(),
+            status: 'Pending Review', // Set implicitly for Mechanic Review workflow
+            origin: 'user_report',
+            needsReplacement: needsReplacement,
+            attachments: attachments
+        };
+
+        // Context Awareness (if available)
+        if (navigator.geolocation) {
+            try {
+                const pos = await new Promise((res, rej) => navigator.geolocation.getCurrentPosition(res, rej, { timeout: 5000 }));
+                ticketData.location = {
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude
+                };
+            } catch (geoErr) {
+                console.log("Geo location denied or failed", geoErr);
+            }
+        }
+
+        console.log("Submitting unified ticket:", ticketData);
+        await addDoc(collection(db, 'maintenance_tickets'), ticketData);
+
+        // Show Success
+        const successModal = Modal({
+            title: 'Request Sent to Maintenance',
+            content: document.createTextNode('Your request has been sent to the mechanic for review.'),
+            actions: [
+                Button({
+                    text: 'OK',
+                    onClick: () => {
+                        successModal.close();
+                        e.target.reset();
+                        loadRecentRequests(); // Refresh list
+                    }
+                })
+            ]
+        });
+
+    } catch (error) {
+        console.error("CRITICAL: Error submitting repair ticket:", error);
+        alert(`Failed to submit ticket: ${error.message}`);
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+    }
+}
+
+async function loadRecentRequests() {
+    const container = document.getElementById('recent-repair-requests');
+    if (!container) return;
+
+    container.innerHTML = '<p class="text-center text-gray-500">Loading recent requests...</p>';
+
+    try {
+        const services = window.firebaseServices || {};
+        const { db, collection, query, where, getDocs, orderBy, limit } = services;
+        const currentUser = window.currentUser;
+
+        if (!currentUser) return;
+
+        // Query 'maintenance_tickets' instead of 'repair_tickets'
+        const q = query(
+            collection(db, 'maintenance_tickets'),
+            where('submittedBy', '==', currentUser.uid),
+            orderBy('createdAt', 'desc'),
+            limit(5)
+        );
+
+        const snapshot = await getDocs(q);
+
+        if (snapshot.empty) {
+            container.innerHTML = '<p class="text-center text-gray-400 text-sm">No recent requests.</p>';
+            return;
+        }
+
+        container.innerHTML = '<h3 class="text-lg font-medium text-slate-900 dark:text-white mb-4">Your Recent Requests</h3>';
+
+        const list = document.createElement('div');
+        list.className = 'space-y-3';
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            const date = new Date(data.createdAt).toLocaleDateString();
+            const item = document.createElement('div');
+            item.className = 'bg-white dark:bg-slate-800 p-4 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700 flex justify-between items-center';
+
+            // Priority Color
+            const priorityColor = PRIORITY_LEVELS.find(p => p.value === data.priority)?.color || 'bg-gray-100 text-gray-800';
+
+            // Status Badge Logic
+            let statusColor = 'text-gray-500';
+            if (data.status === 'Open') statusColor = 'text-green-600 font-bold';
+            if (data.status === 'Pending Review') statusColor = 'text-orange-500 font-bold';
+
+            item.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center gap-2">
+                        <span class="font-medium text-slate-900 dark:text-white">${data.assetId}</span>
+                        <span class="px-2 py-0.5 rounded-full text-xs font-medium ${priorityColor}">${data.priority}</span>
+                    </div>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">${data.description || data.issue}</p>
+                    <p class="text-xs text-slate-400 mt-1">${date} • <span class="${statusColor}">${data.status}</span></p>
+                </div>
+                ${data.attachments && data.attachments.length > 0 ? `<div class="text-xs text-blue-600">${data.attachments.length} attachment(s)</div>` : ''}
+            `;
+            list.appendChild(item);
+        });
+
+        container.appendChild(list);
+
+    } catch (error) {
+        console.error("Error loading recent requests:", error);
+        if (error.code === 'failed-precondition' || error.message.includes('index')) {
+            container.innerHTML = '<p class="text-center text-yellow-600 text-xs p-2">History unavailable (Index requires building).</p>';
+        } else {
+            container.innerHTML = '<p class="text-center text-red-400 text-sm">Could not load history.</p>';
+        }
+    }
+}

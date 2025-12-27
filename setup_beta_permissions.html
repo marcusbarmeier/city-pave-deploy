@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Setup Beta User</title>
+</head>
+
+<body style="font-family: sans-serif; padding: 2rem; max-width: 600px; margin: 0 auto; background: #f0fdf4;">
+    <h1>🛠️ Setup Beta User</h1>
+    <p>Click the button below to create your <b>test@citypave.ca</b> account in the Beta environment.</p>
+
+    <button id="create-btn"
+        style="padding: 1rem 2rem; font-size: 1.2rem; background: #16a34a; color: white; border: none; border-radius: 0.5rem; cursor: pointer;">
+        Create Beta User
+    </button>
+
+    <div id="status"
+        style="margin-top: 2rem; padding: 1rem; background: white; border-radius: 0.5rem; border: 1px solid #ddd; white-space: pre-wrap;">
+        Example Status: Waiting...</div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { activeConfig } from "./firebase-config.js";
+
+        // Force beta if not set, just to be sure we are hitting beta config
+        // Actually, activeConfig depends on localStorage. 
+        // Let's force it here to be absolutely safe:
+        const firebaseConfigBeta = {
+            apiKey: "AIzaSyBSbgNhSIpjd9-ielh1V0EivXZF90166Ow",
+            authDomain: "city-pave-estimator-beta.firebaseapp.com",
+            projectId: "city-pave-estimator-beta",
+            storageBucket: "city-pave-estimator-beta.firebasestorage.app",
+            messagingSenderId: "292246416016",
+            appId: "1:292246416016:web:1bd52862a7e0560e7c8615"
+        };
+
+        const app = initializeApp(firebaseConfigBeta);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const btn = document.getElementById('create-btn');
+        const status = document.getElementById('status');
+        const log = (msg) => {
+            status.textContent += '\n' + msg;
+            console.log(msg);
+        }
+
+        btn.addEventListener('click', async () => {
+            status.textContent = "Processing...";
+            btn.disabled = true;
+            btn.textContent = "Working...";
+
+            const email = "test@citypave.ca";
+            const password = "Password123!";
+
+            try {
+                let user;
+                try {
+                    log(`Creating Auth User: ${email}`);
+                    const userCred = await createUserWithEmailAndPassword(auth, email, password);
+                    user = userCred.user;
+                } catch (error) {
+                    if (error.code === 'auth/email-already-in-use') {
+                        log(`User exists. Signing in to update permissions...`);
+                        const { signInWithEmailAndPassword } = await import("https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js");
+                        const userCred = await signInWithEmailAndPassword(auth, email, password);
+                        user = userCred.user;
+                    } else {
+                        throw error;
+                    }
+                }
+
+                if (user) {
+                    log(`Auth Successful (UID: ${user.uid}). Updating Profile...`);
+                    await updateProfile(user, { displayName: "Test Employee" });
+
+                    log(`Creating Firestore Document...`);
+                    await setDoc(doc(db, "users", user.uid), {
+                        name: "Test Employee",
+                        email: email,
+                        role: "super_admin",
+                        createdAt: new Date().toISOString()
+                    }, { merge: true });
+
+                    log(`✅ SUCCESS! User permissions updated.`);
+                    status.style.border = "2px solid green";
+                    status.style.color = "green";
+                    status.textContent += "\n\nYou can now log in to the main app.";
+                }
+
+            } catch (error) {
+                log(`❌ ERROR: ${error.message}`);
+                log(`Code: ${error.code}`);
+                if (error.code === 'auth/email-already-in-use') {
+                    log(`⚠️ NOTE: The user already exists. You should be able to log in.`);
+                }
+                status.style.border = "2px solid red";
+                status.style.color = "red";
+            }
+            btn.disabled = false;
+            btn.textContent = "Try Again";
+        });
+    </script>
+</body>
+
+</html>

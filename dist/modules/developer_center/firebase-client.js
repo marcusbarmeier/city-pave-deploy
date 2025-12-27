@@ -1,0 +1,2 @@
+// © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited.
+import { initializeApp } from "https: import { getAuth } from "https: import { getFirestore } from "https: import { activeConfig } from "../../firebase-config.js"; const app = initializeApp(activeConfig); export const auth = getAuth(app); export const db = getFirestore(app);

@@ -1,0 +1,105 @@
+// © 2025 City Pave. All Rights Reserved.
+// This code is the confidential and proprietary property of City Pave.
+// Unauthorized copying, distribution, or use of this code is strictly prohibited.
+// Filename: pricing.js (Version with Item Consolidation)
+
+export const GST_RATE = 0.05;
+
+const newPricing = [
+    // --- Demolition ---
+    { id: 'demolition-concrete-slab', name: 'Demolition: Concrete Slab Removal', type: 'area', defaultPrice: 4.50, description: 'Includes saw cutting, jack hammering, removal, and disposal of concrete slab.' },
+    { id: 'demolition-asphalt', name: 'Demolition: Asphalt Removal', type: 'area', defaultPrice: 2.50, description: 'Includes saw cutting, removal, and disposal of existing asphalt pavement.' },
+    { id: 'demolition-other', name: 'Demolition: Other (Custom)', type: 'area', defaultPrice: 0.00, description: 'Custom demolition project. Price to be entered manually.' },
+
+    // --- CONSOLIDATED EXCAVATION & BASE WORK ---
+    {
+        id: 'excavation-base-consolidated',
+        name: 'Excavation & Base',
+        type: 'area',
+        variantLabel: 'Depth', // This tells the UI to create a "Depth" dropdown
+        description: 'Excavate to a specified depth, place geotextile fabric, place base material, final grade, and compact.',
+        variants: [
+            { name: 'Select Depth...', price: 0.00 },
+            { name: '6" Deep', price: 4.50 },
+            { name: '12" Deep', price: 7.00 },
+            { name: '18" Deep', price: 9.00 },
+            { name: '24" Deep', price: 12.00 }
+        ]
+    },
+    { id: 'base-material-repair', name: 'Base Material Repair', type: 'area', defaultPrice: 7.00, description: 'Place base material, final grade, and compact.' },
+    { id: 'excavation-custom', name: 'Excavation: Custom (Bulk)', type: 'volume', defaultPrice: 0.00, description: 'Calculates volume from area and a user-entered depth. Price is per cubic yard. To be entered manually.' },
+
+    // --- CONSOLIDATED ASPHALT PAVING ---
+    {
+        id: 'paving-hd-consolidated',
+        name: 'Paving: High Density Asphalt',
+        type: 'area',
+        description: 'Wash & clean area, apply tack coat, apply 5/8" high density hot mix, rake/spread & compact to the specified depth.',
+        calculation: { // This tells the UI to create a number input
+            label: 'Thickness (in)',
+            rate: 2.50,
+            unit: 'in'
+        }
+    },
+    { id: 'paving-seal-coat', name: 'Paving: Seal Coat', type: 'area', defaultPrice: 2.00, description: 'Application of a protective seal coat to an existing asphalt surface to extend its life.' },
+    { id: 'paving-pothole-repair', name: 'Paving: Pothole Repair (Each)', type: 'none', defaultPrice: 200.00, description: 'Wash & clean area, apply tack coat, apply 3/8" hot mix, rake/spread & compact. ($2000 minimum charge applies).' },
+    { id: 'paving-top-coat', name: 'Paving: Top Coat - Hot Mix', type: 'area', defaultPrice: 6.00, description: 'Wash & clean area, apply tack coat, apply asphalt hot mix, rake/spread & compact.' },
+
+    // --- Concrete & Interlocking Stone ---
+    { id: 'concrete-slab', name: 'Concrete Slab (4-inch)', type: 'area', defaultPrice: 20.00, description: 'Includes excavation, base work, final grade, compacting, framing, rebar placement, concrete pour, and finishing.' },
+    { id: 'interlocking-stone', name: 'Interlocking Stone (Labor Only)', type: 'area', defaultPrice: 13.00, description: 'Labor only (material not included). Includes excavation, base work, grading, compacting, stone placement, edging, final compaction, and poly sand.' },
+
+    // --- Snow Removal & Winter Services ---
+    { id: 'snow-area-loader', name: 'Snow Area: Loader', type: 'area', defaultPrice: 0.00, description: 'Assigns this area to the loader for snow calculations.' },
+    { id: 'snow-area-skidsteer', name: 'Snow Area: Skid Steer', type: 'area', defaultPrice: 0.00, description: 'Assigns this area to the skid steer for snow calculations.' },
+    { id: 'snow-area-shovel', name: 'Snow Area: Shovel', type: 'area', defaultPrice: 0.00, description: 'Assigns this area to shoveling crews for snow calculations.' },
+    { id: 'snow-clearing-per-event', name: 'Snow Service: Per Push', type: 'none', defaultPrice: 0.00, description: 'Pricing for a single snow clearing and/or hauling event for a specific location.' },
+    { id: 'snow-clearing-monthly', name: 'Snow Service: Monthly', type: 'none', defaultPrice: 0.00, description: 'Pricing for a monthly snow service contract for a specific location.' },
+    { id: 'snow-clearing-seasonal', name: 'Snow Service: Seasonal', type: 'none', defaultPrice: 0.00, description: 'Pricing for a full seasonal snow service contract for a specific location.' },
+
+    // --- Commercial / Bulk Items ---
+    { id: 'paving-hd-tonne', name: 'Paving: HD Asphalt 5/8" (per Tonne)', type: 'none', defaultPrice: 300.00, description: 'Wash & clean area, apply tack coat, apply 5/8" high density hot mix, rake/spread & compact.' },
+    { id: 'paving-sd-tonne', name: 'Paving: SD Asphalt 3/8" (per Tonne)', type: 'none', defaultPrice: 300.00, description: 'Wash & clean area, apply tack coat, apply 3/8" standard density hot mix, rake/spread & compact.' },
+    { id: 'material-base-tonne', name: 'Material: Base Supply & Delivery (per Tonne)', type: 'none', defaultPrice: 65.00, description: 'Base material supplied and delivered within the Winnipeg area.' },
+
+    // --- Equipment (Priced Per Hour) ---
+    { id: 'equip-paver-crew', name: 'Equipment: Paver with Operators', type: 'none', defaultPrice: 650.00, description: 'Includes asphalt paver, 6 labourers, 1 skid steer, 2 screed operators, and 1 button man. Priced per hour.' },
+    { id: 'equip-skid-steer', name: 'Equipment: Skid Steer', type: 'none', defaultPrice: 85.00, description: 'Price per hour.' },
+    { id: 'equip-loader', name: 'Equipment: Loader', type: 'none', defaultPrice: 155.00, description: 'Price per hour.' },
+    { id: 'equip-dozer', name: 'Equipment: Dozer', type: 'none', defaultPrice: 245.00, description: 'Price per hour.' },
+    { id: 'equip-excavator-mini', name: 'Equipment: Excavator (Mini)', type: 'none', defaultPrice: 125.00, description: 'Price per hour.' },
+    { id: 'equip-excavator-8-ton', name: 'Equipment: Excavator (8 Ton)', type: 'none', defaultPrice: 185.00, description: 'Price per hour.' },
+    { id: 'equip-excavator-20-ton', name: 'Equipment: Excavator (20 Ton)', type: 'none', defaultPrice: 255.00, description: 'Price per hour.' },
+    { id: 'equip-roller', name: 'Equipment: Roller', type: 'none', defaultPrice: 100.00, description: 'Price per hour.' },
+    { id: 'equip-packer', name: 'Equipment: Packer', type: 'none', defaultPrice: 125.00, description: 'Price per hour.' },
+    { id: 'equip-tandem-dump-truck', name: 'Equipment: Tandem Dump Truck', type: 'none', defaultPrice: 100.00, description: 'Price per hour.' },
+    { id: 'equip-end-dump', name: 'Equipment: End Dump', type: 'none', defaultPrice: 135.00, description: 'Price per hour.' },
+
+    // --- Miscellaneous & Custom ---
+    { id: 'misc-other-sq-ft', name: 'Misc: Other (per sq ft)', type: 'area', defaultPrice: 0.00, description: 'Custom service priced per square foot. Enter price manually.' },
+    { id: 'misc-other-lin-ft', name: 'Misc: Other (per linear ft)', type: 'length', defaultPrice: 0.00, description: 'Custom service priced per linear foot. Enter price manually.' },
+    { id: 'misc-other-hour', name: 'Misc: Other (per hour)', type: 'none', defaultPrice: 0.00, description: 'Custom service priced per hour. Enter price manually.' },
+    { id: 'misc-other-flat-rate', name: 'Misc: Other (Flat Rate)', type: 'none', defaultPrice: 0.00, description: 'Custom service with a flat rate. Enter price manually.' },
+];
+
+const legacyPricing = [
+    // --- ARCHIVED ITEMS ---
+    { id: 'excavation-base-6', name: 'Excavation & Base: 6" Deep', type: 'area', defaultPrice: 4.50, isArchived: true },
+    { id: 'excavation-base-12', name: 'Excavation & Base: 12" Deep', type: 'area', defaultPrice: 7.00, isArchived: true },
+    { id: 'excavation-base-18', name: 'Excavation & Base: 18" Deep', type: 'area', defaultPrice: 9.00, isArchived: true },
+    { id: 'excavation-base-24', name: 'Excavation & Base: 24" Deep', type: 'area', defaultPrice: 12.00, isArchived: true },
+    { id: 'paving-3-inch-hd', name: 'Paving: 3" Thick - High Density Asphalt', type: 'area', defaultPrice: 8.00, isArchived: true },
+    { id: 'paving-4-inch-hd', name: 'Paving: 4" Thick - High Density Asphalt', type: 'area', defaultPrice: 10.00, isArchived: true },
+    { id: 'paving-Custom-Thickness-hd', name: 'Paving: Custom Thickness - HD', type: 'area', defaultPrice: 0.00, isArchived: true },
+
+    // --- Other Legacy Items ---
+    { id: 'hd-repave-concrete', name: 'Legacy: Repave (HD, Concrete Demo)', type: 'area', defaultPrice: 8.88, isArchived: true },
+    { id: 'std-repave-concrete', name: 'Legacy: Repave (Std, Concrete Demo)', type: 'area', defaultPrice: 7.62, isArchived: true },
+    // ... all other legacy items ...
+];
+
+export const pricingOptions = [
+    { id: 'none', name: 'Select Service', type: 'none', defaultPrice: 0, description: 'Choose a service to apply to this measurement.' },
+    ...newPricing,
+    ...legacyPricing
+];

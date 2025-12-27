@@ -1,0 +1,249 @@
+export class DashCamManager {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        this.activeStreams = [];
+        this.mode = 'off'; // off, main, selfie, dual
+
+        // Recording State
+        this.mediaRecorder = null;
+        this.chunks = []; // Circular buffer
+        this.isRecording = false;
+        this.incidentMode = false; // If true, we are actively saving post-incident
+        this.MAX_CHUNKS = 30; // 30 chunks * 10s = 300s (5 mins) buffer
+        this.CHUNK_DURATION = 10000; // 10s slices
+
+        // Bindings
+        this.onStorageUpdate = null; // Callback for UI
+    }
+
+    async getCameras() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+            console.warn("Media Devices API not supported.");
+            return [];
+        }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        return devices.filter(d => d.kind === 'videoinput');
+    }
+
+    async startCamera(mode) {
+        this.stopAll();
+        this.mode = mode;
+
+        if (mode === 'dual') {
+            await this.startDualStream();
+        } else if (mode !== 'off') {
+            const facing = mode === 'main' ? 'environment' : 'user';
+            await this.startSingleStream(facing);
+        }
+
+        // Auto-start recording loop if camera is active
+        if (mode !== 'off') {
+            this.startRecordingLoop();
+        }
+    }
+
+    startRecordingLoop() {
+        // We record the "Main" stream (first one)
+        if (this.activeStreams.length === 0) return;
+        const stream = this.activeStreams[0];
+
+        try {
+            this.mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+
+            this.mediaRecorder.ondataavailable = (e) => {
+                if (e.data && e.data.size > 0) {
+                    this.chunks.push(e.data);
+                    // Maintain Circular Buffer
+                    if (this.chunks.length > this.MAX_CHUNKS && !this.incidentMode) {
+                        this.chunks.shift(); // Drop oldest 10s
+                    }
+                    console.log(`Buffer: ${this.chunks.length} chunks (${this.chunks.length * 10}s)`);
+                }
+            };
+
+            this.mediaRecorder.start(this.CHUNK_DURATION); // Slice every 10s
+            this.isRecording = true;
+            console.log("Dash Cam Recording Started (Circular Buffer)");
+
+        } catch (e) {
+            console.error("MediaRecorder Failed (Codec support?)", e);
+        }
+    }
+
+    async triggerIncident(type = "manual") {
+        if (!this.isRecording) return null;
+
+        console.warn(`INCIDENT TRIGGERED: ${type}`);
+        this.incidentMode = true; // Lock buffer, stop dropping old chunks
+
+        // Auto-save after 5 seconds (captures the event + 5s tail)
+        setTimeout(() => {
+            this.saveIncidentClip({ type });
+        }, 5000);
+
+        return { status: 'saving', type };
+    }
+
+    async saveIncidentClip(metadata = {}) {
+        if (this.chunks.length === 0) return null;
+
+        console.log("Saving Incident Clip...");
+
+        const blob = new Blob(this.chunks, { type: 'video/webm' });
+        const sizeMb = (blob.size / 1024 / 1024).toFixed(2);
+
+        // --- REAL SAVE IMPLEMENTATION ---
+        try {
+            if (!window.firebaseServices) throw new Error("Firebase Service Offline");
+            const { storage, ref, uploadBytes, getDownloadURL, db, collection, addDoc, auth } = window.firebaseServices;
+            const user = auth.currentUser;
+            const userId = user ? user.uid : 'guest';
+
+            const timestamp = new Date().toISOString();
+            const filename = `dashcam/${userId}/${timestamp}.webm`;
+            const storageRef = ref(storage, filename);
+
+            // 1. Upload Video
+            await uploadBytes(storageRef, blob);
+            const downloadURL = await getDownloadURL(storageRef);
+            console.log("Video Uploaded:", downloadURL);
+
+            // 2. Save Metadata to Firestore
+            const clipData = {
+                userId: userId,
+                timestamp: timestamp,
+                url: downloadURL,
+                sizeMb: sizeMb,
+                metadata: metadata, // e.g. type: 'accident', 'manual'
+                durationSec: this.chunks.length * (this.CHUNK_DURATION / 1000)
+            };
+
+            await addDoc(collection(db, "dashcam_clips"), clipData);
+            console.log("Clip Metadata Saved to Firestore");
+
+            // Reset
+            this.incidentMode = false;
+
+            return { blob, sizeMb, timestamp, url: downloadURL };
+
+        } catch (e) {
+            console.error("Failed to save clip:", e);
+            // Fallback for offline mode could be added here (IndexDB)
+            this.incidentMode = false;
+            return { blob, sizeMb, timestamp: new Date().toISOString(), error: e.message };
+        }
+    }
+
+    takeSnapshot() {
+        if (this.activeStreams.length === 0) return;
+
+        // Grab the video element
+        const video = this.container.querySelector('video');
+        if (!video) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+
+        const dataUrl = canvas.toDataURL('image/jpeg');
+        console.log("Snapshot taken");
+        return dataUrl;
+    }
+
+    async startSingleStream(facingMode) {
+        if (!this.container) return;
+
+        const video = document.createElement('video');
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = true;
+        video.className = "hidden dashcam-preview absolute top-20 right-4 w-64 h-36 bg-black rounded-lg border border-slate-700 shadow-xl object-cover z-40 md:w-96 md:h-52 transition-all duration-300";
+
+        try {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("No Media API");
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode } });
+            video.srcObject = stream;
+            this.activeStreams.push(stream);
+            this.container.appendChild(video);
+        } catch (e) {
+            console.warn("Camera access failed - Using Mock Stream", e);
+
+            // Fallback: Canvas Stream (Noise/Overlay)
+            const canvas = document.createElement('canvas');
+            canvas.width = 300; canvas.height = 200;
+            const ctx = canvas.getContext('2d');
+
+            // Animation Loop for Mock Stream
+            const drawMock = () => {
+                ctx.fillStyle = '#111';
+                ctx.fillRect(0, 0, 300, 200);
+                ctx.fillStyle = '#0f0';
+                ctx.font = '20px monospace';
+                ctx.fillText('NO SIGNAL / MOCK', 50, 100);
+                ctx.fillText(new Date().toLocaleTimeString(), 50, 130);
+
+                // Random noise line
+                ctx.strokeStyle = `rgba(0, 255, 0, ${Math.random() * 0.5})`;
+                ctx.beginPath();
+                ctx.moveTo(0, Math.random() * 200);
+                ctx.lineTo(300, Math.random() * 200);
+                ctx.stroke();
+
+                if (this.mode !== 'off') requestAnimationFrame(drawMock);
+            };
+            drawMock();
+
+            const stream = canvas.captureStream(30); // 30 FPS
+            video.srcObject = stream;
+            this.activeStreams.push(stream);
+            this.container.appendChild(video);
+        }
+    }
+
+    async startDualStream() {
+        if (!this.container) return;
+
+        // 1. Main (Big)
+        const mainVideo = document.createElement('video');
+        mainVideo.className = "hidden dashcam-preview absolute top-20 right-4 w-64 h-36 bg-black rounded-lg border-2 border-slate-700 shadow-xl object-cover z-40 md:w-96 md:h-52 transition-all duration-300";
+
+        // 2. Selfie (Small PiP)
+        const selfieVideo = document.createElement('video');
+        selfieVideo.className = "hidden dashcam-preview absolute top-20 right-4 w-20 h-20 bg-black rounded-lg border border-white shadow-lg object-cover z-50 mt-12 mr-2 md:w-28 md:h-28 md:mt-20 md:mr-4 transition-all duration-300"; // PiP
+
+        try {
+            // Attempt to get two streams (Tricky in browser, often exclusive)
+            // We ask for specific device IDs if possible, or generic constraints
+            const cameras = await this.getCameras();
+            if (cameras.length < 2) throw new Error("Need 2 cameras for dual mode");
+
+            const stream1 = await navigator.mediaDevices.getUserMedia({ video: { deviceId: cameras[0].deviceId } }); // Back?
+            const stream2 = await navigator.mediaDevices.getUserMedia({ video: { deviceId: cameras[1].deviceId } }); // Front?
+
+            mainVideo.srcObject = stream1;
+            mainVideo.autoplay = true; mainVideo.muted = true;
+
+            selfieVideo.srcObject = stream2;
+            selfieVideo.autoplay = true; selfieVideo.muted = true;
+
+            this.activeStreams.push(stream1, stream2);
+            this.container.appendChild(mainVideo);
+            this.container.appendChild(selfieVideo);
+        } catch (e) {
+            console.error("Dual Camera failed", e);
+            this.startSingleStream('environment'); // Fallback
+        }
+    }
+
+    stopAll() {
+        if (this.mediaRecorder && this.mediaRecorder.state !== 'inactive') {
+            this.mediaRecorder.stop();
+        }
+        this.activeStreams.forEach(s => s.getTracks().forEach(t => t.stop()));
+        this.activeStreams = [];
+        this.isRecording = false;
+        this.chunks = [];
+        if (this.container) this.container.innerHTML = ''; // Clear videos
+    }
+}

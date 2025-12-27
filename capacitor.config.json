@@ -1,0 +1,9 @@
+{
+    "appId": "com.citypave.estimator",
+    "appName": "City Pave Estimator",
+    "webDir": "dist",
+    "bundledWebRuntime": false,
+    "server": {
+        "androidScheme": "https"
+    }
+}

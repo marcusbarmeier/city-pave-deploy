@@ -1,0 +1,36 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Forms - City Pave</title><script src="https://cdn.tailwindcss.com"></script><link rel="stylesheet" href="../../style.css"></head><body class="bg-gray-100 flex flex-col h-screen"><header class="bg-white shadow-sm p-4 z-10 flex items-center gap-3"><a href="index.html" class="text-gray-600 hover:text-gray-900"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg></a><h1 class="font-bold text-lg text-gray-800">Digital Forms</h1></header><main class="flex-grow overflow-y-auto p-4 pb-24"><div id="form-menu" class="grid grid-cols-1 gap-3"><button onclick="loadForm('pre-trip')"
+                class="p-4 bg-white rounded-lg shadow border-l-4 border-blue-500 flex items-center justify-between active:bg-gray-50"><div><h3 class="font-bold text-gray-800">Pre-Trip Inspection</h3><p class="text-xs text-gray-500">Truck & Trailer Start-up</p></div><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button><button onclick="loadForm('mid-trip')"
+                class="p-4 bg-white rounded-lg shadow border-l-4 border-indigo-500 flex items-center justify-between active:bg-gray-50"><div><h3 class="font-bold text-gray-800">Mid-Trip Inspection</h3><p class="text-xs text-gray-500">Load Securement & Safety</p></div><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button><button onclick="loadForm('post-trip')"
+                class="p-4 bg-white rounded-lg shadow border-l-4 border-green-500 flex items-center justify-between active:bg-gray-50"><div><h3 class="font-bold text-gray-800">Post-Trip Inspection</h3><p class="text-xs text-gray-500">End of Shift Check</p></div><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button><button onclick="loadForm('hazard')"
+                class="p-4 bg-white rounded-lg shadow border-l-4 border-orange-500 flex items-center justify-between active:bg-gray-50"><div><h3 class="font-bold text-gray-800">Hazard Assessment</h3><p class="text-xs text-gray-500">FLHA / Site Safety</p></div><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button><button onclick="loadForm('incident')"
+                class="p-4 bg-white rounded-lg shadow border-l-4 border-red-500 flex items-center justify-between active:bg-gray-50"><div><h3 class="font-bold text-gray-800">Incident Report</h3><p class="text-xs text-gray-500">Accident / Near Miss</p></div><svg class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg></button></div><div id="form-container" class="hidden"><div class="flex justify-between items-center mb-4"><h2 id="form-title" class="text-xl font-bold text-gray-800">Form Title</h2><button onclick="closeForm()" class="text-sm text-red-600 font-semibold">Cancel</button></div><form id="dynamic-form" class="space-y-6"></form><button id="submit-form-btn"
+                class="w-full mt-8 py-3 bg-green-600 text-white font-bold rounded-lg shadow hover:bg-green-700">
+                Submit Form
+            </button></div></main><script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { config } from '../../config.js';
+        import { initializeFormsApp } from './forms.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+            authDomain: "city-pave-estimator.firebaseapp.com",
+            projectId: "city-pave-estimator",
+            storageBucket: "city-pave-estimator.firebasestorage.app",
+            messagingSenderId: "111714884839",
+            appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.firebaseServices = { auth, db, storage, collection, addDoc, ref, uploadBytes, getDownloadURL };
+
+        initializeFormsApp();
+    </script><script type="module" src="../../qa-agent.js"></script></body></html>

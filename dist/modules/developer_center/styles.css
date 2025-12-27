@@ -1,0 +1,325 @@
+:root {
+    --bg-dark: #121212;
+    --bg-rail: #000000;
+    --bg-panel: #1e1e1e;
+    --bg-hover: #2a2a2a;
+    --border-color: #333;
+    --accent-color: #3b82f6;
+    --text-primary: #e5e5e5;
+    --text-secondary: #a3a3a3;
+    --success: #10b981;
+    --warning: #f59e0b;
+    --danger: #ef4444;
+    --font-sans: 'Inter', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    height: 100vh;
+    overflow: hidden;
+}
+
+.app-shell {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+/* Command Rail */
+.command-rail {
+    width: 70px;
+    background: var(--bg-rail);
+    border-right: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1rem 0;
+    z-index: 10;
+}
+
+.rail-brand {
+    font-size: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.rail-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    align-items: center;
+}
+
+.rail-btn {
+    background: none;
+    border: none;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all 0.2s;
+}
+
+.rail-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+}
+
+.rail-btn.active {
+    background: rgba(59, 130, 246, 0.2);
+    color: var(--accent-color);
+}
+
+.rail-btn .icon {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
+.rail-btn .label {
+    font-size: 0.55rem;
+    font-weight: 500;
+}
+
+.rail-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 32px;
+    height: 32px;
+    background: var(--accent-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+/* Main Content */
+.main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.global-header {
+    height: 60px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-panel);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1.5rem;
+}
+
+.workspace {
+    display: none;
+    flex: 1;
+    overflow: hidden;
+}
+
+.workspace.active {
+    display: block;
+}
+
+/* Dashboard Grid */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.stat-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    padding: 1.2rem;
+    border-radius: 8px;
+}
+
+.stat-card h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.stat-card .val {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.stat-card .trend {
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-top: 0.2rem;
+}
+
+.trend.up {
+    color: var(--success);
+}
+
+.trend.down {
+    color: var(--success);
+}
+
+/* Typically down is bad, but for errors down is good. Logic handled in HTML */
+
+/* Re-using existing styles from previous step for Master-Detail */
+.col-master,
+.col-context,
+.col-detail {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+    height: 100%;
+}
+
+.col-master {
+    width: 300px;
+    background: var(--bg-panel);
+}
+
+.col-context {
+    width: 350px;
+    background: var(--bg-dark);
+}
+
+.col-detail {
+    flex: 1;
+    background: var(--bg-dark);
+}
+
+.list-view,
+.grid-view,
+.detail-content {
+    overflow-y: auto;
+}
+
+.view-container {
+    display: flex;
+    /* FIXED: Restore horizontal layout for columns */
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+}
+
+.hidden {
+    display: none;
+}
+
+.empty-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+}
+
+.col-header {
+    height: 48px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    background: rgba(255, 255, 255, 0.02);
+}
+
+/* Modules & Lists */
+.list-item {
+    padding: 12px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.list-item:hover {
+    background: var(--bg-hover);
+}
+
+.list-item.selected {
+    background: rgba(59, 130, 246, 0.1);
+    border-left: 3px solid var(--accent-color);
+}
+
+.module-card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+}
+
+.module-card.selected {
+    border-color: var(--accent-color);
+}
+
+.status-indicator-mini {
+    width: 8px;
+    height: 8px;
+    background: var(--success);
+    border-radius: 50%;
+}
+
+.status-indicator {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.control-group {
+    margin-bottom: 2rem;
+}
+
+/* Buttons & Inputs */
+.btn-sm {
+    background: var(--accent-color);
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.global-search {
+    background: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    padding: 8px 12px;
+    border-radius: 6px;
+    width: 250px;
+    color: white;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

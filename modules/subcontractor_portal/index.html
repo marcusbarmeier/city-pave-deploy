@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subcontractor Portal - City Pave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="../../style.css" rel="stylesheet">
+</head>
+
+<body class="bg-slate-100 text-slate-800 font-inter min-h-screen flex flex-col">
+
+    <!-- Simple External Header -->
+    <header class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="bg-blue-600 rounded-lg p-2 text-white">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
+                </div>
+                <h1 class="text-xl font-bold text-gray-900">Partner Portal</h1>
+            </div>
+            <div id="user-status">
+                <button id="login-btn" class="text-sm font-medium text-blue-600 hover:text-blue-800">Log In /
+                    Register</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- Registration / Onboarding View -->
+        <div id="view-onboarding"
+            class="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl overflow-hidden p-8 space-y-8 animate-fade-in hidden">
+            <div class="text-center">
+                <h2 class="text-3xl font-bold text-gray-900">Join the Network</h2>
+                <p class="mt-2 text-gray-600">Get matched with high-value paving and construction jobs in your area.</p>
+            </div>
+
+            <!-- Steps -->
+            <div class="flex justify-between items-center relative">
+                <div class="absolute left-0 top-1/2 w-full h-1 bg-gray-200 -z-10"></div>
+                <div class="bg-white px-2"><span
+                        class="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold">1</span>
+                </div>
+                <div class="bg-white px-2"><span
+                        class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold">2</span>
+                </div>
+                <div class="bg-white px-2"><span
+                        class="w-8 h-8 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold">3</span>
+                </div>
+            </div>
+
+            <form id="registration-form" class="space-y-6">
+                <!-- Step 1: Basic Info -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-gray-800">Company Information</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <input type="text" placeholder="Company Name"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                            required>
+                        <input type="email" placeholder="Email Address"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                            required>
+                    </div>
+                </div>
+
+                <!-- Step 2: Vetting Uploads -->
+                <div class="space-y-4 pt-4 border-t border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-800">Vetting Documentation</h3>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Insurance -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors group">
+                            <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-700">Insurance Cert</p>
+                            <p class="text-xs text-gray-500">Drag or click to upload</p>
+                        </div>
+
+                        <!-- Licenses -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors group">
+                            <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0c0 .884-.956 2-1 2-3.086 0-5.553 2.569-5.553 5.553v1.894c0 1.494 1.578 2.553 3 2.553h11c1.422 0 3-1.059 3-2.553v-1.894C20 9.569 17.533 7 14.447 7H10z">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-700">Business License</p>
+                            <p class="text-xs text-gray-500">Drag or click to upload</p>
+                        </div>
+
+                        <!-- Portfolio -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors group">
+                            <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-700">Past Work (Photos/Video)</p>
+                            <p class="text-xs text-gray-500">Showcase your best projects</p>
+                        </div>
+
+                        <!-- References -->
+                        <div
+                            class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:bg-gray-50 hover:border-blue-400 cursor-pointer transition-colors group">
+                            <svg class="w-8 h-8 text-gray-400 group-hover:text-blue-500 mx-auto mb-2" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                            <p class="text-sm font-medium text-gray-700">Client References</p>
+                            <p class="text-xs text-gray-500">Upload PDF or Enter Details</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-6">
+                    <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-95">
+                        Submit Application
+                    </button>
+                    <p class="text-center text-xs text-gray-400 mt-4">By submitting, you agree to our Terms of Service
+                        and vetting process.</p>
+                </div>
+            </form>
+        </div>
+
+        <!-- Dashboard View (After Login) -->
+        <div id="view-dashboard" class="space-y-6 animate-fade-in hidden">
+            <!-- Welcome Banner -->
+            <div
+                class="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-lg flex justify-between items-center">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">Welcome, Elite Paving Co.</h2>
+                    <p class="text-slate-300">Your profile matches 3 active opportunities.</p>
+                </div>
+                <div class="bg-white/10 px-4 py-2 rounded-lg backdrop-blur-sm border border-white/20">
+                    <div class="text-xs text-slate-300 uppercase tracking-widest">Status</div>
+                    <div class="font-bold text-green-400 flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div> Verified Partner
+                    </div>
+                </div>
+            </div>
+
+            <!-- Opportunities List -->
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                    <h2 class="text-lg font-bold text-gray-800">Matched Opportunities</h2>
+                </div>
+                <div id="opportunity-list" class="divide-y divide-gray-200">
+                    <!-- Job Cards -->
+                    <!-- Job 1 -->
+                    <div class="p-6 hover:bg-gray-50 transition-colors">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <span
+                                    class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded-full mb-2 inline-block">Direct
+                                    Match (98%)</span>
+                                <h3 class="text-xl font-bold text-gray-900">Commercial Parking Lot Resurfacing</h3>
+                                <p class="text-gray-500 text-sm mt-1">Downtown Office Complex • 12,000 sq ft</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-500">Deadline</p>
+                                <p class="font-bold text-red-600">Tomorrow, 5:00 PM</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="flex -space-x-2">
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-500">
+                                    ?</div>
+                                <div
+                                    class="w-8 h-8 rounded-full bg-gray-200 border-2 border-white flex items-center justify-center text-xs font-bold text-gray-500">
+                                    ?</div>
+                            </div>
+                            <span class="text-sm text-gray-500">2 other bidders active</span>
+                        </div>
+                        <div class="flex gap-3">
+                            <button
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium shadow-sm transition-colors">View
+                                Details & Bid</button>
+                            <button
+                                class="border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium">Ignore</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="bg-white border-t border-gray-200 mt-auto py-8">
+        <div class="max-w-7xl mx-auto px-4 text-center text-gray-400 text-sm">
+            &copy; 2025 City Pave. Subcontractor Network.
+        </div>
+    </footer>
+
+    <script type="module" src="./portal.js"></script>
+</body>
+
+</html>

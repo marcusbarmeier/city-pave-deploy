@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>City Pave - Time Ticket</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="bg-gray-100 flex flex-col h-screen">
+
+    <header class="bg-white shadow-sm p-4 z-10 flex items-center gap-3">
+        <a href="/modules/employee/index.html" class="text-gray-600 hover:text-gray-900">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+        </a>
+        <h1 class="font-bold text-lg text-gray-800" id="page-title">Time Tickets</h1>
+    </header>
+
+    <main class="flex-grow overflow-y-auto p-4 pb-32">
+        <!-- MODE SELECTION (Default View) -->
+        <div id="mode-selection-section" class="space-y-6 max-w-lg mx-auto">
+
+            <!-- Generate from Job -->
+            <div class="bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl shadow-lg p-6 text-white text-center">
+                <h2 class="text-2xl font-bold mb-2">Smart Create</h2>
+                <p class="text-blue-100 mb-6">Auto-fill ticket from today's work.</p>
+                <div id="smart-candidates-list" class="space-y-3">
+                    <div class="animate-pulse flex space-x-4 justify-center">
+                        <div class="h-2 bg-blue-400 rounded w-1/2"></div>
+                    </div>
+                    <p class="text-xs text-blue-200">Scanning for active jobs...</p>
+                </div>
+            </div>
+
+            <!-- Manual Entry -->
+            <button id="manual-create-btn"
+                class="w-full bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div class="bg-gray-100 p-3 rounded-full group-hover:bg-gray-200">
+                        <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Create Blank Ticket</h3>
+                        <p class="text-sm text-gray-500">Manual entry from scratch</p>
+                    </div>
+                </div>
+            </button>
+
+            <!-- History Link -->
+            <a href="modules/employee/history/index.html"
+                class="block w-full bg-white p-6 rounded-xl shadow-sm border border-gray-200 hover:border-blue-300 transition-all text-left group">
+                <div class="flex items-center gap-4">
+                    <div class="bg-purple-100 p-3 rounded-full group-hover:bg-purple-200">
+                        <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Work History</h3>
+                        <p class="text-sm text-gray-500">View past 6 months</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <!-- TICKET FORM (Hidden by default) -->
+        <div id="ticket-form-section" class="bg-white rounded-xl shadow p-6 space-y-6 hidden">
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Select Job / Customer</label>
+                <select id="ticket-job-select" class="w-full p-3 border rounded-lg bg-gray-50">
+                    <option value="">Loading...</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Date</label>
+                    <input type="date" id="ticket-date" class="w-full p-3 border rounded-lg bg-gray-50">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Truck / Unit #</label>
+                    <input type="text" id="ticket-unit" class="w-full p-3 border rounded-lg bg-gray-50"
+                        placeholder="e.g. T-101">
+                </div>
+            </div>
+
+            <div class="border-2 border-dashed border-blue-300 rounded-lg p-4 bg-blue-50">
+                <h3 class="font-bold text-blue-900 mb-1">1. Signed Paper Ticket</h3>
+                <p class="text-xs text-blue-600 mb-3">Upload the main timesheet signed by the client. (Auto-fills data)
+                </p>
+                <input type="file" id="ticket-photo" accept="image/*"
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">Description of Work / Material</label>
+                <textarea id="ticket-desc" rows="2" class="w-full p-3 border rounded-lg bg-gray-50"
+                    placeholder="e.g. Hauled 4 loads of base..."></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Hours / Qty</label>
+                    <input type="number" id="ticket-hours" class="w-full p-3 border rounded-lg bg-gray-50"
+                        placeholder="0">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Unit Type</label>
+                    <select id="ticket-uom" class="w-full p-3 border rounded-lg bg-gray-50">
+                        <option value="Hours">Hours</option>
+                        <option value="Loads">Loads</option>
+                        <option value="Tonnes">Tonnes</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">Travel (Hrs)</label>
+                    <input type="number" id="ticket-travel" class="w-full p-3 border rounded-lg bg-gray-50" value="1">
+                </div>
+            </div>
+
+            <div class="border-t pt-4 mt-4">
+                <h3 class="font-bold text-gray-800 mb-2">2. Scale Tickets / Receipts</h3>
+                <p class="text-xs text-gray-500 mb-2">Upload all weigh slips associated with this job.</p>
+                <input type="file" id="scale-tickets-input" accept="image/*" multiple
+                    class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gray-200 file:text-gray-700 hover:file:bg-gray-300">
+                <div id="scale-tickets-preview" class="mt-2 text-xs text-gray-600 italic">No extra tickets attached.
+                </div>
+            </div>
+
+            <div class="border-t pt-4 mt-4">
+                <h3 class="font-bold text-gray-800 mb-2">Digital Sign-Off (Optional)</h3>
+                <p class="text-xs text-gray-500 mb-2">If paper ticket is illegible, sign here.</p>
+
+                <div class="mb-3">
+                    <label class="block text-xs font-bold text-gray-500 uppercase">Client Name</label>
+                    <input type="text" id="client-name" class="w-full p-2 border rounded bg-gray-50"
+                        placeholder="Print Name">
+                </div>
+
+                <div class="border border-gray-300 rounded-lg bg-gray-50">
+                    <canvas id="signature-pad" class="w-full h-32 touch-none"></canvas>
+                </div>
+                <button id="clear-sig-btn" class="text-xs text-red-500 underline mt-1">Clear Signature</button>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 pt-2">
+                <button id="submit-ticket-btn"
+                    class="w-full py-3 bg-green-600 text-white font-bold rounded-lg shadow hover:bg-green-700">
+                    Submit & Finish Day
+                </button>
+                <button id="submit-and-new-btn"
+                    class="w-full py-3 bg-blue-600 text-white font-bold rounded-lg shadow hover:bg-blue-700">
+                    Submit & Add Another Ticket
+                </button>
+            </div>
+
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+        import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getStorage, ref, uploadString, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-storage.js";
+        import { config } from './config.js';
+        import { initializeTicketApp } from './tickets.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyADrnYgh1fSTo3IZD7HOEJMyjduzDYIYSs",
+            authDomain: "city-pave-estimator.firebaseapp.com",
+            projectId: "city-pave-estimator",
+            storageBucket: "city-pave-estimator.firebasestorage.app",
+            messagingSenderId: "111714884839",
+            appId: "1:111714884839:web:2b782a1b7be5be8edc5642"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        window.firebaseServices = { auth, db, storage, collection, addDoc, query, where, getDocs, ref, uploadString, uploadBytes, getDownloadURL };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // Wait for services to be attached to window if needed, though they are attached line above.
+                // The issue might be aggregator init inside tickets.js needing specific ref.
+                // explicitly setting currentUser to ensure it's available synchronously for the aggregator
+                window.firebaseServices.auth.currentUser = user;
+                initializeTicketApp();
+            } else {
+                window.location.href = 'index.html';
+            }
+        });
+    </script>
+    <script type="module" src="qa-agent.js"></script>
+</body>
+
+</html>

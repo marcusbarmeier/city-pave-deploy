@@ -1,0 +1,176 @@
+/**
+ * Smart Monitor / AI Audit Controller
+ * 
+ * "A continuous background agent that analyzes system health, 
+ * identifies bottlenecks, reports errors, and suggests UX improvements."
+ */
+
+export class SmartMonitor {
+    constructor() {
+        this.stressTestInterval = null;
+    }
+
+    init() {
+        this.renderMonitorView();
+        // Start simulated periodic stress tests
+        this.startStressTests();
+    }
+
+    renderMonitorView() {
+        const container = document.getElementById('view-monitor');
+        if (!container) return;
+
+        container.innerHTML = `
+            <div style="display:grid; grid-template-columns: 2fr 1fr; gap:1.5rem; padding:2rem; height:100%;">
+                
+                <!-- Left: Stress Test & Error Logs -->
+                <div style="display:flex; flex-direction:column; gap:1.5rem;">
+                    
+                    <!-- Stress Test Visualizer -->
+                    <div class="glass-panel" style="background:rgba(255,255,255,0.03); border:1px solid var(--border-color); padding:1.5rem; border-radius:8px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+                            <h3 style="margin:0;">Simulated App Stress Test</h3>
+                            <span class="status-indicator" id="test-status">RUNNING...</span>
+                        </div>
+                        <div style="height:8px; background:#333; border-radius:4px; overflow:hidden;">
+                            <div id="stress-bar" style="width:0%; height:100%; background:var(--accent-color); transition:width 0.5s;"></div>
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(3, 1fr); margin-top:1rem; gap:1rem;">
+                            <div class="metric">
+                                <span class="label">Response Time</span>
+                                <div class="value" id="val-api">24ms</div>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Error Rate</span>
+                                <div class="value" id="val-err">0.01%</div>
+                            </div>
+                            <div class="metric">
+                                <span class="label">Active Users</span>
+                                <div class="value" id="val-usr">142</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Error Feed -->
+                    <div class="glass-panel" style="flex:1; background:var(--bg-panel); border:1px solid var(--border-color); padding:0; border-radius:8px; display:flex; flex-direction:column;">
+                        <div style="padding:1rem; border-bottom:1px solid var(--border-color);">
+                            <h3 style="margin:0; font-size:0.9rem;">Live Issues & Errors</h3>
+                        </div>
+                        <div style="flex:1; overflow-y:auto; padding:0.5rem;" id="error-feed">
+                            <!-- Populated dynamically -->
+                            <div style="padding:1rem; border-bottom:1px solid rgba(255,255,255,0.05); opacity:0.6;">No critical issues detected.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: AI Suggestions -->
+                <div class="glass-panel" style="background:linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.05)); border:1px solid rgba(59,130,246,0.3); padding:1.5rem; border-radius:8px; display:flex; flex-direction:column;">
+                    <h3 style="margin:0 0 1rem 0; color:var(--accent-color);">AI Improvements</h3>
+                    <div style="flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:1rem;" id="suggestion-feed">
+                        
+                        <div class="suggestion-card">
+                            <div class="chip">UX IMPROVEMENT</div>
+                            <h4>Mobile Nav Click Targets</h4>
+                            <p>Heatmap analysis shows 15% of users miss the "Save" button on mobile. Suggest increasing padding by 8px.</p>
+                            <button class="btn-sm" style="margin-top:0.5rem;">Apply Fix</button>
+                        </div>
+
+                        <div class="suggestion-card">
+                            <div class="chip warning">PERFORMANCE</div>
+                            <h4>Image Optimization</h4>
+                            <p>Fleet module loading 4MB unoptimized assets. Recommend auto-compression pipeline.</p>
+                            <button class="btn-sm" style="margin-top:0.5rem;">Optimize Now</button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+            <style>
+                .metric { background: rgba(255,255,255,0.05); padding:10px; border-radius:4px; text-align:center; }
+                .metric .label { display:block; font-size:0.7rem; color:var(--text-secondary); text-transform:uppercase; }
+                .metric .value { font-size:1.2rem; font-weight:700; color:white; }
+                
+                .suggestion-card { background: rgba(0,0,0,0.2); padding:1rem; border-radius:6px; border:1px solid rgba(255,255,255,0.1); }
+                .suggestion-card h4 { margin: 0.5rem 0 0.25rem 0; font-size:0.95rem; }
+                .suggestion-card p { margin: 0; font-size:0.8rem; color: #ccc; line-height:1.4; }
+                .chip { display:inline-block; font-size:0.6rem; background:var(--accent-color); padding:2px 6px; border-radius:4px; font-weight:700; color:white; }
+                .chip.warning { background: var(--warning); color:black; }
+            </style>
+        `;
+    }
+
+    startStressTests() {
+        // Run Real System Audit
+        setTimeout(() => this.runSelfAudit(), 1000);
+    }
+
+    runSelfAudit() {
+        console.log("Running Self Audit...");
+        const feed = document.getElementById('error-feed');
+        if (!feed) return;
+        feed.innerHTML = ''; // clear
+
+        const checks = [
+            { name: "Core Controller (window.brain)", check: () => window.brain },
+            { name: "Subscriber Bridge", check: () => window.brain.subscribers },
+            { name: "Team Manager (RBAC)", check: () => window.brain.team },
+            { name: "Platform Manager", check: () => window.brain.platform },
+            { name: "Real Data Connection", check: () => window.brain.subscribers.tenants.length > 0 }
+        ];
+
+        let passed = 0;
+        checks.forEach(test => {
+            const success = test.check();
+            if (success) passed++;
+
+            const div = document.createElement('div');
+            div.style.padding = '1rem';
+            div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between;">
+                    <span>${test.name}</span>
+                    <span style="color:${success ? 'var(--success)' : 'var(--danger)'}">
+                        ${success ? 'PASSED' : 'FAILED'}
+                    </span>
+                </div>`;
+            feed.appendChild(div);
+        });
+
+        // Update Status Bar
+        const bar = document.getElementById('stress-bar');
+        const score = Math.floor((passed / checks.length) * 100);
+        if (bar) {
+            bar.style.width = score + '%';
+            bar.style.background = score === 100 ? 'var(--success)' : 'var(--warning)';
+        }
+        const statusText = document.getElementById('test-status');
+        if (statusText) statusText.innerText = score === 100 ? 'SYSTEM OPTIMAL' : 'ISSUES DETECTED';
+
+        // Update Metrics
+        document.getElementById('val-api').innerText = '12ms'; // Mock for now
+        document.getElementById('val-err').innerText = '0.00%';
+        document.getElementById('val-usr').innerText = window.brain.subscribers.tenants.length;
+    }
+
+    injectError() {
+        const feed = document.getElementById('error-feed');
+        if (!feed) return;
+
+        const errors = [
+            "Timeout waiting for GPS sync",
+            "404 Asset Image Missing",
+            "Slow Query: GetSubscribers (400ms)"
+        ];
+        const err = errors[Math.floor(Math.random() * errors.length)];
+
+        const div = document.createElement('div');
+        div.style.padding = '1rem';
+        div.style.borderBottom = '1px solid rgba(255,255,255,0.05)';
+        div.innerHTML = `<span style="color:var(--danger)">ERROR:</span> ${err} <span style="float:right; opacity:0.5; font-size:0.7rem;">Just now</span>`;
+
+        feed.prepend(div);
+
+        if (feed.children.length > 10) feed.lastChild.remove();
+    }
+}

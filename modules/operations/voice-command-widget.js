@@ -1,0 +1,181 @@
+/**
+ * voice-command-widget.js
+ * "The Voice Command Center" for Operations Dispatch.
+ * Handles Mic recording, Target selection, and Mock Broadcasting.
+ */
+
+export class VoiceCommandWidget {
+    constructor(containerId) {
+        this.containerId = containerId;
+        this.isRecording = false;
+        this.target = 'all'; // 'all', 'crew-a', 'crew-b', 'job-123'
+        this.mediaRecorder = null;
+        this.audioChunks = [];
+    }
+
+    render() {
+        const parent = document.getElementById(this.containerId);
+        if (!parent) {
+            console.warn(`VoiceCommandWidget: Container ${this.containerId} not found.`);
+            return;
+        }
+
+        // Create Widget Container
+        const widget = document.createElement('div');
+        widget.id = 'voice-command-widget';
+        widget.className = 'absolute bottom-6 left-6 z-[1000] bg-slate-900/90 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl p-4 w-80 animate-slide-up flex flex-col gap-4 font-sans';
+
+        widget.innerHTML = `
+            <!-- Header -->
+            <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+                <div class="flex items-center gap-2">
+                    <div class="w-3 h-3 rounded-full bg-green-500 animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.6)]"></div>
+                    <span class="text-white font-bold tracking-wide text-sm uppercase">Voice Command</span>
+                </div>
+                <div class="text-[10px] text-slate-400 font-mono">CHANNEL: OPEN</div>
+            </div>
+
+            <!-- Target Selector -->
+            <div class="grid grid-cols-3 gap-2">
+                <button class="target-btn active bg-blue-600 text-white text-xs font-bold py-2 rounded hover:bg-blue-500 transition-colors" data-target="all">ALL CREWS</button>
+                <button class="target-btn bg-slate-800 text-slate-400 text-xs font-bold py-2 rounded hover:bg-slate-700 transition-colors" data-target="crew-a">CREW A</button>
+                <button class="target-btn bg-slate-800 text-slate-400 text-xs font-bold py-2 rounded hover:bg-slate-700 transition-colors" data-target="crew-b">CREW B</button>
+            </div>
+
+            <!-- Main Mic Button -->
+            <div class="relative py-4 flex justify-center">
+                <button id="btn-ptt-main" class="w-20 h-20 rounded-full bg-slate-800 border-4 border-slate-700 flex items-center justify-center group transition-all duration-200 active:scale-95 shadow-inner">
+                    <svg class="w-8 h-8 text-slate-400 group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+                    <!-- Ring Animation -->
+                    <div id="mic-ring" class="absolute inset-0 rounded-full border-4 border-red-500 opacity-0 scale-100 transition-all duration-1000"></div>
+                </button>
+                <span id="ptt-status" class="absolute bottom-0 text-[10px] text-slate-500 font-bold uppercase tracking-widest transition-colors">Hold to Speak</span>
+            </div>
+
+            <!-- Recent Logs -->
+            <div class="bg-black/40 rounded-lg p-2 max-h-24 overflow-y-auto custom-scrollbar space-y-2" id="voice-log-list">
+                <div class="text-[10px] text-slate-500 italic text-center">No recent broadcasts</div>
+            </div>
+        `;
+
+        parent.appendChild(widget);
+        this.bindEvents(widget);
+    }
+
+    bindEvents(el) {
+        // Target Switching
+        el.querySelectorAll('.target-btn').forEach(btn => {
+            btn.onclick = () => {
+                el.querySelectorAll('.target-btn').forEach(b => {
+                    b.classList.remove('bg-blue-600', 'text-white');
+                    b.classList.add('bg-slate-800', 'text-slate-400');
+                });
+                btn.classList.remove('bg-slate-800', 'text-slate-400');
+                btn.classList.add('bg-blue-600', 'text-white');
+                this.target = btn.dataset.target;
+            }
+        });
+
+        // PTT Logic
+        const pttBtn = el.querySelector('#btn-ptt-main');
+        const ring = el.querySelector('#mic-ring');
+        const status = el.querySelector('#ptt-status');
+
+        // Mouse/Touch Down -> Start Recording
+        const start = (e) => {
+            e.preventDefault();
+            if (this.isRecording) return;
+            this.isRecording = true;
+
+            // UI
+            pttBtn.classList.remove('bg-slate-800', 'border-slate-700');
+            pttBtn.classList.add('bg-red-600', 'border-red-500', 'shadow-[0_0_20px_rgba(220,38,38,0.5)]');
+            ring.classList.remove('opacity-0');
+            ring.classList.add('animate-ping');
+            status.textContent = "Broadcasting...";
+            status.classList.add('text-red-500');
+
+            this.startAudioCapture();
+        };
+
+        // Mouse/Touch Up -> Stop & Send
+        const stop = (e) => {
+            e.preventDefault();
+            if (!this.isRecording) return;
+            this.isRecording = false;
+
+            // UI
+            pttBtn.classList.add('bg-slate-800', 'border-slate-700');
+            pttBtn.classList.remove('bg-red-600', 'border-red-500', 'shadow-[0_0_20px_rgba(220,38,38,0.5)]');
+            ring.classList.add('opacity-0');
+            ring.classList.remove('animate-ping');
+            status.textContent = "Hold to Speak";
+            status.classList.remove('text-red-500');
+
+            this.stopAudioCapture();
+        };
+
+        pttBtn.addEventListener('mousedown', start);
+        pttBtn.addEventListener('touchstart', start);
+
+        window.addEventListener('mouseup', stop); // Catch release outside button
+        window.addEventListener('touchend', stop);
+    }
+
+    startAudioCapture() {
+        // Mock capture - in real app use navigator.mediaDevices.getUserMedia
+        console.log(`[VoiceCommand] Started recording for target: ${this.target}`);
+        this.mockTranscript = "Hey Crew A, be advised traffic is heavy on I-94."; // Simulated
+    }
+
+    async stopAudioCapture() {
+        console.log(`[VoiceCommand] Stopped recording.`);
+
+        // Simulate Processing Delay
+        const logList = document.getElementById('voice-log-list');
+        const tempId = Date.now();
+
+        // Optimistic UI Update
+        const logItem = document.createElement('div');
+        logItem.id = `log-${tempId}`;
+        logItem.className = 'flex items-center gap-2 text-xs text-slate-300 animate-pulse';
+        logItem.innerHTML = `
+            <span class="w-1.5 h-1.5 rounded-full bg-yellow-500"></span>
+            <span class="truncate">Sending to ${this.target.toUpperCase()}...</span>
+        `;
+        if (logList.querySelector('.italic')) logList.innerHTML = ''; // Clear empty state
+        logList.prepend(logItem);
+
+        // Simulate Network Call
+        setTimeout(() => {
+            logItem.classList.remove('animate-pulse');
+            logItem.innerHTML = `
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                <span class="truncate font-bold text-white">To ${this.target.toUpperCase()}:</span>
+                <span class="truncate text-slate-400">"${this.mockTranscript}"</span>
+            `;
+
+            // Log to Firestore
+            this.logToBackend(this.target, this.mockTranscript);
+
+        }, 1500);
+    }
+
+    async logToBackend(target, text) {
+        if (!window.firebaseServices) return;
+        const { db, addDoc, collection } = window.firebaseServices;
+
+        try {
+            await addDoc(collection(db, "voice_logs"), {
+                target: target,
+                transcript: text,
+                sender: "Dispatch", // Auth user ideally
+                timestamp: new Date().toISOString(),
+                status: "sent"
+            });
+            console.log("[VoiceCommand] Logged to Firestore");
+        } catch (e) {
+            console.error("Failed to log voice command", e);
+        }
+    }
+}

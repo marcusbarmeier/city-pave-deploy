@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Developer Command Center | City Pave</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #e2e8f0;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen p-6 pt-24"> <!-- Increased pt-20 to pt-24 for nav spacing -->
+    <div id="app-navigation" class="fixed top-0 left-0 right-0 z-50"></div>
+    <script type="module" src="../../navigation.js"></script>
+
+    <!-- Header -->
+    <header class="flex justify-between items-center mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">
+                Developer Command Center
+            </h1>
+            <p class="text-gray-400 text-sm">SaaS Architect Module • God Mode</p>
+        </div>
+        <div class="flex gap-4">
+            <div class="text-right">
+                <div class="text-xs text-gray-500">TOTAL MRR</div>
+                <div class="text-2xl font-bold text-green-400">$<span id="total-mrr">0.00</span></div>
+            </div>
+            <div class="text-right">
+                <div class="text-xs text-gray-500">SYSTEM HEALTH</div>
+                <div class="text-2xl font-bold text-cyan-400">99.9%</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Top Navigation Bar (Global App Nav) -->
+    <nav class="bg-gray-900 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <div class="flex items-center gap-4">
+                    <div class="flex-shrink-0 text-cyan-400 font-bold text-xl">
+                        DevConsole
+                    </div>
+                    <div class="hidden md:block h-6 w-px bg-gray-700"></div>
+                    <div class="text-xs text-gray-500">v2.4.0-beta</div>
+                </div>
+                <div>
+                    <div class="flex items-center gap-4">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs text-gray-500">TOTAL MRR</div>
+                            <div class="text-sm font-bold text-green-400">$<span id="total-mrr">0.00</span></div>
+                        </div>
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs text-gray-500">HEALTH</div>
+                            <div class="text-sm font-bold text-cyan-400">99.9%</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- STICKY WORKSPACE HEADER (Context & Tabs) -->
+    <header class="sticky top-0 z-50 bg-gray-800/95 backdrop-blur border-b border-gray-700 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Row 1: Context Bar -->
+            <div class="py-3 flex flex-col sm:flex-row justify-between items-center gap-4">
+
+                <!-- Left: Context Selector -->
+                <div class="flex items-center gap-3 w-full sm:w-auto flex-1">
+                    <div class="relative w-full sm:max-w-md">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" id="global-search" placeholder="Select Subscriber to Manage..."
+                            class="w-full bg-gray-900 border border-gray-600 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent placeholder-gray-500">
+                    </div>
+
+                    <!-- Active Context Badge -->
+                    <div id="context-badge"
+                        class="hidden flex items-center gap-2 px-3 py-1.5 bg-blue-900/40 border border-blue-500/30 rounded-lg">
+                        <span class="text-xs text-blue-200 font-bold uppercase tracking-wider">Active:</span>
+                        <span id="context-name" class="text-sm font-bold text-white">City Pave</span>
+                        <button onclick="clearContext()" class="ml-2 text-gray-400 hover:text-white"><svg
+                                class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12"></path>
+                            </svg></button>
+                    </div>
+                </div>
+
+                <!-- Right: Guardian Status -->
+                <div class="flex items-center gap-3">
+                    <div
+                        class="flex items-center gap-2 text-xs text-gray-400 bg-gray-900 px-3 py-1.5 rounded-full border border-gray-700">
+                        <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        Guardian AI Active
+                    </div>
+                </div>
+            </div>
+
+            <!-- Row 2: Navigation Tabs -->
+            <div class="flex space-x-1 overflow-x-auto no-scrollbar pt-1">
+                <button onclick="switchTab('tenants')" id="nav-tenants"
+                    class="border-b-2 border-cyan-500 text-white px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">Directory</button>
+                <button onclick="switchTab('deployment')" id="nav-deployment"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">Modules
+                    & Deployment</button>
+                <button onclick="switchTab('ads')" id="nav-ads"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">Advertising</button>
+                <button onclick="switchTab('legal')" id="nav-legal"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">Legal</button>
+                <button onclick="switchTab('whitelabel')" id="nav-whitelabel"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">White-Label</button>
+                <button onclick="switchTab('aiaudit')" id="nav-aiaudit"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">AI
+                    Audit</button>
+                <button onclick="switchTab('releases')" id="nav-releases"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">Releases</button>
+                <button onclick="switchTab('monetization')" id="nav-monetization"
+                    class="border-b-2 border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-600 px-4 py-2 text-sm font-medium whitespace-nowrap transition-colors">
+                    <span class="mr-1">💰</span> Monetization
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Guardian AI Log (Hidden by default, toggleable) -->
+        <div id="guardian-log-container" class="hidden mb-6 glass-panel rounded-xl p-4 border-l-4 border-yellow-500">
+            <div class="flex justify-between items-start">
+                <h2 class="text-sm font-bold text-yellow-500 flex items-center gap-2 mb-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                        </path>
+                    </svg>
+                    Guardian AI Log
+                </h2>
+                <button onclick="document.getElementById('guardian-log-container').classList.add('hidden')"
+                    class="text-gray-500 hover:text-white">&times;</button>
+            </div>
+            <div id="guardian-log" class="text-xs text-gray-300 font-mono h-32 overflow-y-auto"></div>
+        </div>
+
+        <!-- TAB: Subscribers (Renamed from Tenants) -->
+        <div id="tab-tenants" class="space-y-6">
+            <div class="glass-panel rounded-xl p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
+                    <h2 class="text-xl font-bold flex items-center gap-2">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                            </path>
+                        </svg>
+                        Subscriber Management
+                    </h2>
+
+                    <!-- Search & Filter -->
+                    <div class="flex-1 w-full sm:max-w-md flex gap-2">
+                        <div class="relative flex-grow">
+                            <input type="text" id="tenant-search" placeholder="Search subscribers..."
+                                class="w-full bg-gray-900 border border-gray-700 rounded-lg py-2 pl-10 pr-4 text-sm text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-gray-500" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <select id="tier-filter"
+                            class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-300">
+                            <option value="all">All Tiers</option>
+                            <option value="titan">Titan</option>
+                            <option value="pro">Pro</option>
+                            <option value="basic">Basic</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Bulk Actions Toolbar -->
+                <div id="bulk-actions"
+                    class="hidden mb-4 bg-blue-900/30 border border-blue-500/30 rounded-lg p-3 flex justify-between items-center">
+                    <div class="flex items-center gap-3">
+                        <span class="text-sm text-blue-200 font-bold"><span id="selected-count">0</span> Selected</span>
+                        <span class="h-4 w-px bg-blue-700"></span>
+                        <button onclick="clearSelection()" class="text-xs text-blue-300 hover:text-white">Clear
+                            Selection</button>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="switchTab('deployment')"
+                            class="text-xs bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 rounded font-medium">Manage
+                            Modules</button>
+                        <button class="text-xs bg-gray-700 hover:bg-gray-600 text-white px-3 py-1.5 rounded">Export
+                            CSV</button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead>
+                            <tr class="text-gray-500 border-b border-gray-700">
+                                <th class="pb-3 pl-2 w-8">
+                                    <input type="checkbox" id="select-all-tenants"
+                                        class="rounded bg-gray-700 border-gray-600 text-blue-500 focus:ring-blue-500">
+                                </th>
+                                <th class="pb-3">Client Name</th>
+                                <th class="pb-3">Tier</th>
+                                <th class="pb-3">Status</th>
+                                <th class="pb-3">Usage (API)</th>
+                                <th class="pb-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tenant-list-body">
+                            <!-- Populated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Telemetry & Geofence Monitor -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel rounded-xl p-6">
+                    <h3 class="text-lg font-bold mb-4 text-purple-400">Customer Ranking & Telemetry</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">Top User (Data)</span>
+                            <span class="font-bold text-white">Bob's Paving (14.2 GB)</span>
+                        </div>
+                        <div class="flex justify-between items-center text-sm">
+                            <span class="text-gray-400">Most Active</span>
+                            <span class="font-bold text-white">City Seal (842 Actions/Day)</span>
+                        </div>
+                        <div class="w-full bg-gray-700 h-2 rounded-full mt-2">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 75%"></div>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">System Load: 75% Capacity</p>
+                    </div>
+                </div>
+                <div class="glass-panel rounded-xl p-6">
+                    <h3 class="text-lg font-bold mb-4 text-red-400">Geofence Monitor</h3>
+                    <div class="space-y-2">
+                        <div class="bg-red-900/30 border border-red-500/30 p-3 rounded text-sm flex items-start gap-2">
+                            <span class="text-red-500">⚠</span>
+                            <div>
+                                <p class="font-bold text-red-200">Invalid GPS Config</p>
+                                <p class="text-xs text-gray-400">Tenant: "Metro Concrete" - Radius set to 0m.</p>
+                            </div>
+                            <button
+                                class="ml-auto text-xs bg-red-600 hover:bg-red-500 text-white px-2 py-1 rounded">Fix</button>
+                        </div>
+                        <div class="text-center text-gray-500 text-xs mt-4">No other issues detected.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Deployment Control Panel -->
+        <div id="tab-deployment" class="hidden space-y-6">
+            <div class="glass-panel rounded-xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-green-400">Module & Deployment Control</h2>
+                        <p class="text-gray-400 text-sm">Manage feature flags and module access for selected
+                            subscribers.</p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex gap-3">
+                        <button onclick="revertChanges()"
+                            class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg text-sm font-bold transition">Revert
+                            Changes</button>
+                        <button onclick="saveChanges()"
+                            class="px-4 py-2 bg-green-600 hover:bg-green-500 text-white rounded-lg text-sm font-bold shadow-lg shadow-green-900/50 transition flex items-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            Save & Apply
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <!-- Advanced RBAC Module -->
+                    <div class="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-white flex items-center gap-2">
+                                    <span class="text-yellow-400">🛡️</span> Advanced RBAC
+                                </h3>
+                                <p class="text-xs text-gray-400 mt-1">Enables editable permission matrix in User Admin.
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div id="rbac-status-badge"
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-700 text-gray-300">
+                                    Select Tenant
+                                </div>
+                                <p id="rbac-status-detail" class="text-[10px] text-gray-500 mt-1">Default: Titan/Pro =
+                                    ON, Basic = OFF</p>
+                            </div>
+                        </div>
+
+                        <!-- Control Actions -->
+                        <div class="flex gap-2 border-t border-gray-700 pt-3">
+                            <button onclick="applyOverride('advancedRBAC', true)"
+                                class="flex-1 bg-green-900/30 hover:bg-green-900/50 text-green-400 text-xs py-2 rounded border border-green-900/50 transition">
+                                Force Enable
+                            </button>
+                            <button onclick="applyOverride('advancedRBAC', false)"
+                                class="flex-1 bg-red-900/30 hover:bg-red-900/50 text-red-400 text-xs py-2 rounded border border-red-900/50 transition">
+                                Force Disable
+                            </button>
+                            <button onclick="clearOverride('advancedRBAC')"
+                                class="flex-1 bg-gray-700 hover:bg-gray-600 text-gray-300 text-xs py-2 rounded border border-gray-600 transition">
+                                Reset to Default
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Placeholder for future modules -->
+                    <div
+                        class="bg-gray-800/50 border border-gray-700 rounded-lg p-4 flex justify-between items-center opacity-50">
+                        <div>
+                            <h3 class="font-bold text-white flex items-center gap-2">
+                                <span class="text-blue-400">📊</span> Advanced Analytics
+                            </h3>
+                            <p class="text-xs text-gray-400 mt-1">Coming Soon: Custom dashboards and reporting.</p>
+                        </div>
+                        <span class="text-xs text-gray-500 border border-gray-600 px-2 py-1 rounded">In
+                            Development</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Advertising Engine -->
+        <div id="tab-ads" class="hidden space-y-6">
+            <!-- (Content preserved from previous implementation) -->
+            <div class="glass-panel rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 text-green-400">Advertising Engine</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- External Ads -->
+                    <div>
+                        <h3 class="font-bold text-white mb-3 border-b border-gray-700 pb-2">External Ads
+                            (AdMob/Scripts)</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Ad Frequency (Basic Tier)</label>
+                                <input type="range" class="w-full accent-green-500" min="0" max="100" value="100">
+                                <div class="flex justify-between text-xs text-gray-500"><span>0%</span><span>100%
+                                        (Always)</span></div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-400 mb-1">Ad Script Injection</label>
+                                <textarea
+                                    class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-xs font-mono text-green-300 h-24"
+                                    placeholder="<script>...</script>"></textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Internal Promotions -->
+                    <div>
+                        <h3 class="font-bold text-white mb-3 border-b border-gray-700 pb-2">Internal Promotions
+                            (House Ads)</h3>
+                        <div class="space-y-4">
+                            <div class="bg-gray-800 p-3 rounded border border-gray-700">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-sm font-bold text-blue-300">Promo: "Safety Module 50%
+                                        Off"</span>
+                                    <input type="checkbox" class="accent-blue-500" checked>
+                                </div>
+                                <p class="text-xs text-gray-400">Display to: All Non-Safety Users</p>
+                            </div>
+                            <button
+                                class="w-full py-2 border border-dashed border-gray-600 text-gray-400 text-sm rounded hover:bg-gray-800 hover:text-white transition">+
+                                Create New Promo</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Legal & Liability -->
+        <div id="tab-legal" class="hidden space-y-6">
+            <div class="glass-panel rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 text-orange-400">Legal & Liability</h2>
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-sm font-bold text-gray-300 mb-2">Master Terms of Service (Developer
+                            Liability)</label>
+                        <textarea
+                            class="w-full bg-gray-900 border border-gray-700 rounded p-4 text-sm text-gray-300 h-64 font-mono"
+                            placeholder="## Terms of Service&#10;1. Limitation of Liability..."></textarea>
+                    </div>
+                    <div
+                        class="flex items-center justify-between bg-orange-900/20 border border-orange-500/30 p-4 rounded">
+                        <div>
+                            <h4 class="font-bold text-orange-200">Global Policy Push</h4>
+                            <p class="text-xs text-gray-400">Force all tenants to re-sign the updated ToS on next
+                                login.</p>
+                        </div>
+                        <button
+                            class="bg-orange-600 hover:bg-orange-500 text-white font-bold py-2 px-4 rounded shadow-lg shadow-orange-900/50">
+                            Push Update & Force Re-sign
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: White-Label Support -->
+        <div id="tab-whitelabel" class="hidden space-y-6">
+            <div class="glass-panel rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 text-pink-400">White-Label Support</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Tenant Selector (REMOVED - Now Global) -->
+                    <div class="md:col-span-1">
+                        <div class="bg-gray-800/50 rounded p-4 border border-gray-700 h-full">
+                            <h3 class="text-sm font-bold text-gray-300 mb-2">Active Context</h3>
+                            <p class="text-xs text-gray-400 mb-4">You are editing branding for:</p>
+                            <div id="whitelabel-context-display" class="font-bold text-white text-lg mb-4">Select a
+                                Subscriber</div>
+
+                            <button id="btn-view-as"
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded flex items-center justify-center gap-2">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z">
+                                    </path>
+                                </svg>
+                                Simulate "View As"
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Editor -->
+                    <div class="md:col-span-2 bg-gray-800/50 rounded p-4 border border-gray-700">
+                        <h3 class="text-sm font-bold text-gray-300 mb-4 border-b border-gray-700 pb-2">Branding
+                            Configuration</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">App Name</label>
+                                <input type="text"
+                                    class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white"
+                                    placeholder="e.g. Bob's Paving App">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Primary Color</label>
+                                <div class="flex gap-2">
+                                    <input type="color" id="theme-primary"
+                                        class="h-9 w-9 bg-transparent border-0 cursor-pointer" value="#3b82f6">
+                                    <input type="text" id="theme-primary-val"
+                                        class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white font-mono"
+                                        value="#3b82f6">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Border Radius</label>
+                                <input type="range" id="theme-radius" min="0" max="20" value="8"
+                                    class="w-full accent-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-xs text-gray-500 mb-1">Logo URL</label>
+                                <input type="text"
+                                    class="w-full bg-gray-900 border border-gray-700 rounded p-2 text-white text-xs"
+                                    placeholder="https://...">
+                            </div>
+                        </div>
+
+                        <!-- AI Theme Generator Section -->
+                        <div class="mt-6 pt-4 border-t border-gray-700">
+                            <h4 class="text-xs font-bold text-purple-400 mb-2 flex items-center gap-2">
+                                <span>✨</span> AI Theme Generator
+                            </h4>
+                            <div class="flex gap-2 mb-3">
+                                <input type="text" id="ai-theme-seed"
+                                    class="flex-grow bg-gray-900 border border-gray-700 rounded p-2 text-white text-xs"
+                                    placeholder="Enter brand color (e.g. #ff0000) or mood...">
+                                <button id="btn-generate-theme"
+                                    class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-2 rounded">
+                                    Generate
+                                </button>
+                            </div>
+                            <div id="ai-theme-results" class="grid grid-cols-3 gap-2 hidden">
+                                <!-- Results injected here -->
+                            </div>
+                        </div>
+
+                        <div class="mt-4 flex justify-end">
+                            <button class="bg-pink-600 hover:bg-pink-700 text-white font-bold py-2 px-6 rounded">Save
+                                Branding</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: AI Integration Audit -->
+        <div id="tab-aiaudit" class="hidden space-y-6">
+            <div class="glass-panel rounded-xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-purple-400">AI Integration Auditor</h2>
+                        <p class="text-gray-400 text-sm">Autonomous scanner to identify AI opportunities in the
+                            current view.</p>
+                    </div>
+                    <button id="btn-run-audit"
+                        class="bg-purple-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-purple-700 flex items-center gap-2">
+                        <span>🚀</span> Run Audit
+                    </button>
+                </div>
+
+                <div id="audit-results" class="space-y-4">
+                    <div class="text-center py-12 text-gray-500">
+                        <p>Click "Run Audit" to scan the application.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Release Management -->
+        <div id="tab-releases" class="hidden space-y-6">
+            <div class="glass-panel rounded-xl p-6">
+                <h2 class="text-xl font-bold mb-4 text-blue-400">Release Management</h2>
+                <div id="releases-list" class="space-y-4">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB: Monetization / Command Center -->
+        <div id="tab-monetization" class="hidden space-y-6">
+            <div id="monetization-container">
+                <!-- Injected by MonetizationManager.js -->
+                <div class="glass-panel p-6 rounded-xl text-center text-gray-400">Loading Command Center...</div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Modals -->
+    <div id="downgrade-modal" class="fixed inset-0 bg-black bg-opacity-80 hidden flex items-center justify-center z-50">
+        <div class="bg-gray-900 border border-red-500 rounded-xl p-8 max-w-md w-full shadow-2xl shadow-red-900/50">
+            <h3 class="text-2xl font-bold text-red-500 mb-4">Guardian AI Warning</h3>
+            <p id="downgrade-warning-text" class="text-gray-300 mb-6">
+                <!-- Warning text -->
+            </p>
+            <div class="flex justify-end gap-4">
+                <button onclick="closeDowngradeModal()" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button id="confirm-downgrade-btn"
+                    class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded font-bold">Proceed Anyway</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="developer-console.js"></script>
+    <script type="module" src="../../qa-agent.js"></script>
+</body>
+
+</html>

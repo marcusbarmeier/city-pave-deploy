@@ -1,0 +1,56 @@
+<!-- // © 2025 City Pave. All Rights Reserved. Unauthorized copying is prohibited. -->
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>AI Overlay Module</title><script src="https://cdn.tailwindcss.com"></script><style>
+        /* Basic Module Styles */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style><script>
+        if (!window.firebaseServices) {
+            window.firebaseServices = {
+                auth: { currentUser: { email: 'admin@citypave.com' } },
+                db: {},
+                collection: () => { },
+                doc: () => { },
+                getDoc: async () => ({ exists: () => true, data: () => ({ role: 'admin', tier: 'LEVEL_3' }) }),
+                getDocs: async () => [],
+            };
+            window.currentUser = {
+                tier: 'LEVEL_3',
+                name: 'System Admin',
+                permissions: { ai_overlay: true }
+            };
+        }
+    </script></head><body class="bg-slate-50 min-h-screen"><div class="p-8 max-w-4xl mx-auto"><header class="flex justify-between items-center mb-8"><div><h1 class="text-3xl font-bold text-slate-800">AI Overlay</h1><p class="text-slate-500">Module Configuration & Status</p></div><div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
+                Active
+            </div></header><div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8"><div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200"><h2 class="font-semibold text-lg mb-4">Module Health</h2><div id="ai-status" class="text-sm font-mono text-slate-600">Initializing...</div></div><div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200"><h2 class="font-semibold text-lg mb-4">Quick Actions</h2><div class="space-y-2"><button onclick="window.aiOverlay.toggle()"
+                        class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition">
+                        Toggle Overlay
+                    </button><button onclick="window.aiOverlay.startVoiceInteraction()"
+                        class="w-full bg-slate-100 text-slate-700 py-2 rounded hover:bg-slate-200 transition">
+                        Test Voice
+                    </button></div></div></div><div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200"><h2 class="font-semibold text-lg mb-4">Configuration</h2><p class="text-slate-500 text-sm mb-4">
+                To configure global settings, please use the User Admin module.
+                Local settings can be adjusted here in future updates.
+            </p><div class="p-4 bg-slate-50 border rounded-md text-xs font-mono">
+                Master Level: <span id="tier-display">LEVEL_3</span><br>
+                Voice: Enabled<br>
+                Geofence: Active
+            </div></div><div id="ai-bridge-container"></div></div><script type="module">
+        import { AIOverlay } from './ai-overlay.js';
+
+        // Initialize Overlay
+        const overlay = new AIOverlay();
+        window.aiOverlay = overlay;
+
+        // Wait for DOM
+        document.addEventListener('DOMContentLoaded', async () => {
+            await overlay.init();
+            document.getElementById('ai-status').innerHTML =
+                `<span class="text-green-600">● Operational</span><br>Version: 1.0.0`;
+
+            // Sync UI check
+            if (window.currentUser) {
+                document.getElementById('tier-display').textContent = window.currentUser.tier || 'LEVEL_1';
+            }
+        });
+    </script></body></html>
